@@ -1,0 +1,225 @@
+// Mamta General Store — database schema (PostgreSQL)
+//
+// Mirrors the domain types in `src/types/category.ts` and `src/types/product.ts`.
+// The catalog is category-driven: products always belong to a Category, so new
+// categories are data (a Category row), never schema changes.
+//
+// Conventions
+// - Tables use snake_case (@@map); models use PascalCase.
+// - Money is stored in minor units (paise) as Int: 199900 = ₹1,999.00 — no floats.
+// - Every table carries createdAt/updatedAt timestamps.
+// - Order rows snapshot product/customer data at purchase time, so order history
+//   stays correct even if a product is later renamed or deleted.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+  runtime  = "nodejs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// Storefront role. ADMIN users manage catalog/orders (admin area comes later).
+enum UserRole {
+  CUSTOMER
+  ADMIN
+}
+
+/// Fulfilment lifecycle of an order.
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PACKED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+/// Payment lifecycle of an order.
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+/// Store customer or admin. `passwordHash` is nullable to allow guest checkout
+/// before authentication is introduced.
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  phone        String?
+  passwordHash String?
+  role         UserRole @default(CUSTOMER)
+  /// Disabled accounts cannot sign in; their history is preserved.
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  orders Order[]
+
+  @@map("users")
+}
+
+/// Storefront product category (e.g. "Ladies' Suits", "Kurtis", "Sarees").
+model Category {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  /// Tile image for category listings.
+  imageUrl    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  products Product[]
+
+  @@map("categories")
+}
+
+/// Product photo. `position` controls ordering within the gallery.
+model ProductImage {
+  id       String  @id @default(cuid())
+  url      String
+  alt      String?
+  position Int     @default(0)
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("product_images")
+}
+
+/// Product size option, e.g. S / M / L / XL / Free Size.
+model ProductSize {
+  id    String @id @default(cuid())
+  label String
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("product_sizes")
+}
+
+/// Product color option with an optional swatch hex.
+model ProductColor {
+  id   String  @id @default(cuid())
+  name String
+  hex  String?
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("product_colors")
+}
+
+/// A sellable item (e.g. a suit design, a kurti, a saree).
+model Product {
+  id            String   @id @default(cuid())
+  name          String
+  slug          String   @unique
+  description   String?
+  /// Current selling price in minor units (paise): 199900 = ₹1,999.00
+  price         Int
+  /// Optional original price shown struck-through. Also in minor units.
+  discountPrice Int?
+  currency      String   @default("INR")
+  /// Units available; null = not tracked (e.g. made-to-order).
+  stock         Int?
+  /// Merchant-facing product code.
+  sku           String?  @unique
+  brand         String?
+  featured      Boolean  @default(false)
+  /// Only active products are visible on the storefront.
+  active        Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+  images     ProductImage[]
+  sizes      ProductSize[]
+  colors     ProductColor[]
+  orderItems OrderItem[]
+
+  @@index([categoryId, active])
+  @@index([active, createdAt])
+  @@index([active, price])
+  @@index([featured, active])
+  @@map("products")
+}
+
+/// A customer order. Keeps immutable copies of contact/shipping details and
+/// line-item data so history survives later catalog or account changes.
+model Order {
+  id            String        @id @default(cuid())
+  /// Human-friendly reference shown to the customer, e.g. MGS-2026-000123.
+  orderNumber   String        @unique
+  status        OrderStatus   @default(PENDING)
+  paymentStatus PaymentStatus @default(PENDING)
+
+  /// Placed by a registered user; null for guest orders.
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  /// Contact details snapshot (works for guest checkout and keeps history).
+  customerName  String
+  customerEmail String?
+  customerPhone String?
+
+  /// Shipping address snapshot at purchase time.
+  shippingLine1      String
+  shippingLine2      String?
+  shippingCity       String
+  shippingState      String
+  shippingPostalCode String
+  shippingCountry    String  @default("India")
+
+  /// All amounts in minor units (paise).
+  subtotal Int
+  shipping Int @default(0)
+  total    Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items OrderItem[]
+
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+  @@map("orders")
+}
+
+/// A line item on an order. Snapshots the product's name/slug/price at the
+/// time of purchase; `productId` becomes null (history kept) if the product
+/// is ever deleted.
+model OrderItem {
+  id        String @id @default(cuid())
+  quantity  Int
+  /// Unit price paid, in minor units (paise).
+  unitPrice Int
+  /// quantity × unitPrice, denormalized for fast order totals/history.
+  lineTotal Int
+
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  /// Product snapshot at purchase time.
+  productName String
+  productSlug String
+  sku         String?
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_items")
+}
