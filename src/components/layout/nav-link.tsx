@@ -26,7 +26,7 @@ export function NavLink({ item, className, ...props }: NavLinkProps) {
       href={item.href}
       aria-current={isActive ? "page" : undefined}
       className={cn(
-        "transition-colors duration-200 ease-gentle hover:text-foreground",
+        "focus-visible:ring-ring/50 rounded-md transition-colors duration-200 ease-gentle hover:text-foreground focus-visible:ring-[3px] focus-visible:outline-none",
         isActive ? "text-foreground" : "text-muted-foreground",
         className,
       )}

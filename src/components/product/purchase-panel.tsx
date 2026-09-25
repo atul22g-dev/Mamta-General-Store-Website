@@ -200,7 +200,7 @@ function QuantityStepper({
         <button
           type="button"
           aria-label="Decrease quantity"
-          className="flex size-10 items-center justify-center rounded-l-full transition-colors hover:bg-accent/60 disabled:opacity-40"
+          className="focus-visible:ring-ring/50 flex size-10 items-center justify-center rounded-l-full transition-colors hover:bg-accent/60 focus-visible:ring-[3px] focus-visible:outline-none disabled:opacity-40"
           onClick={onDecrease}
           disabled={quantity <= 1 || !available}
         >
@@ -216,7 +216,7 @@ function QuantityStepper({
         <button
           type="button"
           aria-label="Increase quantity"
-          className="flex size-10 items-center justify-center rounded-r-full transition-colors hover:bg-accent/60 disabled:opacity-40"
+          className="focus-visible:ring-ring/50 flex size-10 items-center justify-center rounded-r-full transition-colors hover:bg-accent/60 focus-visible:ring-[3px] focus-visible:outline-none disabled:opacity-40"
           onClick={onIncrease}
           disabled={quantity >= maxQuantity || !available}
         >

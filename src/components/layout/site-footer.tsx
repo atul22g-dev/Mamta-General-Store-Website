@@ -34,7 +34,7 @@ export function SiteFooter() {
                 <li key={item.href}>
                   <Link
                     href={item.href}
-                    className="text-muted-foreground hover:text-foreground text-sm transition-colors duration-200 ease-gentle"
+                    className="focus-visible:ring-ring/50 -mx-1 inline-flex min-h-11 items-center px-1 py-2 text-sm text-muted-foreground transition-colors duration-200 ease-gentle hover:text-foreground focus-visible:ring-[3px] focus-visible:outline-none sm:min-h-0 sm:py-0"
                   >
                     {item.label}
                   </Link>
@@ -45,7 +45,7 @@ export function SiteFooter() {
                   href={GOOGLE_MAPS_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm transition-colors duration-200 ease-gentle"
+                  className="focus-visible:ring-ring/50 -mx-1 inline-flex min-h-11 items-center gap-1 px-1 py-2 text-sm text-muted-foreground transition-colors duration-200 ease-gentle hover:text-foreground focus-visible:ring-[3px] focus-visible:outline-none sm:min-h-0 sm:py-0"
                 >
                   Google Maps
                   <ExternalLink aria-hidden="true" className="size-3" />
@@ -57,7 +57,10 @@ export function SiteFooter() {
           <p className="text-muted-foreground text-sm">
             Questions? Call{" "}
             {siteContact.phone && (
-              <a href={`tel:${siteContact.phone}`} className="text-foreground hover:underline">
+              <a
+                href={`tel:${siteContact.phone}`}
+                className="focus-visible:ring-ring/50 inline-flex min-h-11 items-center text-foreground focus-visible:ring-[3px] focus-visible:outline-none hover:underline sm:min-h-0"
+              >
                 {siteContact.phone}
               </a>
             )}

@@ -105,7 +105,7 @@ export function CartView() {
                       type="button"
                       aria-label={`Remove ${item.name} from cart`}
                       onClick={() => removeItem(item.id)}
-                      className="text-muted-foreground hover:bg-accent/60 hover:text-destructive inline-flex size-10 shrink-0 items-center justify-center rounded-md outline-none transition-colors focus-visible:ring-[3px] focus-visible:ring-ring/50 md:size-9"
+                      className="text-muted-foreground hover:bg-accent/60 hover:text-destructive focus-visible:ring-ring/50 inline-flex size-10 shrink-0 items-center justify-center rounded-md transition-colors focus-visible:ring-[3px] focus-visible:outline-none md:size-9"
                     >
                       <Trash2 aria-hidden="true" className="size-4" />
                     </button>
@@ -126,7 +126,7 @@ export function CartView() {
                             ? removeItem(item.id)
                             : setQuantity(item.id, item.quantity - 1)
                         }
-                        className="flex size-10 items-center justify-center rounded-l-lg transition-colors hover:bg-accent/60 disabled:opacity-40 md:size-9"
+                        className="focus-visible:ring-ring/50 flex size-10 items-center justify-center rounded-l-lg transition-colors hover:bg-accent/60 focus-visible:ring-[3px] focus-visible:outline-none disabled:opacity-40 md:size-9"
                         disabled={soldOut}
                       >
                         <Minus aria-hidden="true" className="size-4" />
@@ -142,7 +142,7 @@ export function CartView() {
                         type="button"
                         aria-label={`Increase quantity of ${item.name}`}
                         onClick={() => setQuantity(item.id, item.quantity + 1)}
-                        className="flex size-10 items-center justify-center rounded-r-lg transition-colors hover:bg-accent/60 disabled:opacity-40 md:size-9"
+                        className="focus-visible:ring-ring/50 flex size-10 items-center justify-center rounded-r-lg transition-colors hover:bg-accent/60 focus-visible:ring-[3px] focus-visible:outline-none disabled:opacity-40 md:size-9"
                         disabled={
                           soldOut ||
                           (item.maxQuantity !== null && item.quantity >= item.maxQuantity)

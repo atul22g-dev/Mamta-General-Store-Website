@@ -125,13 +125,14 @@ export function ShopView({
       </aside>
 
       <div>
-        {/* Toolbar — wraps on the narrowest phones where the filter button
-            plus sort select exceed the viewport's min-content width. */}
-        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+        {/* Toolbar — stacks on the narrowest phones (below ~360px) where the
+            filter button plus sort select exceed the viewport's min-content
+            width; row layout from xs up. */}
+        <div className="flex flex-col gap-2 min-[400px]:flex-row min-[400px]:flex-wrap min-[400px]:items-center min-[400px]:justify-between min-[400px]:gap-x-3">
           <p className="text-sm text-muted-foreground" aria-live="polite">
             {visible.length} {visible.length === 1 ? "product" : "products"}
           </p>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between gap-2 min-[400px]:justify-end">
             <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
               <SheetTrigger asChild>
                 <Button variant="outline" size="sm" className="lg:hidden">

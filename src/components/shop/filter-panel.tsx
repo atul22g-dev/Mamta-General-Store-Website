@@ -89,7 +89,7 @@ export function FilterPanel({
               <li key={category.slug}>
                 <label
                   className={cn(
-                    "flex cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-accent/50",
+                    "flex cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-accent/50 has-focus-visible:ring-ring/50 has-focus-visible:ring-[3px] has-focus-visible:outline-none",
                     count === 0 && "text-muted-foreground",
                   )}
                 >
@@ -131,7 +131,7 @@ export function FilterPanel({
                 aria-pressed={active}
                 onClick={() => onPriceBandChange(active ? null : band.id)}
                 className={cn(
-                  "rounded-full border px-3 py-1.5 text-xs transition-colors",
+                  "focus-visible:ring-ring/50 min-h-11 rounded-full border px-3.5 text-xs transition-colors focus-visible:ring-[3px] focus-visible:outline-none sm:min-h-0 sm:py-1.5",
                   active
                     ? "border-primary bg-primary text-primary-foreground"
                     : "bg-background hover:bg-accent/60",
@@ -146,7 +146,7 @@ export function FilterPanel({
 
       <Separator />
 
-      <label className="flex cursor-pointer items-center gap-2.5 text-sm">
+      <label className="focus-visible:ring-ring/50 -mx-2 flex min-h-11 cursor-pointer items-center gap-2.5 rounded-md px-2 text-sm transition-shadow has-focus-visible:ring-[3px] has-focus-visible:outline-none sm:min-h-0">
         <span
           className={cn(
             "relative h-5 w-9 shrink-0 rounded-full transition-colors",

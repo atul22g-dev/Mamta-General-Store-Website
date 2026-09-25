@@ -58,7 +58,7 @@ export function SiteHeader({ className }: { className?: string }) {
               shrink-to-fit width is capped at half the viewport and wraps. */}
           <Link
             href="/"
-            className="absolute left-1/2 w-max -translate-x-1/2 font-display text-lg font-medium tracking-tight transition-opacity hover:opacity-80 sm:static sm:w-auto sm:translate-x-0 lg:mr-8"
+            className="focus-visible:ring-ring/50 absolute left-1/2 w-max -translate-x-1/2 rounded-md px-1 py-2 font-display text-lg font-medium tracking-tight transition-opacity hover:opacity-80 focus-visible:ring-[3px] focus-visible:outline-none sm:static sm:w-auto sm:translate-x-0 sm:py-0 lg:mr-8"
           >
             {SITE_NAME}
           </Link>
