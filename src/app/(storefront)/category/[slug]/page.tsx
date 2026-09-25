@@ -8,6 +8,7 @@ import {
   getShopProducts,
   getCategoriesWithCounts,
 } from "@/lib/supabase/catalog";
+import { siteConfig } from "@/config/site";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { Container } from "@/components/ui/container";
 import { SectionHeading } from "@/components/ui/section-heading";
@@ -29,9 +30,24 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
   }
   if (!category) return { title: "Category not found" };
 
+  const description = `Browse the ${category.name.toLowerCase()} collection at ${siteConfig.name}.${category.description ? ` ${category.description}` : ""}`;
+
   return {
     title: category.name,
-    description: `Browse the ${category.name.toLowerCase()} collection at Mamta General Store. ${category.description ?? ""}`,
+    description,
+    alternates: { canonical: `/category/${category.slug}` },
+    openGraph: {
+      title: `${category.name} — ${siteConfig.name}`,
+      description,
+      type: "website",
+      url: `/category/${category.slug}`,
+      images: category.imageUrl ? [{ url: category.imageUrl, alt: category.name }] : undefined,
+    },
+    twitter: {
+      card: category.imageUrl ? "summary_large_image" : "summary",
+      title: `${category.name} — ${siteConfig.name}`,
+      description,
+    },
   };
 }
 

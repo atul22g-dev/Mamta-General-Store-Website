@@ -10,6 +10,13 @@ import { SectionHeading } from "@/components/ui/section-heading";
 export const metadata: Metadata = {
   title: "About Us",
   description: `${SITE_NAME} is a local shop near the Post Office in Jatwar, Haryana, offering women's unstitched suit materials with dupatta — daily wear, festive and premium collections, delivered across India by India Post.`,
+  alternates: { canonical: "/about" },
+  openGraph: {
+    title: `About Us — ${SITE_NAME}`,
+    description: `${SITE_NAME} is a local shop near the Post Office in Jatwar, Haryana, offering women's unstitched suit materials with dupatta — delivered across India by India Post.`,
+    type: "website",
+    url: "/about",
+  },
 };
 
 /** About the local shop — a modern editorial layout with only verifiable facts. */

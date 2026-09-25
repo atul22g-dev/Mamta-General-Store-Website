@@ -11,6 +11,13 @@ import { ImageArea } from "@/components/ui/image-area";
 export const metadata: Metadata = {
   title: "Categories",
   description: "Explore product categories at Mamta General Store.",
+  alternates: { canonical: "/categories" },
+  openGraph: {
+    title: "Categories — Mamta General Store",
+    description: "Explore product categories at Mamta General Store.",
+    type: "website",
+    url: "/categories",
+  },
 };
 
 /** Refresh from the database without a rebuild (same cadence as the home page). */

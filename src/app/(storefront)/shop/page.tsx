@@ -9,6 +9,13 @@ import { ProductGridSkeleton } from "@/components/product/product-grid-skeleton"
 export const metadata: Metadata = {
   title: "Shop",
   description: "Browse all products at Mamta General Store.",
+  alternates: { canonical: "/shop" },
+  openGraph: {
+    title: "Shop — Mamta General Store",
+    description: "Browse all products at Mamta General Store.",
+    type: "website",
+    url: "/shop",
+  },
 };
 
 interface ShopPageProps {

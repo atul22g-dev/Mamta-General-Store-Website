@@ -10,6 +10,13 @@ import { SITE_NAME } from "@/lib/constants";
 export const metadata: Metadata = {
   title: "Contact",
   description: `Contact ${SITE_NAME}, Jatwar — call, WhatsApp or visit the shop for women's unstitched suit materials with dupatta. Get directions on Google Maps.`,
+  alternates: { canonical: "/contact" },
+  openGraph: {
+    title: `Contact — ${SITE_NAME}`,
+    description: `Contact ${SITE_NAME}, Jatwar — call, WhatsApp or visit the shop for women's unstitched suit materials with dupatta.`,
+    type: "website",
+    url: "/contact",
+  },
 };
 
 /**

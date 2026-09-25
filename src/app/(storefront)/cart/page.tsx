@@ -6,6 +6,7 @@ import { Container } from "@/components/ui/container";
 export const metadata: Metadata = {
   title: "Cart",
   description: "Your shopping cart at Mamta General Store.",
+  alternates: { canonical: "/cart" },
   robots: { index: false, follow: false },
 };
 

@@ -40,11 +40,35 @@ export const DELIVERY_NOTE = "Delivered across India by India Post";
 /** The shop's full postal address, as displayed in the local-shop section. */
 export const SHOP_ADDRESS = "Mamta General Store, Near Post Office, Jatwar, Haryana 134201, India";
 
-/** Public site URL without a trailing slash. */
-export const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(
-  /\/+$/,
-  "",
-);
+/**
+ * Public site URL without a trailing slash — the base for every canonical
+ * URL, Open Graph absolute URL, sitemap entry and robots.txt sitemap link.
+ *
+ * PRODUCTION GUARD: the localhost fallback exists for `next dev` only. When
+ * the app runs in production mode without NEXT_PUBLIC_SITE_URL set, startup
+ * fails rather than silently emitting localhost:// canonicals, sitemap URLs
+ * and JSON-LD — canonical URLs pointing at localhost would tell search
+ * engines to drop the real site from their indexes.
+ */
+function resolveSiteUrl(): string {
+  const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (configured) {
+    return configured.replace(/\/+$/, "");
+  }
+
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "NEXT_PUBLIC_SITE_URL is required in production. Set it to the site's public " +
+        "origin (e.g. https://www.example.in) in the hosting provider's environment " +
+        "settings — canonical URLs, sitemap.xml, robots.txt and Open Graph tags are " +
+        "built from it.",
+    );
+  }
+
+  return "http://localhost:3000";
+}
+
+export const siteUrl = resolveSiteUrl();
 
 /**
  * Contact details for the shop. All values are real; the WhatsApp number

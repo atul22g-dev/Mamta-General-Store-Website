@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { ChevronRight } from "lucide-react";
 
 import { getProductBySlug, getRelatedProducts } from "@/lib/supabase/catalog";
-import { siteUrl } from "@/config/site";
+import { siteConfig, siteUrl } from "@/config/site";
 import { Container } from "@/components/ui/container";
 import { ProductCard } from "@/components/product/product-card";
 import { ProductGallery } from "@/components/product/product-gallery";
@@ -23,6 +23,8 @@ function ProductJsonLd({
 }: {
   product: NonNullable<Awaited<ReturnType<typeof getProductBySlug>>>;
 }) {
+  const hasDiscount =
+    product.discountPrice !== null && product.discountPrice > product.price;
   const data = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -36,12 +38,53 @@ function ProductJsonLd({
       url: `${siteUrl}/products/${product.slug}`,
       priceCurrency: "INR",
       price: (product.price / 100).toFixed(2),
+      // High price is the pre-discount reference price ("was ₹1,500").
+      ...(hasDiscount
+        ? { priceSpecification: undefined, highPrice: (product.discountPrice! / 100).toFixed(2) }
+        : {}),
       availability:
         product.stock === null || product.stock > 0
           ? "https://schema.org/InStock"
           : "https://schema.org/OutOfStock",
       itemCondition: "https://schema.org/NewCondition",
+      seller: {
+        "@type": "Organization",
+        name: siteConfig.name,
+      },
     },
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{
+        __html: JSON.stringify(data).replace(/</g, "\\u003c"),
+      }}
+    />
+  );
+}
+
+/** Breadcrumb structured data — matches the visible breadcrumb exactly. */
+function BreadcrumbJsonLd({
+  category,
+  productName,
+}: {
+  category: { name: string; slug: string };
+  productName: string;
+}) {
+  const data = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: siteUrl },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: category.name,
+        item: `${siteUrl}/category/${category.slug}`,
+      },
+      { "@type": "ListItem", position: 3, name: productName },
+    ],
   };
 
   return (
@@ -59,20 +102,29 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
   const product = await getProductBySlug(slug);
   if (!product) return { title: "Product not found" };
 
-  const description = product.description ?? `Shop ${product.name} at Mamta General Store.`;
+  const description =
+    product.description ??
+    `Shop ${product.name} at ${siteConfig.name} — delivered across India by India Post.`;
 
   return {
     title: product.name,
     description,
+    alternates: { canonical: `/products/${product.slug}` },
     openGraph: {
       title: product.name,
       description,
       type: "website",
+      url: `/products/${product.slug}`,
       images: product.images[0]
         ? [{ url: product.images[0].url, alt: product.images[0].alt ?? product.name }]
         : undefined,
     },
-    alternates: { canonical: `/products/${product.slug}` },
+    twitter: {
+      card: product.images[0] ? "summary_large_image" : "summary",
+      title: product.name,
+      description,
+      images: product.images[0] ? [product.images[0].url] : undefined,
+    },
   };
 }
 
@@ -114,6 +166,10 @@ export default async function ProductPage({ params }: ProductPageProps) {
   return (
     <Container className="flex flex-1 flex-col py-8 pb-28 sm:py-12 lg:pb-12">
       <ProductJsonLd product={product} />
+      <BreadcrumbJsonLd
+        category={product.category}
+        productName={product.name}
+      />
       {/* Breadcrumb */}
       <nav aria-label="Breadcrumb" className="mb-8">
         <ol className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">

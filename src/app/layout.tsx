@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
-import { GOOGLE_MAPS_URL, SHOP_ADDRESS, siteContact, siteConfig, siteUrl } from "@/config/site";
+import { GOOGLE_MAPS_URL, siteContact, siteConfig, siteUrl } from "@/config/site";
 import "./globals.css";
 
 /** Clean, neutral body typeface — highly legible on mobile. */
@@ -33,22 +33,26 @@ export const metadata: Metadata = {
   },
   description: siteConfig.description,
   keywords: [...siteConfig.keywords],
+  alternates: { canonical: "/" },
   openGraph: {
     type: "website",
     locale: siteConfig.locale,
     siteName: siteConfig.name,
     title: `${siteConfig.name} — ${siteConfig.tagline}`,
     description: siteConfig.description,
-    url: siteUrl,
+    url: "/",
   },
   twitter: {
-    card: "summary_large_image",
+    card: "summary",
     title: `${siteConfig.name} — ${siteConfig.tagline}`,
     description: siteConfig.description,
   },
   robots: {
     index: true,
     follow: true,
+    googleBot: {
+      "max-image-preview": "large",
+    },
   },
 };
 
@@ -63,13 +67,14 @@ const localBusinessJsonLd = {
   email: siteContact.email ?? undefined,
   address: {
     "@type": "PostalAddress",
-    streetAddress: SHOP_ADDRESS,
+    streetAddress: "Near Post Office, Jatwar",
     addressLocality: "Jatwar",
     addressRegion: "Haryana",
     postalCode: "134201",
     addressCountry: "IN",
   },
   hasMap: GOOGLE_MAPS_URL,
+  openingHours: siteContact.timings ?? undefined,
   priceRange: "₹₹",
 };
 

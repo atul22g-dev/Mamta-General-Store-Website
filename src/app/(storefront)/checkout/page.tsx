@@ -6,6 +6,7 @@ import { Container } from "@/components/ui/container";
 export const metadata: Metadata = {
   title: "Checkout",
   description: "Complete your order at Mamta General Store.",
+  alternates: { canonical: "/checkout" },
   robots: { index: false, follow: false },
 };
 
