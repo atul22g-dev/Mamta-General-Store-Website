@@ -34,12 +34,21 @@ function ProductThumb({ imageUrl, size }: { imageUrl: string | null; size: "sm" 
   );
 }
 
-/** Active/Featured status badges. */
-function ProductBadges({ active, featured }: { active: boolean; featured: boolean }) {
+/** Active/Featured/stock status badges. Untracked (null) stock = available. */
+function ProductBadges({
+  active,
+  featured,
+  stock,
+}: {
+  active: boolean;
+  featured: boolean;
+  stock: number | null;
+}) {
   return (
     <div className="flex flex-wrap items-center gap-1.5">
       <Badge variant={active ? "secondary" : "outline"}>{active ? "Active" : "Inactive"}</Badge>
       {featured && <Badge variant="accent">Featured</Badge>}
+      {stock === 0 && <Badge variant="destructive">Out of stock</Badge>}
     </div>
   );
 }
@@ -99,7 +108,11 @@ function ProductTable({ rows }: { rows: AdminProductRow[] }) {
                 <ProductPrice price={product.price} discountPrice={product.discountPrice} />
               </td>
               <td className="px-5 py-3">
-                <ProductBadges active={product.active} featured={product.featured} />
+                <ProductBadges
+                  active={product.active}
+                  featured={product.featured}
+                  stock={product.stock}
+                />
               </td>
               <td className="px-5 py-3">
                 <ProductRowActions
@@ -135,7 +148,11 @@ function ProductCards({ rows }: { rows: AdminProductRow[] }) {
             </div>
           </div>
           <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-            <ProductBadges active={product.active} featured={product.featured} />
+            <ProductBadges
+              active={product.active}
+              featured={product.featured}
+              stock={product.stock}
+            />
             <ProductRowActions
               id={product.id}
               name={product.name}

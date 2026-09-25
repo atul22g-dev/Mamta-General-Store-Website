@@ -65,6 +65,28 @@ export const productFormSchema = z
     price: rupeesField,
     discountPrice: z.preprocess(parseRupees, z.number().int().positive().nullable().optional()),
     /**
+     * Inventory handling chosen in the admin form:
+     * - `untracked` — always available (stock stored as NULL; checkout skips
+     *   the stock decrement; matches every product created before the field
+     *   existed)
+     * - `out_of_stock` — temporarily unavailable (stock stored as 0)
+     * - `quantity` — tracked count that decrements with each order
+     */
+    stockMode: z.enum(["untracked", "out_of_stock", "quantity"]).default("untracked"),
+    stock: z.preprocess(
+      (value) => {
+        if (value == null || String(value).trim() === "") return null;
+        const parsed = Number(value);
+        return Number.isFinite(parsed) ? parsed : null;
+      },
+      z
+        .number({ error: "Enter a valid quantity" })
+        .int("Whole numbers only")
+        .min(0, "Stock can't be negative")
+        .max(999999, "Quantity is too large")
+        .nullable(),
+    ),
+    /**
      * Optional when an image file is uploaded instead (the action requires
      * either a file or a URL). Still URL-validated when provided.
      */
@@ -84,6 +106,10 @@ export const productFormSchema = z
   .refine((data) => data.discountPrice == null || data.discountPrice > data.price, {
     error: "Original price must be higher than the selling price",
     path: ["discountPrice"],
+  })
+  .refine((data) => data.stockMode !== "quantity" || data.stock !== null, {
+    error: "Enter a stock quantity (or choose Out of stock)",
+    path: ["stock"],
   });
 
 export type ProductFormInput = z.input<typeof productFormSchema>;
@@ -98,9 +124,14 @@ export function toDatabaseValues(data: ProductFormData) {
     description: data.description ? data.description : null,
     price: data.price,
     discountPrice: data.discountPrice ?? null,
-    // Stock is not managed in the admin form: products are saved as untracked
-    // (null = always available; checkout skips the stock decrement).
-    stock: null,
+    // Inventory: untracked (NULL = always available), explicitly out of
+    // stock (0), or a tracked quantity that decrements with each order.
+    stock:
+      data.stockMode === "untracked"
+        ? null
+        : data.stockMode === "out_of_stock"
+          ? 0
+          : (data.stock ?? 0),
     featured: data.featured,
     isNewArrival: data.isNewArrival,
     active: data.active,

@@ -87,7 +87,37 @@ describe("slug handling (12)", () => {
       price: 120_000,
       discountPrice: 150_000,
       description: "Embroidered fabric",
-      stock: null, // stock untracked from the form
+      stock: null, // stockMode defaults to untracked
     });
+  });
+
+  it("stock modes map to the right database values (9: stock validation)", () => {
+    // Default (no field submitted): untracked → NULL, always available.
+    expect(toDatabaseValues(productFormSchema.parse(base)).stock).toBeNull();
+    // Explicit out-of-stock → 0 (visible, unpurchasable).
+    expect(
+      toDatabaseValues(productFormSchema.parse({ ...base, stockMode: "out_of_stock" })).stock,
+    ).toBe(0);
+    // Tracked quantity → stored as the given whole number.
+    expect(
+      toDatabaseValues(productFormSchema.parse({ ...base, stockMode: "quantity", stock: "12" }))
+        .stock,
+    ).toBe(12);
+  });
+
+  it("rejects invalid stock input", () => {
+    // Tracked mode requires a quantity.
+    expect(productFormSchema.safeParse({ ...base, stockMode: "quantity", stock: "" }).success).toBe(
+      false,
+    );
+    // Negative and fractional quantities are rejected.
+    expect(
+      productFormSchema.safeParse({ ...base, stockMode: "quantity", stock: "-3" }).success,
+    ).toBe(false);
+    expect(
+      productFormSchema.safeParse({ ...base, stockMode: "quantity", stock: "1.5" }).success,
+    ).toBe(false);
+    // Unknown modes are rejected.
+    expect(productFormSchema.safeParse({ ...base, stockMode: "infinite" }).success).toBe(false);
   });
 });

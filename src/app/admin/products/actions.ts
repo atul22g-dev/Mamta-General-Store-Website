@@ -61,6 +61,9 @@ export async function saveProductAction(
     description: formData.get("description") ?? "",
     price: formData.get("price"),
     discountPrice: formData.get("discountPrice"),
+    // Inventory radio: absent (never checked) → untracked via schema default.
+    stockMode: formData.get("stockMode") ?? undefined,
+    stock: formData.get("stock"),
     imageUrl: formData.get("imageUrl"),
     active: formData.get("active") === "on",
     featured: formData.get("featured") === "on",

@@ -7,8 +7,9 @@ import { AlertCircle, Loader2 } from "lucide-react";
 
 import type { AdminProductDetail } from "@/lib/admin-products";
 import { saveProductAction, type ProductFormState } from "@/app/admin/products/actions";
-import { slugifyName } from "@/lib/validation/product";
+import { slugifyName, type ProductFormData } from "@/lib/validation/product";
 import { compressImageFile, PRODUCT_IMAGE_INPUT_MAX_BYTES } from "@/lib/images/compress-image";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -323,6 +324,107 @@ function PricingSection({
   );
 }
 
+/**
+ * Inventory: availability is a deliberate choice, not just a number.
+ * - Always available — no stock counting (stored as NULL; the pre-existing
+ *   behavior for every product).
+ * - Out of stock — flips the storefront to its "Out of stock" state while
+ *   keeping the product visible (stored as 0).
+ * - Track quantity — a real count that decrements with each order.
+ */
+const STOCK_MODES = {
+  untracked: "Always available",
+  out_of_stock: "Out of stock",
+  quantity: "Track quantity",
+} as const;
+
+function StockSection({
+  product,
+  errors,
+  isPending,
+}: {
+  product: AdminProductDetail | undefined;
+  errors: ProductFormState["errors"];
+  isPending: boolean;
+}) {
+  const initialMode: ProductFormData["stockMode"] =
+    product == null
+      ? "untracked"
+      : product.stock === null
+        ? "untracked"
+        : product.stock === 0
+          ? "out_of_stock"
+          : "quantity";
+  const [mode, setMode] = React.useState<ProductFormData["stockMode"]>(initialMode);
+
+  return (
+    <fieldset className="space-y-5" disabled={isPending}>
+      <legend className="mb-3 text-sm font-semibold tracking-wide uppercase">Stock</legend>
+
+      <div role="radiogroup" aria-label="Stock handling" className="grid gap-2.5 sm:grid-cols-3">
+        {(Object.keys(STOCK_MODES) as (keyof typeof STOCK_MODES)[]).map((value) => {
+          const selected = mode === value;
+          return (
+            <label
+              key={value}
+              className={cn(
+                "focus-within:ring-ring/50 flex cursor-pointer items-start gap-2.5 rounded-lg border p-3.5 text-sm transition-colors",
+                selected
+                  ? "border-primary bg-accent/40"
+                  : "hover:border-foreground/20 hover:bg-accent/20",
+              )}
+            >
+              <input
+                type="radio"
+                name="stockMode"
+                value={value}
+                checked={selected}
+                onChange={() => setMode(value)}
+                className="accent-[var(--primary)] mt-0.5 size-4 shrink-0"
+              />
+              <span>
+                <span className="block font-medium">{STOCK_MODES[value]}</span>
+                <span className="text-muted-foreground mt-0.5 block text-xs leading-snug">
+                  {value === "untracked" && "No stock counting — always sellable"}
+                  {value === "out_of_stock" && "Visible, but can't be ordered right now"}
+                  {value === "quantity" && "Decreases with every order placed"}
+                </span>
+              </span>
+            </label>
+          );
+        })}
+      </div>
+
+      {mode === "quantity" && (
+        <div className="max-w-48 space-y-2">
+          <Label htmlFor="stock">Quantity in stock</Label>
+          <Input
+            id="stock"
+            name="stock"
+            type="number"
+            min="0"
+            step="1"
+            placeholder="e.g. 12"
+            defaultValue={product?.stock != null ? String(product.stock) : ""}
+            required
+            {...inputInvalid(errors?.stock)}
+          />
+          <p className="text-muted-foreground text-xs">
+            Each order reduces this by the quantity bought; it reaches 0 → out of stock.
+          </p>
+          <FieldError errors={errors?.stock} />
+        </div>
+      )}
+      {mode === "out_of_stock" && (
+        <p className="text-muted-foreground max-w-prose text-xs">
+          The product stays listed but shows an “Out of stock” notice and the order buttons are
+          disabled until you switch back.
+        </p>
+      )}
+    </fieldset>
+  );
+}
+
 /** Image & visibility: multi-upload with live previews, URL fallback, toggles. */
 function ImageVisibilitySection({
   product,
@@ -534,6 +636,7 @@ export function ProductForm({
         isPending={isPending}
       />
       <PricingSection product={product} errors={errors} isPending={isPending} />
+      <StockSection product={product} errors={errors} isPending={isPending} />
       <ImageVisibilitySection product={product} errors={errors} isPending={isPending} />
 
       <FormActions isPending={isPending} isEdit={Boolean(product)} />
