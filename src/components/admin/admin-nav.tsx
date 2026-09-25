@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Package, ReceiptText, Tag } from "lucide-react";
+import { DatabaseBackup, LayoutDashboard, Package, ReceiptText, Tag } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -11,6 +11,7 @@ const LINKS = [
   { href: "/admin/products", label: "Products", icon: Package },
   { href: "/admin/categories", label: "Categories", icon: Tag },
   { href: "/admin/orders", label: "Orders", icon: ReceiptText },
+  { href: "/admin/data", label: "Data", icon: DatabaseBackup },
 ] as const;
 
 /**
