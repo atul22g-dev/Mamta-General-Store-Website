@@ -7,6 +7,7 @@ import type { Category } from "@/types/category";
 import { Container } from "@/components/ui/container";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { ImageArea } from "@/components/ui/image-area";
+import { SafeImage } from "@/components/product/safe-image";
 
 export const metadata: Metadata = {
   title: "Categories",
@@ -59,11 +60,11 @@ export default async function CategoriesPage() {
                 className="transition-shadow duration-300 ease-gentle group-hover:shadow-soft-lg"
               >
                 {category.imageUrl && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
+                  <SafeImage
                     src={category.imageUrl}
                     alt={category.name}
-                    loading="lazy"
+                    fill
+                    sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
                     className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 ease-gentle group-hover:scale-[1.03]"
                   />
                 )}

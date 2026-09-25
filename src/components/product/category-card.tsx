@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { cn } from "@/lib/utils";
 import { ImageArea } from "@/components/ui/image-area";
+import { SafeImage } from "@/components/product/safe-image";
 
 interface CategoryCardProps {
   name: string;
@@ -20,11 +21,11 @@ export function CategoryCard({ name, href, imageUrl, description, className }: C
         className="transition-shadow duration-300 ease-gentle group-hover:shadow-soft-lg"
       >
         {imageUrl && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <SafeImage
             src={imageUrl}
             alt={name}
-            loading="lazy"
+            fill
+            sizes="(min-width: 1280px) 33vw, (min-width: 640px) 50vw, 100vw"
             className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 ease-gentle group-hover:scale-[1.03]"
           />
         )}
