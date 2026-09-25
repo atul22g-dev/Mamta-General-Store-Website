@@ -38,6 +38,8 @@ export function ProductCard({ product, className }: { product: Product; classNam
             <SafeImage
               src={image.url}
               alt={image.alt ?? name}
+              fill
+              sizes="(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 50vw"
               className={cn(
                 "absolute inset-0 h-full w-full object-cover transition-transform duration-500 ease-gentle group-hover:scale-[1.04]",
                 !available && "grayscale-[35%] group-hover:scale-100",

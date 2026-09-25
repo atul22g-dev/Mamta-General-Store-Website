@@ -9,8 +9,10 @@ import {
   deleteProductImageAction,
   reorderProductImagesAction,
   setCoverImageAction,
+  updateImageAltAction,
   type ProductImagesActionState,
 } from "@/app/admin/products/images";
+import { SafeImage } from "@/components/product/safe-image";
 import { Button } from "@/components/ui/button";
 import { compressImageFile, PRODUCT_IMAGE_INPUT_MAX_BYTES } from "@/lib/images/compress-image";
 import { cn } from "@/lib/utils";
@@ -64,11 +66,11 @@ function CoverCard({ cover, productName }: { cover: ManagedImage; productName: s
   return (
     <div className="flex items-center gap-4">
       <div className="bg-muted relative size-20 shrink-0 overflow-hidden rounded-lg border ring-2 ring-primary/20 sm:size-24">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <SafeImage
           src={cover.url}
           alt={cover.alt ?? `${productName} cover photo`}
-          loading="lazy"
+          fill
+          sizes="96px"
           className="absolute inset-0 h-full w-full object-cover"
         />
       </div>
@@ -101,6 +103,8 @@ function GalleryImageRow({
   coverAction,
   isCoverPending,
   isReordering,
+  altAction,
+  altSavedFor,
   onMove,
 }: {
   image: ManagedImage;
@@ -112,94 +116,125 @@ function GalleryImageRow({
   coverAction: ImagesFormAction;
   isCoverPending: boolean;
   isReordering: boolean;
+  altAction: ImagesFormAction;
+  /** Image id whose alt text was just saved (shows inline feedback). */
+  altSavedFor: string | null;
   onMove: (delta: -1 | 1) => void;
 }) {
   const [deleting, setDeleting] = useState(false);
   const photoNumber = index + 2; // 1-based, after the cover.
 
   return (
-    <li className="flex items-center gap-2 p-3 sm:gap-3">
-      <div
-        className={cn(
-          "bg-muted relative size-14 shrink-0 overflow-hidden rounded-lg border sm:size-16",
-          deleting && "opacity-40",
-        )}
-      >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={image.url}
-          alt={image.alt ?? `${productName} photo`}
-          loading="lazy"
-          className="absolute inset-0 h-full w-full object-cover"
-        />
-      </div>
-      <p className="text-muted-foreground min-w-0 flex-1 truncate text-xs">
-        {index === 0 ? "First gallery photo" : `Gallery photo ${photoNumber}`}
-      </p>
-
-      <div className="flex shrink-0 flex-col gap-0.5">
-        <button
-          type="button"
-          aria-label={`Move photo ${photoNumber} up`}
-          disabled={index === 0 || isReordering}
-          onClick={() => onMove(-1)}
-          className={reorderButton}
+    <li className="p-3 sm:p-4">
+      <div className="flex items-center gap-2 sm:gap-3">
+        <div
+          className={cn(
+            "bg-muted relative size-14 shrink-0 overflow-hidden rounded-lg border sm:size-16",
+            deleting && "opacity-40",
+          )}
         >
-          <ArrowUp aria-hidden="true" className="size-4" />
-        </button>
-        <button
-          type="button"
-          aria-label={`Move photo ${photoNumber} down`}
-          disabled={index === galleryLength - 1 || isReordering}
-          onClick={() => onMove(1)}
-          className={reorderButton}
+          <SafeImage
+            src={image.url}
+            alt={image.alt ?? `${productName} photo`}
+            fill
+            sizes="64px"
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        </div>
+        <p className="text-muted-foreground min-w-0 flex-1 truncate text-xs">
+          {index === 0 ? "First gallery photo" : `Gallery photo ${photoNumber}`}
+        </p>
+
+        <div className="flex shrink-0 flex-col gap-0.5">
+          <button
+            type="button"
+            aria-label={`Move photo ${photoNumber} up`}
+            disabled={index === 0 || isReordering}
+            onClick={() => onMove(-1)}
+            className={reorderButton}
+          >
+            <ArrowUp aria-hidden="true" className="size-4" />
+          </button>
+          <button
+            type="button"
+            aria-label={`Move photo ${photoNumber} down`}
+            disabled={index === galleryLength - 1 || isReordering}
+            onClick={() => onMove(1)}
+            className={reorderButton}
+          >
+            <ArrowDown aria-hidden="true" className="size-4" />
+          </button>
+        </div>
+
+        {/* Set as cover — row-scoped form. */}
+        <form action={coverAction}>
+          <input type="hidden" name="productId" value={productId} />
+          <input type="hidden" name="imageId" value={image.id} />
+          <button
+            type="submit"
+            disabled={isCoverPending}
+            aria-label={`Set photo ${photoNumber} as cover`}
+            title="Set as cover"
+            className={crownButton}
+          >
+            {isCoverPending ? (
+              <Loader2 aria-hidden="true" className="size-4 animate-spin" />
+            ) : (
+              <Crown aria-hidden="true" className="size-4" />
+            )}
+          </button>
+        </form>
+
+        {/* Delete — row-scoped form. */}
+        <form
+          action={deleteProductImageAction}
+          onSubmit={(event) => {
+            if (!window.confirm(`Delete this photo? This cannot be undone.`)) {
+              event.preventDefault();
+              return;
+            }
+            setDeleting(true);
+          }}
         >
-          <ArrowDown aria-hidden="true" className="size-4" />
-        </button>
+          <input type="hidden" name="imageId" value={image.id} />
+          <input type="hidden" name="productId" value={productId} />
+          <Button
+            type="submit"
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground hover:text-destructive"
+            aria-label={`Delete photo ${photoNumber} of ${productName}`}
+          >
+            <Trash2 />
+            <span className="sr-only sm:not-sr-only">Delete</span>
+          </Button>
+        </form>
       </div>
 
-      {/* Set as cover — row-scoped form. */}
-      <form action={coverAction}>
+      {/* Alt-text editor — row-scoped form under the controls. Auto-generated
+          alts are placeholders; the admin refines them for screen readers. */}
+      <form action={altAction} className="mt-2 flex items-center gap-2">
         <input type="hidden" name="productId" value={productId} />
         <input type="hidden" name="imageId" value={image.id} />
+        <input
+          type="text"
+          name="alt"
+          defaultValue={image.alt ?? ""}
+          maxLength={300}
+          placeholder="Describe this photo for screen readers (alt text)"
+          aria-label={`Alt text for photo ${photoNumber}`}
+          className="border-input placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 h-8 w-full min-w-0 rounded-md border bg-transparent px-2.5 text-xs outline-none focus-visible:ring-[3px]"
+        />
         <button
           type="submit"
-          disabled={isCoverPending}
-          aria-label={`Set photo ${photoNumber} as cover`}
-          title="Set as cover"
-          className={crownButton}
+          className="text-muted-foreground hover:text-foreground hover:bg-accent focus-visible:ring-ring/50 inline-flex h-8 shrink-0 items-center gap-1 rounded-md px-2 text-xs outline-none transition-colors focus-visible:ring-[3px]"
         >
-          {isCoverPending ? (
-            <Loader2 aria-hidden="true" className="size-4 animate-spin" />
+          {altSavedFor === image.id ? (
+            <Check aria-hidden="true" className="size-3.5 text-emerald-600" />
           ) : (
-            <Crown aria-hidden="true" className="size-4" />
+            "Save"
           )}
         </button>
-      </form>
-
-      {/* Delete — row-scoped form. */}
-      <form
-        action={deleteProductImageAction}
-        onSubmit={(event) => {
-          if (!window.confirm(`Delete this photo? This cannot be undone.`)) {
-            event.preventDefault();
-            return;
-          }
-          setDeleting(true);
-        }}
-      >
-        <input type="hidden" name="imageId" value={image.id} />
-        <input type="hidden" name="productId" value={productId} />
-        <Button
-          type="submit"
-          variant="ghost"
-          size="sm"
-          className="text-muted-foreground hover:text-destructive"
-          aria-label={`Delete photo ${photoNumber} of ${productName}`}
-        >
-          <Trash2 />
-          <span className="sr-only sm:not-sr-only">Delete</span>
-        </Button>
       </form>
     </li>
   );
@@ -325,6 +360,7 @@ export function ProductImagesManager({
     setCoverImageAction,
     initialState,
   );
+  const [altState, altAction] = useActionState(updateImageAltAction, initialState);
   const [order, setOrder] = useState<ManagedImage[] | null>(null);
   const [isReordering, startReorder] = useTransition();
 
@@ -382,6 +418,8 @@ export function ProductImagesManager({
               coverAction={coverAction}
               isCoverPending={isCoverPending}
               isReordering={isReordering}
+              altAction={altAction}
+              altSavedFor={altState.altSavedFor ?? null}
               onMove={(delta) => move(index, delta)}
             />
           ))}
@@ -392,6 +430,14 @@ export function ProductImagesManager({
       {isReordering && (
         <p className="text-muted-foreground text-xs" role="status">
           Saving new order…
+        </p>
+      )}
+
+      {/* Alt-save feedback: success is per-row (Check icon); a failure is
+          global to the manager but must never be silent. */}
+      {altState.error && (
+        <p className="text-destructive text-sm" role="alert">
+          {altState.error}
         </p>
       )}
 

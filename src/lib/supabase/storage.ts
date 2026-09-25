@@ -24,6 +24,13 @@ export const PRODUCT_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/avif"]);
 
 /**
+ * Minimum useful image size in pixels. Anything smaller is unusable as
+ * product photography (a 1×1 pixel passes MIME/size checks) and would
+ * render as a blurry smear in the 3:4 catalog frame.
+ */
+export const MIN_IMAGE_EDGE_PX = 200;
+
+/**
  * Public URL for an object in the product-images bucket — pure URL math on
  * the project host, no client needed (and therefore no request scope).
  */
@@ -49,8 +56,26 @@ export interface UploadResult {
 }
 
 /**
+ * Decode an image just enough to verify its real dimensions (sharp handles
+ * JPEG/PNG/WebP/AVIF and applies EXIF orientation). Returns null when the
+ * file cannot be decoded (corrupt or mislabeled) — callers treat null as
+ * invalid.
+ */
+async function decodeDimensions(file: File): Promise<{ width: number; height: number } | null> {
+  try {
+    const sharp = (await import("sharp")).default;
+    const metadata = await sharp(Buffer.from(await file.arrayBuffer())).metadata();
+    if (!metadata.width || !metadata.height) return null;
+    return { width: metadata.width, height: metadata.height };
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Upload a product image (server-side) and return its public URL.
- * Throws with a readable message on invalid type, size, or upload failure.
+ * Throws with a readable message on invalid type, size, dimensions, or
+ * upload failure.
  */
 export async function uploadProductImage(productId: string, file: File): Promise<UploadResult> {
   // Type validation: allow-list only, never trust the extension.
@@ -66,6 +91,19 @@ export async function uploadProductImage(productId: string, file: File): Promise
   }
   if (file.size === 0) {
     throw new Error("The selected file is empty.");
+  }
+
+  // Dimension validation: decode the actual pixels so a tiny/placeholder
+  // file (or something mislabeled with an image MIME type) is rejected with
+  // a clear message instead of shipping a broken-looking product card.
+  const dimensions = await decodeDimensions(file);
+  if (!dimensions) {
+    throw new Error("This file could not be read as an image. Try a different photo.");
+  }
+  if (dimensions.width < MIN_IMAGE_EDGE_PX || dimensions.height < MIN_IMAGE_EDGE_PX) {
+    throw new Error(
+      `Image is too small (${dimensions.width}×${dimensions.height}). Minimum is ${MIN_IMAGE_EDGE_PX}×${MIN_IMAGE_EDGE_PX} pixels.`,
+    );
   }
 
   const admin = await getSupabaseAdminClient();

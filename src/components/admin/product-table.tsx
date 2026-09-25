@@ -15,12 +15,12 @@ type AdminProductRow = Awaited<ReturnType<typeof listAdminProducts>>["rows"][num
 function ProductThumb({ imageUrl, size }: { imageUrl: string | null; size: "sm" | "md" }) {
   return (
     <span
-      className={`bg-muted flex shrink-0 items-center justify-center overflow-hidden rounded-lg border ${
+      className={`relative flex shrink-0 items-center justify-center overflow-hidden rounded-lg border bg-muted ${
         size === "sm" ? "size-10" : "size-12"
       }`}
     >
       {imageUrl ? (
-        <SafeImage src={imageUrl} alt="" className="size-full object-cover" />
+        <SafeImage src={imageUrl} alt="" fill sizes="48px" className="absolute inset-0 size-full object-cover" />
       ) : (
         <ImageOff aria-hidden="true" className="text-muted-foreground size-4" />
       )}

@@ -8,8 +8,10 @@ import { getAdminSession } from "@/lib/auth/session";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import {
   deleteProductImage,
+  productImageUrl,
   productImagePathFromUrl,
   uploadProductImage,
+  PRODUCT_IMAGES_BUCKET,
 } from "@/lib/supabase/storage";
 
 /**
@@ -23,6 +25,96 @@ export interface ProductImagesActionState {
   added?: number;
   reordered?: boolean;
   newCoverUrl?: string;
+  /** Image id whose alt text was just saved (for targeted UI feedback). */
+  altSavedFor?: string;
+}
+
+/**
+ * Update one image's alt text. Accessibility data lives with the image row;
+ * auto-generated alts are placeholders the admin should refine.
+ */
+export async function updateImageAltAction(
+  _prev: ProductImagesActionState,
+  formData: FormData,
+): Promise<ProductImagesActionState> {
+  await assertAdmin();
+
+  const productId = formData.get("productId")?.toString();
+  const imageId = formData.get("imageId")?.toString();
+  const alt = formData.get("alt")?.toString().trim() ?? "";
+  if (!productId || !imageId) return { error: "Missing product or photo." };
+  if (alt.length > 300) return { error: "Alt text is too long (max 300 characters)." };
+
+  const client = await getSupabaseAdminClient();
+
+  // Verify ownership before writing (anti-tampering, same as reorder).
+  const { data: owned } = await client
+    .from("product_images")
+    .select("id")
+    .eq("id", imageId)
+    .eq("productId", productId)
+    .maybeSingle<{ id: string }>();
+  if (!owned) return { error: "Photo not found — please refresh and try again." };
+
+  const { error } = await client
+    .from("product_images")
+    .update({ alt: alt === "" ? null : alt } as never)
+    .eq("id", imageId)
+    .eq("productId", productId);
+  if (error) {
+    console.error("[admin-product-images] alt update failed:", error);
+    return { error: `Could not save the alt text: ${error.message}` };
+  }
+
+  // Slug for storefront revalidation (screen readers see the new text).
+  const { data: product } = await client
+    .from("products")
+    .select("slug")
+    .eq("id", productId)
+    .maybeSingle<{ slug: string }>();
+  revalidateProductSurfaces(product?.slug ?? null);
+
+  return { altSavedFor: imageId };
+}
+
+/**
+ * Remove storage objects that are no longer referenced by any product_images
+ * row (orphans from interrupted uploads or replaced covers). Admin hygiene;
+ * reports how many objects were removed.
+ */
+export async function cleanupOrphanImagesAction(formData: FormData): Promise<void> {
+  await assertAdmin();
+
+  const productId = formData.get("productId")?.toString();
+  if (!productId) return;
+
+  const client = await getSupabaseAdminClient();
+
+  // URLs currently attached to ANY product (a moved/reused photo must not be
+  // deleted), and the objects under this product's prefix.
+  const [{ data: attached }, { data: objects }] = await Promise.all([
+    client.from("product_images").select("url"),
+    client.storage.from(PRODUCT_IMAGES_BUCKET).list(`products/${productId}`, {
+      limit: 200,
+      sortBy: { column: "name", order: "asc" },
+    }),
+  ]);
+  if (!objects || objects.length === 0) return;
+
+  const attachedUrls = new Set(((attached ?? []) as { url: string }[]).map((row) => row.url));
+  const orphanPaths = objects
+    .map((object) => `products/${productId}/${object.name}`)
+    .filter((path) => !attachedUrls.has(productImageUrl(path)));
+
+  if (orphanPaths.length === 0) return;
+  await client.storage.from(PRODUCT_IMAGES_BUCKET).remove(orphanPaths);
+
+  const { data: product } = await client
+    .from("products")
+    .select("slug")
+    .eq("id", productId)
+    .maybeSingle<{ slug: string }>();
+  revalidateProductSurfaces(product?.slug ?? null);
 }
 
 /** Every mutation requires a verified Auth session AND an active ADMIN profile. */
@@ -74,16 +166,31 @@ export async function addProductImagesAction(
   // Current highest position → gallery images append after it.
   const { data: existing } = await client
     .from("product_images")
-    .select("position")
+    .select("position, url")
     .eq("productId", productId)
-    .order("position", { ascending: false })
-    .limit(1);
-  const highest = (existing as { position: number }[] | null)?.[0]?.position ?? -1;
+    .order("position", { ascending: false });
+  const existingRows = (existing ?? []) as { position: number; url: string }[];
+  const highest = existingRows[0]?.position ?? -1;
   let nextPosition = highest + 1;
 
+  // Duplicate guard: re-picking the SAME FILE twice in one batch should not
+  // attach it twice (a re-upload creates a new object with a new URL, so
+  // cross-request duplicates are prevented at selection time instead).
+  const seenInBatch = new Set<string>();
+
   let added = 0;
+  const errors: string[] = [];
   try {
     for (const file of files) {
+      // Duplicate guard within the batch: identical files (same name+size)
+      // are skipped rather than attached twice.
+      const dedupeKey = `${file.name}:${file.size}:${file.lastModified}`;
+      if (seenInBatch.has(dedupeKey)) {
+        errors.push(`"${file.name}" was selected twice — added once.`);
+        continue;
+      }
+      seenInBatch.add(dedupeKey);
+
       const uploaded = await uploadProductImage(productId, file);
       const { error } = await client.from("product_images").insert({
         id: randomUUID(),
@@ -112,6 +219,10 @@ export async function addProductImagesAction(
   }
 
   revalidateProductSurfaces(product.slug);
+  // Surface batch warnings (duplicate picks) alongside the success count.
+  if (errors.length > 0) {
+    return { added, error: errors[0] };
+  }
   return { added };
 }
 

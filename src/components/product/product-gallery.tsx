@@ -150,6 +150,8 @@ export function ProductGallery({
                 src={image.url}
                 alt={image.alt ?? `${productName} — photo ${index + 1}`}
                 eager={index === 0}
+                fill
+                sizes="85vw"
                 className="absolute inset-0 h-full w-full object-cover"
               />
             </ImageArea>
@@ -199,6 +201,8 @@ export function ProductGallery({
               key={active.id}
               src={active.url}
               alt={active.alt ?? productName}
+              fill
+              sizes="(min-width: 640px) 50vw, 100vw"
               className="absolute inset-0 h-full w-full animate-fade-up object-cover"
             />
           </button>
@@ -229,6 +233,8 @@ export function ProductGallery({
                   key={image.id}
                   src={image.url}
                   alt=""
+                  fill
+                  sizes="96px"
                   className="absolute inset-0 h-full w-full object-cover"
                 />
               </button>
@@ -267,6 +273,8 @@ export function ProductGallery({
               key={active.id}
               src={active.url}
               alt={active.alt ?? productName}
+              width={1200}
+              height={1600}
               className="max-h-[90vh] max-w-full rounded-lg object-contain shadow-soft-lg animate-fade-up"
             />
 
