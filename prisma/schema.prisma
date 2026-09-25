@@ -70,6 +70,9 @@ model Category {
   description String?
   /// Tile image for category listings.
   imageUrl    String?
+  /// Inactive categories are hidden from the storefront (added by migration
+  /// 0008_category_active.sql).
+  active      Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -136,6 +139,8 @@ model Product {
   featured      Boolean  @default(false)
   /// Only active products are visible on the storefront.
   active        Boolean  @default(false)
+  /// Homepage "New Arrivals" flag (added by migration 0006_new_arrival_flag.sql).
+  isNewArrival  Boolean  @default(false)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -151,6 +156,7 @@ model Product {
   @@index([active, createdAt])
   @@index([active, price])
   @@index([featured, active])
+  @@index([isNewArrival, active, createdAt])
   @@map("products")
 }
 
