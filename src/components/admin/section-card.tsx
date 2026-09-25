@@ -32,7 +32,7 @@ export function SectionCard({
         {actionLabel && actionHref && (
           <Link
             href={actionHref}
-            className="text-muted-foreground hover:text-foreground inline-flex items-center gap-0.5 text-sm transition-colors"
+            className="text-muted-foreground hover:text-foreground focus-visible:ring-ring/50 inline-flex min-h-11 items-center gap-0.5 rounded-md px-1 text-sm transition-colors focus-visible:ring-[3px] focus-visible:outline-none md:min-h-0"
           >
             {actionLabel}
             <ChevronRight aria-hidden="true" className="size-4" />

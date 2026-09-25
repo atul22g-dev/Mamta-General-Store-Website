@@ -98,9 +98,12 @@ export default async function AdminDashboardPage() {
                 <ul className="divide-y">
                   {data.recentProducts.map((product) => (
                     <li key={product.id} className="py-3 first:pt-0 last:pb-0">
-                      <div className="flex items-center justify-between gap-3">
+                      {/* Stack name above badges on phones (long suit-material
+                          names would truncate to nothing beside them); row
+                          layout from sm: up. */}
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-medium">{product.name}</p>
+                          <p className="text-sm leading-snug font-medium">{product.name}</p>
                           <p className="text-muted-foreground mt-0.5 text-xs">
                             {product.categoryName ?? "Uncategorized"} ·{" "}
                             {formatDate(product.createdAt)}
@@ -130,7 +133,7 @@ export default async function AdminDashboardPage() {
                 <ul className="divide-y">
                   {data.recentOrders.map((order) => (
                     <li key={order.id} className="py-3 first:pt-0 last:pb-0">
-                      <div className="flex items-center justify-between gap-3">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
                         <div className="min-w-0">
                           <p className="truncate font-mono text-sm font-medium">
                             {order.orderNumber}

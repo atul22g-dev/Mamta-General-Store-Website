@@ -31,7 +31,11 @@ export function AdminNav({ className }: { className?: string }) {
             href={href}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors",
+              // shrink-0 + nowrap: in the mobile scroll strip the labels must
+              // keep their natural width (flex children otherwise compress
+              // and truncate mid-word). min-h-11 keeps the 44px touch target
+              // in the strip; desktop returns to the compact row height.
+              "inline-flex min-h-11 shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm whitespace-nowrap transition-colors focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-none md:min-h-0",
               active
                 ? "bg-accent text-accent-foreground font-medium"
                 : "text-muted-foreground hover:text-foreground hover:bg-accent/60",

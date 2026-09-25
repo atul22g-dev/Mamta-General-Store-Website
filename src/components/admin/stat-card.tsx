@@ -26,9 +26,9 @@ export function StatCard({
 }) {
   const body = (
     <>
-      <div className="flex items-center justify-between gap-3">
-        <span className="text-muted-foreground text-sm font-medium">{label}</span>
-        <span className="bg-accent text-accent-foreground flex size-9 items-center justify-center rounded-lg">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-muted-foreground text-sm leading-snug font-medium">{label}</span>
+        <span className="bg-accent text-accent-foreground flex size-9 shrink-0 items-center justify-center rounded-lg">
           <Icon aria-hidden="true" className="size-4.5" />
         </span>
       </div>
@@ -40,7 +40,10 @@ export function StatCard({
   );
 
   const styles = cn(
-    "bg-card block rounded-xl border p-5 shadow-soft transition-shadow hover:shadow-soft-lg",
+    // h-full: grid items stretch by default, but a block child collapses to
+    // content height — h-full keeps sibling cards equal-height on mobile
+    // where "Total products" wraps to two lines and others don't.
+    "bg-card block h-full rounded-xl border p-5 shadow-soft transition-shadow hover:shadow-soft-lg",
     className,
   );
 

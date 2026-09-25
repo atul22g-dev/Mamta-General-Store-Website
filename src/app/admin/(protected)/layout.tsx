@@ -61,8 +61,15 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           </div>
         </div>
 
-        {/* Mobile nav row: horizontally scrollable tab strip (scrollbar hidden) */}
-        <AdminNav className="flex overflow-x-auto border-t px-2 pb-1 [scrollbar-width:none] md:hidden [&::-webkit-scrollbar]:hidden" />
+        {/* Mobile nav row: horizontally scrollable tab strip (scrollbar hidden).
+            A right-edge card-colored fade hints there is more to scroll to. */}
+        <div className="relative md:hidden">
+          <AdminNav className="flex overflow-x-auto border-t px-2 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" />
+          <div
+            aria-hidden="true"
+            className="bg-linear-to-l from-card pointer-events-none absolute inset-y-0 right-0 w-8 to-transparent"
+          />
+        </div>
       </header>
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6 lg:px-8">{children}</main>
