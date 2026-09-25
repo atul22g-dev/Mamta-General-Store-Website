@@ -13,6 +13,9 @@ export const metadata: Metadata = {
   description: "Explore product categories at Mamta General Store.",
 };
 
+/** Refresh from the database without a rebuild (same cadence as the home page). */
+export const revalidate = 60;
+
 /** Category index, rendered straight from the database. */
 export default async function CategoriesPage() {
   let categories: Category[] = [];

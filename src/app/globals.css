@@ -3,6 +3,16 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Touch-safe hover: `hover:` styles only apply on devices that truly support
+   hover, so mobile browsers never get stuck in a hovered state after a tap. */
+@custom-variant hover {
+  @media (hover: hover) {
+    &:hover {
+      @slot;
+    }
+  }
+}
+
 /* Minimal motion: fast, gentle ease-out. Keyframes live at top level (CSS
    requires it); the animation token below references them. */
 @keyframes fade-up {

@@ -3,8 +3,7 @@
 import Link from "next/link";
 import { Menu, ShoppingBag } from "lucide-react";
 
-import { mainNav, toNavItems, type NavItem } from "@/config/navigation";
-import type { CategoryRef } from "@/types/category";
+import { mainNav } from "@/config/navigation";
 import { CartButton } from "@/components/cart/cart-button";
 import { SITE_NAME } from "@/lib/constants";
 import { cn } from "@/lib/utils";
@@ -24,20 +23,10 @@ import { NavLink } from "@/components/layout/nav-link";
 /**
  * Sticky site header.
  *
- * Desktop: brand, primary nav, category links (from the database), Shop Now +
- * cart actions. Mobile: menu button, brand, cart button — the hamburger opens
- * a full navigation sheet including the same live category links.
+ * Desktop: brand, primary nav, Shop Now + cart actions. Mobile: menu button,
+ * brand, cart button — the hamburger opens a full navigation sheet.
  */
-export function SiteHeader({
-  categories = [],
-  className,
-}: {
-  /** Live categories from the database (storefront layout supplies them). */
-  categories?: CategoryRef[];
-  className?: string;
-}) {
-  const categoryNav: NavItem[] = toNavItems(categories);
-
+export function SiteHeader({ className }: { className?: string }) {
   return (
     <header
       className={cn(
@@ -60,7 +49,7 @@ export function SiteHeader({
                   <SheetTitle className="font-display text-lg">{SITE_NAME}</SheetTitle>
                   <SheetDescription className="sr-only">Site navigation</SheetDescription>
                 </SheetHeader>
-                <MobileNav categories={categoryNav} />
+                <MobileNav />
               </SheetContent>
             </Sheet>
           </div>
@@ -75,10 +64,7 @@ export function SiteHeader({
 
           {/* Desktop nav */}
           <nav aria-label="Main navigation" className="hidden flex-1 items-center gap-6 lg:flex">
-            {mainNav.map((item: NavItem) => (
-              <NavLink key={item.href} item={item} className="text-sm" />
-            ))}
-            {categoryNav.slice(0, 3).map((item) => (
+            {mainNav.map((item) => (
               <NavLink key={item.href} item={item} className="text-sm" />
             ))}
           </nav>

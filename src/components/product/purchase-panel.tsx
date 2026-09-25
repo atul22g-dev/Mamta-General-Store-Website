@@ -2,7 +2,17 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Check, MessageCircle, Minus, Phone, Plus, ShoppingBag, Zap } from "lucide-react";
+import {
+  Check,
+  MessageCircle,
+  Minus,
+  Phone,
+  Plus,
+  ShieldCheck,
+  ShoppingBag,
+  Truck,
+  Zap,
+} from "lucide-react";
 
 import type { Product } from "@/types/product";
 import { useCart } from "@/components/cart/cart-provider";
@@ -10,9 +20,7 @@ import { discountPercent, isAvailable } from "@/lib/catalog";
 import { siteContact } from "@/config/site";
 import { DEFAULT_CURRENCY } from "@/lib/constants";
 import { cn, formatPrice } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 
 function OptionButton({
   selected,
@@ -35,9 +43,9 @@ function OptionButton({
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        "inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg border px-3.5 text-sm transition-all duration-200 ease-gentle outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-40",
+        "inline-flex min-h-11 items-center justify-center gap-1.5 rounded-full border px-4 text-sm font-medium transition-all duration-200 ease-gentle outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-40",
         selected
-          ? "border-primary bg-primary text-primary-foreground"
+          ? "border-primary bg-primary text-primary-foreground shadow-xs"
           : "bg-background hover:border-ring/60 hover:bg-accent/50",
         className,
       )}
@@ -48,7 +56,7 @@ function OptionButton({
   );
 }
 
-/** Price, struck-through original price, discount badge, and the tax note. */
+/** Price, struck-through original, savings callout and the tax note. */
 function PriceBlock({
   product,
   discount,
@@ -57,26 +65,31 @@ function PriceBlock({
   /** Null when the product has no discount. */
   discount: number | null;
 }) {
+  const hasDiscount = Boolean(product.discountPrice && product.discountPrice > product.price);
+
   return (
-    <div>
+    <div className="space-y-1.5">
       <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <span className="font-display text-3xl font-medium tracking-tight">
+        <span className="font-display text-3xl font-semibold tracking-tight tabular-nums sm:text-4xl">
           {formatPrice(product.price, DEFAULT_CURRENCY)}
         </span>
-        {product.discountPrice && product.discountPrice > product.price && (
-          <>
-            <span className="text-base text-muted-foreground line-through">
-              {formatPrice(product.discountPrice, DEFAULT_CURRENCY)}
-            </span>
-            <Badge variant="accent" className="translate-y-[-2px]">
-              {discount}% off
-            </Badge>
-          </>
+        {hasDiscount && (
+          <span className="text-lg text-muted-foreground line-through tabular-nums">
+            {formatPrice(product.discountPrice!, DEFAULT_CURRENCY)}
+          </span>
+        )}
+        {hasDiscount && (
+          <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+            {discount}% off
+          </span>
         )}
       </p>
-      <p className="mt-1.5 text-xs text-muted-foreground">
-        Inclusive of all taxes · {DEFAULT_CURRENCY}
-      </p>
+      {hasDiscount && (
+        <p className="text-sm font-medium text-emerald-700">
+          You save {formatPrice(product.discountPrice! - product.price, DEFAULT_CURRENCY)}
+        </p>
+      )}
+      <p className="text-xs text-muted-foreground">Inclusive of all taxes · {DEFAULT_CURRENCY}</p>
     </div>
   );
 }
@@ -157,7 +170,6 @@ function ColorPicker({
               />
             )}
             {color.name}
-            {selectedColor === color.id && <Check className="size-3.5" />}
           </OptionButton>
         ))}
       </div>
@@ -165,7 +177,7 @@ function ColorPicker({
   );
 }
 
-/** −/value/+ quantity stepper. */
+/** Quantity stepper — bordered control with generous touch targets. */
 function QuantityStepper({
   quantity,
   maxQuantity,
@@ -180,27 +192,31 @@ function QuantityStepper({
   onIncrease: () => void;
 }) {
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex items-center justify-between gap-4">
       <p className="text-xs font-medium tracking-widest text-muted-foreground uppercase">
         Quantity
       </p>
-      <div className="flex items-center rounded-lg border">
+      <div className="flex items-center rounded-full border">
         <button
           type="button"
           aria-label="Decrease quantity"
-          className="flex size-10 items-center justify-center rounded-l-lg transition-colors hover:bg-accent/60 disabled:opacity-40"
+          className="flex size-10 items-center justify-center rounded-l-full transition-colors hover:bg-accent/60 disabled:opacity-40"
           onClick={onDecrease}
           disabled={quantity <= 1 || !available}
         >
           <Minus className="size-4" />
         </button>
-        <span aria-live="polite" className="w-10 text-center text-sm font-semibold tabular-nums">
+        <span
+          aria-live="polite"
+          aria-label={`Quantity: ${quantity}`}
+          className="w-10 text-center text-sm font-semibold tabular-nums"
+        >
           {quantity}
         </span>
         <button
           type="button"
           aria-label="Increase quantity"
-          className="flex size-10 items-center justify-center rounded-r-lg transition-colors hover:bg-accent/60 disabled:opacity-40"
+          className="flex size-10 items-center justify-center rounded-r-full transition-colors hover:bg-accent/60 disabled:opacity-40"
           onClick={onIncrease}
           disabled={quantity >= maxQuantity || !available}
         >
@@ -208,6 +224,29 @@ function QuantityStepper({
         </button>
       </div>
     </div>
+  );
+}
+
+/** Quiet reassurance strip: delivery, easy payment, quality checks. */
+function TrustStrip() {
+  const items = [
+    { icon: Truck, label: "India Post delivery" },
+    { icon: ShieldCheck, label: "Quality checked" },
+    { icon: MessageCircle, label: "Easy phone ordering" },
+  ];
+
+  return (
+    <ul className="grid grid-cols-3 gap-2 rounded-xl border bg-secondary/40 px-2 py-3">
+      {items.map(({ icon: Icon, label }) => (
+        <li
+          key={label}
+          className="flex flex-col items-center gap-1.5 text-center text-[11px] font-medium text-muted-foreground"
+        >
+          <Icon aria-hidden="true" className="size-4 shrink-0 text-foreground/70" />
+          {label}
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -227,7 +266,7 @@ function ContactOrderBlock({
     `Hello! I'm interested in "${productName}" from Mamta General Store. Is it available?`,
   );
   return (
-    <div className="bg-card space-y-3 rounded-xl border p-4">
+    <div className="space-y-3 rounded-xl border bg-card p-4">
       <p className="text-sm leading-relaxed">
         Interested in this product? Contact us to check availability and place your order.
       </p>
@@ -256,7 +295,7 @@ function ContactOrderBlock({
       <p className="text-muted-foreground text-xs">
         {unavailable
           ? "Out of stock right now — ask us and we'll tell you when it's back or suggest something similar."
-          : `Ordering from outside the area? We deliver across India by India Post.`}
+          : "Ordering from outside the area? We deliver across India by India Post."}
       </p>
     </div>
   );
@@ -276,11 +315,17 @@ function CartActions({
 }) {
   return (
     <div className="flex flex-col gap-3 sm:flex-row">
-      <Button size="lg" className="flex-1" disabled={!canAdd} onClick={onAddToCart}>
+      <Button size="lg" className="h-12 flex-1 text-base" disabled={!canAdd} onClick={onAddToCart}>
         {added ? <Check /> : <ShoppingBag />}
         {added ? "Added to cart" : "Add to Cart"}
       </Button>
-      <Button size="lg" variant="outline" className="flex-1" disabled={!canAdd} onClick={onBuyNow}>
+      <Button
+        size="lg"
+        variant="outline"
+        className="h-12 flex-1 text-base"
+        disabled={!canAdd}
+        onClick={onBuyNow}
+      >
         <Zap />
         Buy Now
       </Button>
@@ -288,10 +333,56 @@ function CartActions({
   );
 }
 
+/** Fixed bottom bar on mobile: price + Add to Cart stay reachable while scrolling. */
+function StickyBuyBar({
+  show,
+  price,
+  added,
+  canAdd,
+  onAddToCart,
+}: {
+  show: boolean;
+  price: number;
+  added: boolean;
+  canAdd: boolean;
+  onAddToCart: () => void;
+}) {
+  return (
+    <div
+      aria-hidden={!show}
+      className={cn(
+        "bg-background/95 fixed inset-x-0 bottom-0 z-40 border-t px-4 py-3 backdrop-blur-md transition-all duration-300 ease-gentle lg:hidden",
+        "pb-[calc(0.75rem+env(safe-area-inset-bottom))]",
+        show ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-full opacity-0",
+      )}
+    >
+      <div className="flex items-center gap-3">
+        <div className="min-w-0">
+          <p className="text-muted-foreground text-[11px] uppercase">Price</p>
+          <p className="text-base font-semibold tabular-nums">
+            {formatPrice(price, DEFAULT_CURRENCY)}
+          </p>
+        </div>
+        <Button
+          className="ml-auto h-11 flex-1 sm:flex-none sm:px-8"
+          disabled={!canAdd}
+          onClick={onAddToCart}
+          tabIndex={show ? 0 : -1}
+        >
+          {added ? <Check /> : <ShoppingBag />}
+          {added ? "Added" : canAdd ? "Add to Cart" : "Unavailable"}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 /**
- * Product purchase panel: price + discount, size and color pickers, quantity
- * selector, and Add to Cart / Buy Now actions. State and cart wiring live
- * here; the sections above are presentational.
+ * Product purchase panel: modern price block with savings callout, pill-style
+ * size/color pickers, quantity selector, trust strip and Add to Cart /
+ * Buy Now actions — plus a sticky mobile buy bar that appears once the main
+ * actions scroll out of view. State and cart wiring live here; the sections
+ * are presentational.
  */
 export function PurchasePanel({ product, className }: { product: Product; className?: string }) {
   const available = isAvailable(product);
@@ -347,44 +438,70 @@ export function PurchasePanel({ product, className }: { product: Product; classN
     router.push("/checkout");
   };
 
+  // The sticky mobile bar appears only when the real actions are off-screen.
+  const actionsRef = React.useRef<HTMLDivElement>(null);
+  const [showStickyBar, setShowStickyBar] = React.useState(false);
+  React.useEffect(() => {
+    const actions = actionsRef.current;
+    if (!actions) return;
+    const observer = new IntersectionObserver(([entry]) => setShowStickyBar(!entry.isIntersecting));
+    observer.observe(actions);
+    return () => observer.disconnect();
+  }, []);
+
+  const hasVariants = product.sizes.length > 0 || product.colors.length > 0;
+
   return (
-    <div className={cn("space-y-7", className)}>
+    <div className={cn("space-y-6", className)}>
       <PriceBlock product={product} discount={discount} />
 
-      <Separator />
+      {hasVariants && (
+        <div className="space-y-5 border-t pt-6">
+          <SizePicker
+            sizes={product.sizes}
+            needsSize={needsSize}
+            selectedSize={selectedSize}
+            onSelect={setSelectedSize}
+          />
+          <ColorPicker
+            colors={product.colors}
+            needsColor={needsColor}
+            selectedColor={selectedColor}
+            onSelect={setSelectedColor}
+          />
+        </div>
+      )}
 
-      <SizePicker
-        sizes={product.sizes}
-        needsSize={needsSize}
-        selectedSize={selectedSize}
-        onSelect={setSelectedSize}
-      />
+      <div className="space-y-5 border-t pt-6">
+        <QuantityStepper
+          quantity={quantity}
+          maxQuantity={maxQuantity}
+          available={available}
+          onDecrease={() => setQuantity((q) => Math.max(1, q - 1))}
+          onIncrease={() => setQuantity((q) => Math.min(maxQuantity, q + 1))}
+        />
 
-      <ColorPicker
-        colors={product.colors}
-        needsColor={needsColor}
-        selectedColor={selectedColor}
-        onSelect={setSelectedColor}
-      />
+        <div ref={actionsRef}>
+          <CartActions
+            added={added}
+            canAdd={canAdd}
+            onAddToCart={handleAddToCart}
+            onBuyNow={handleBuyNow}
+          />
+        </div>
 
-      <Separator />
+        <TrustStrip />
+      </div>
 
-      <QuantityStepper
-        quantity={quantity}
-        maxQuantity={maxQuantity}
-        available={available}
-        onDecrease={() => setQuantity((q) => Math.max(1, q - 1))}
-        onIncrease={() => setQuantity((q) => Math.min(maxQuantity, q + 1))}
-      />
+      <ContactOrderBlock productName={product.name} unavailable={!available} />
 
-      <CartActions
+      <StickyBuyBar
+        show={showStickyBar}
+        price={product.price}
         added={added}
         canAdd={canAdd}
         onAddToCart={handleAddToCart}
-        onBuyNow={handleBuyNow}
       />
-
-      <ContactOrderBlock productName={product.name} unavailable={!available} />
     </div>
   );
 }

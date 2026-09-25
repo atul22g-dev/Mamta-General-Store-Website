@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
 
 import { Hero } from "@/components/home/hero";
-import { ShopByCategory } from "@/components/home/shop-by-category";
 import { FeaturedProducts } from "@/components/home/featured-products";
 import { NewArrivals } from "@/components/home/new-arrivals";
 import { ProductCollection } from "@/components/home/product-collection";
-import { DeliveryBand } from "@/components/home/delivery-band";
 import { VisitOurStore } from "@/components/home/visit-our-store";
 import { ContactBand } from "@/components/home/contact-band";
 import { CallToAction } from "@/components/home/call-to-action";
@@ -28,11 +26,9 @@ export default function HomePage() {
   return (
     <>
       <Hero />
-      <ShopByCategory />
       <NewArrivals />
       <FeaturedProducts />
       <ProductCollection />
-      <DeliveryBand />
       <VisitOurStore />
       <ContactBand />
       <CallToAction />

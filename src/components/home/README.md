@@ -3,7 +3,6 @@
 Homepage sections, one component per band:
 
 - **`hero.tsx`** — editorial split hero with headline and CTAs
-- **`shop-by-category.tsx`** — category tiles
 - **`featured-products.tsx`** — handpicked products on a contrasting band
 - **`new-arrivals.tsx`** — latest additions
 - **`why-shop-with-us.tsx`** — quiet trust badges

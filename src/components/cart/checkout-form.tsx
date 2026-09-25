@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useActionState } from "react";
-import { Banknote, CheckCircle2, Loader2, Lock, ShieldCheck } from "lucide-react";
+import { CheckCircle2, Loader2, Lock, Phone, ShieldCheck } from "lucide-react";
 
 import { useCart } from "@/components/cart/cart-provider";
 import { placeOrderAction, type PlaceOrderState } from "@/app/(storefront)/checkout/actions";
@@ -61,8 +61,8 @@ export function CheckoutForm() {
         </span>
         <h2 className="font-display mt-6 text-3xl font-semibold tracking-tight">Order placed!</h2>
         <p className="text-muted-foreground mt-3 text-sm leading-relaxed">
-          Thank you for your order. We&apos;ll call you on your mobile number to confirm delivery
-          details. Pay with cash when your order arrives.
+          Thank you for your order. We&apos;ll call you on your mobile number to confirm the details
+          and payment — cash, UPI or bank transfer.
         </p>
         <p className="mt-6 rounded-xl border bg-card px-4 py-3 text-sm shadow-soft">
           Order number: <span className="font-mono font-semibold">{placedOrderNumber}</span>
@@ -225,11 +225,12 @@ export function CheckoutForm() {
         </fieldset>
 
         <div className="bg-card flex items-start gap-3 rounded-xl border p-4">
-          <Banknote aria-hidden="true" className="mt-0.5 size-5 shrink-0" />
+          <Phone aria-hidden="true" className="mt-0.5 size-5 shrink-0" />
           <div>
-            <p className="text-sm font-medium">Cash on delivery</p>
+            <p className="text-sm font-medium">Pay on order confirmation</p>
             <p className="text-muted-foreground mt-0.5 text-xs">
-              Pay in cash when your order arrives by India Post. No online payment required.
+              We&apos;ll call to confirm your order and share payment options — cash, UPI or bank
+              transfer, whichever is easiest for you.
             </p>
           </div>
         </div>

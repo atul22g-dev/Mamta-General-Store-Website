@@ -19,10 +19,12 @@ export const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
-        sm: "h-9 rounded-md px-3.5 text-xs has-[>svg]:px-3",
-        default: "h-10 px-5 has-[>svg]:px-4",
-        lg: "h-11 rounded-lg px-7 has-[>svg]:px-5",
-        icon: "size-10",
+        // Mobile-first heights: ≥44px touch targets on phones, compact on
+        // pointer devices (md:) — comfortable tapping without desktop sprawl.
+        sm: "h-10 rounded-md px-4 text-xs has-[>svg]:px-3 md:h-9",
+        default: "h-11 px-5 has-[>svg]:px-4 md:h-10",
+        lg: "h-12 rounded-lg px-7 has-[>svg]:px-5 md:h-11",
+        icon: "size-11 md:size-10",
       },
     },
     defaultVariants: {

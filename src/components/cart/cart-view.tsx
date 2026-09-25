@@ -219,7 +219,7 @@ export function CartView() {
           </p>
         )}
         <p className="text-muted-foreground mt-4 text-center text-xs">
-          Cash on delivery available · Easy returns
+          Easy ordering by phone or WhatsApp · Easy returns
         </p>
       </aside>
     </div>

@@ -1,22 +1,17 @@
-"use client";
-
-import * as React from "react";
 import Link from "next/link";
-import { Eye } from "lucide-react";
 
 import type { Product } from "@/types/product";
 import { discountPercent, isAvailable } from "@/lib/catalog";
 import { DEFAULT_CURRENCY } from "@/lib/constants";
 import { cn, formatPrice } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { ImageArea } from "@/components/ui/image-area";
 
 /**
- * Product card: image area with discount + availability badges, category
- * eyebrow, serif name, price (+ struck-through original) and a quick-add
- * button (disabled when out of stock). Links to the product detail page,
- * where size/color are chosen.
+ * Product card — the visual backbone of every listing (home, shop, category,
+ * related). Clean editorial style: image area with a discount badge, category
+ * eyebrow, serif name with an underline-on-hover, tabular price row and a
+ * quiet full-width view action. Server component — no client JS.
  */
 export function ProductCard({ product, className }: { product: Product; className?: string }) {
   const { name, price, discountPrice, category, images } = product;
@@ -25,15 +20,15 @@ export function ProductCard({ product, className }: { product: Product; classNam
   const discount = discountPercent(product);
 
   return (
-    <article className={cn("group flex flex-col gap-3", className)}>
+    <article className={cn("group flex flex-col", className)}>
       <Link
         href={`/products/${product.slug}`}
         aria-label={`View ${name}`}
-        className="relative block"
+        className="relative block rounded-xl focus-visible:ring-ring/50 outline-none focus-visible:ring-[3px]"
       >
         <ImageArea
           className={cn(
-            "transition-shadow duration-300 ease-gentle group-hover:shadow-soft-lg",
+            "transition-all duration-300 ease-gentle group-hover:shadow-soft-lg",
             !available && "opacity-80",
           )}
           ratio="3/4"
@@ -47,7 +42,7 @@ export function ProductCard({ product, className }: { product: Product; classNam
               alt={image.alt ?? name}
               loading="lazy"
               className={cn(
-                "absolute inset-0 h-full w-full object-cover transition-transform duration-500 ease-gentle group-hover:scale-[1.03]",
+                "absolute inset-0 h-full w-full object-cover transition-transform duration-500 ease-gentle group-hover:scale-[1.04]",
                 !available && "grayscale-[35%] group-hover:scale-100",
               )}
             />
@@ -67,54 +62,36 @@ export function ProductCard({ product, className }: { product: Product; classNam
         </ImageArea>
       </Link>
 
-      <div className="space-y-1">
-        <p className="text-[11px] font-medium tracking-widest text-muted-foreground uppercase">
+      <div className="flex flex-1 flex-col pt-3">
+        <p className="text-[10px] font-medium tracking-[0.14em] text-muted-foreground uppercase">
           {category.name}
         </p>
-        <h3 className="font-display text-base leading-snug font-medium">
-          <Link href={`/products/${product.slug}`} className="transition-colors hover:opacity-80">
+        <h3 className="mt-1 text-[15px] leading-snug font-medium">
+          <Link
+            href={`/products/${product.slug}`}
+            className="underline-offset-2 transition-colors group-hover:underline group-hover:decoration-1"
+          >
             {name}
           </Link>
         </h3>
-        <p className="flex items-baseline gap-2 pt-0.5">
-          <span className="text-sm font-semibold">{formatPrice(price, DEFAULT_CURRENCY)}</span>
+        <p className="mt-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+          <span className="text-[15px] font-semibold tabular-nums">
+            {formatPrice(price, DEFAULT_CURRENCY)}
+          </span>
           {discountPrice && discountPrice > price && (
-            <span className="text-xs text-muted-foreground line-through">
+            <span className="text-xs text-muted-foreground tabular-nums line-through">
               {formatPrice(discountPrice, DEFAULT_CURRENCY)}
             </span>
           )}
         </p>
-        {product.description && (
-          <p className="text-muted-foreground line-clamp-2 text-xs leading-relaxed">
-            {product.description}
-          </p>
-        )}
-        <p
-          className={cn(
-            "flex items-center gap-1.5 text-xs",
-            available ? "text-muted-foreground" : "text-destructive",
-          )}
-        >
-          <span
-            aria-hidden="true"
-            className={cn(
-              "size-1.5 rounded-full",
-              available ? "bg-emerald-600/70" : "bg-destructive",
-            )}
-          />
-          {available ? "In stock" : "Out of stock"}
-          {images.length > 1 && (
-            <span className="text-muted-foreground/70">· {images.length} photos</span>
-          )}
-        </p>
       </div>
 
-      <Button variant="outline" size="sm" className="mt-auto w-full" asChild>
-        <Link href={`/products/${product.slug}`} aria-label={`View ${name}`}>
-          <Eye aria-hidden="true" />
-          View Product
-        </Link>
-      </Button>
+      <Link
+        href={`/products/${product.slug}`}
+        className="border-input hover:border-ring/60 hover:bg-accent/50 mt-3 inline-flex h-10 w-full items-center justify-center rounded-lg border text-xs font-medium tracking-wide shadow-xs transition-all duration-200 ease-gentle hover:text-accent-foreground md:h-9"
+      >
+        View product
+      </Link>
     </article>
   );
 }

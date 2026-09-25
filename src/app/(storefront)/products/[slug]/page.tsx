@@ -1,10 +1,10 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { ChevronRight, Package, Phone, Truck } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 
 import { getProductBySlug, getRelatedProducts } from "@/lib/supabase/catalog";
-import { DELIVERY_NOTE } from "@/config/site";
+import { siteUrl } from "@/config/site";
 import { Container } from "@/components/ui/container";
 import { ProductCard } from "@/components/product/product-card";
 import { ProductGallery } from "@/components/product/product-gallery";
@@ -16,6 +16,43 @@ interface ProductPageProps {
 
 /** Product pages render per request so fresh stock/price is always shown. */
 export const dynamic = "force-dynamic";
+
+/** Product structured data — rich results (price, availability) in search. */
+function ProductJsonLd({
+  product,
+}: {
+  product: NonNullable<Awaited<ReturnType<typeof getProductBySlug>>>;
+}) {
+  const data = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name,
+    description: product.description ?? undefined,
+    sku: product.sku ?? product.id,
+    image: product.images.map((image) => image.url),
+    category: product.category.name,
+    offers: {
+      "@type": "Offer",
+      url: `${siteUrl}/products/${product.slug}`,
+      priceCurrency: "INR",
+      price: (product.price / 100).toFixed(2),
+      availability:
+        product.stock === null || product.stock > 0
+          ? "https://schema.org/InStock"
+          : "https://schema.org/OutOfStock",
+      itemCondition: "https://schema.org/NewCondition",
+    },
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{
+        __html: JSON.stringify(data).replace(/</g, "\\u003c"),
+      }}
+    />
+  );
+}
 
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
   const { slug } = await params;
@@ -75,7 +112,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
   if (!product) notFound();
 
   return (
-    <Container className="flex flex-1 flex-col py-8 sm:py-12">
+    <Container className="flex flex-1 flex-col py-8 pb-28 sm:py-12 lg:pb-12">
+      <ProductJsonLd product={product} />
       {/* Breadcrumb */}
       <nav aria-label="Breadcrumb" className="mb-8">
         <ol className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
@@ -115,45 +153,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
           <h1 className="font-display mt-2 text-3xl leading-tight font-medium tracking-tight text-balance sm:text-4xl">
             {product.name}
           </h1>
-          {product.sku && <p className="mt-2 text-xs text-muted-foreground">SKU: {product.sku}</p>}
           <PurchasePanel product={product} className="mt-8" />
         </div>
-      </div>
-
-      {/* Description + service notes */}
-      <div className="mt-16 grid gap-10 lg:grid-cols-2 lg:gap-14">
-        <section aria-labelledby="description-heading">
-          <h2 id="description-heading" className="font-display text-xl font-medium">
-            Product details
-          </h2>
-          <p className="mt-4 leading-relaxed text-muted-foreground">
-            {product.description ??
-              "Details for this product are being updated. Visit the store or contact us for more information."}
-          </p>
-        </section>
-        <section aria-labelledby="service-heading">
-          <h2 id="service-heading" className="font-display text-xl font-medium">
-            Good to know
-          </h2>
-          <ul className="mt-4 space-y-3 text-sm text-muted-foreground">
-            <li className="flex items-center gap-3">
-              <Truck className="size-4 shrink-0" />
-              {DELIVERY_NOTE} — contact us to order from anywhere in India.
-            </li>
-            <li className="flex items-center gap-3">
-              <Package className="size-4 shrink-0" />
-              Complete unstitched set — top, bottom and dupatta, ready for tailoring.
-            </li>
-            <li className="flex items-center gap-3">
-              <Package className="size-4 shrink-0" />
-              Hand-checked fabric, work and finish before dispatch.
-            </li>
-            <li className="flex items-center gap-3">
-              <Phone className="size-4 shrink-0" />
-              Questions? Call or WhatsApp the shop — details in the contact panel above.
-            </li>
-          </ul>
-        </section>
       </div>
 
       {/* Related products */}

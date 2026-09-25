@@ -11,7 +11,7 @@ export function ProductGridSkeleton({
   return (
     <div
       aria-hidden="true"
-      className={cn("grid grid-cols-2 gap-4 sm:gap-6 xl:grid-cols-4", className)}
+      className={cn("grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4", className)}
     >
       {Array.from({ length: count }, (_, index) => (
         <div key={index} className="space-y-3">

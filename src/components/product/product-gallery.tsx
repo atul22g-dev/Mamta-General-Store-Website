@@ -85,10 +85,10 @@ export function ProductGallery({
         ))}
       </div>
 
-      {/* Mobile dots */}
+      {/* Mobile dots — 16px targets (32px effective with padding) for touch. */}
       {sorted.length > 1 && (
         <div
-          className="flex justify-center gap-1.5 sm:hidden"
+          className="flex justify-center gap-1 sm:hidden"
           role="tablist"
           aria-label="Photo position"
         >
@@ -100,11 +100,16 @@ export function ProductGallery({
               aria-selected={index === activeIndex}
               aria-label={`Photo ${index + 1}`}
               onClick={() => select(index)}
-              className={cn(
-                "size-2 rounded-full transition-colors",
-                index === activeIndex ? "bg-primary" : "bg-muted-foreground/30",
-              )}
-            />
+              className="flex size-5 items-center justify-center"
+            >
+              <span
+                aria-hidden="true"
+                className={cn(
+                  "size-2 rounded-full transition-colors",
+                  index === activeIndex ? "bg-primary" : "bg-muted-foreground/30",
+                )}
+              />
+            </button>
           ))}
         </div>
       )}

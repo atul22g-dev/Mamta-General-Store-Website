@@ -59,21 +59,14 @@ export function Hero() {
         {/* Imagery */}
         <div className="relative order-1 lg:order-2">
           <ImageArea ratio="4/5" className="mx-auto max-w-sm lg:max-w-none">
+            {/* LCP element on mobile: load eagerly at high priority. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={heroImages.main.url}
               alt={heroImages.main.alt}
-              className="absolute inset-0 h-full w-full object-cover"
-            />
-          </ImageArea>
-          <ImageArea
-            ratio="1/1"
-            className="shadow-soft-lg absolute -bottom-6 -left-2 hidden w-40 sm:block lg:-left-8 lg:w-52"
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={heroImages.secondary.url}
-              alt={heroImages.secondary.alt}
+              loading="eager"
+              fetchPriority="high"
+              decoding="sync"
               className="absolute inset-0 h-full w-full object-cover"
             />
           </ImageArea>
