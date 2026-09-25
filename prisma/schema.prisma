@@ -1,5 +1,15 @@
 // Mamta General Store — database schema (PostgreSQL)
 //
+// NOTE: This file is a REFERENCE schema only. The runtime data layer is
+// Supabase (PostgreSQL + supabase/migrations/*.sql + supabase-js); nothing
+// imports a generated Prisma client. The live source of truth is the SQL
+// under supabase/migrations/ — keep this file in sync when that changes.
+//
+// Authentication lives in Supabase Auth; authorization in the `profiles`
+// table (role 'ADMIN' + active). There is deliberately NO User model with a
+// password hash here — the Prisma-era `users` table was retired by
+// migration 0011_single_auth_source.sql to keep ONE auth system.
+//
 // Mirrors the domain types in `src/types/category.ts` and `src/types/product.ts`.
 // The catalog is category-driven: products always belong to a Category, so new
 // categories are data (a Category row), never schema changes.
@@ -11,20 +21,8 @@
 // - Order rows snapshot product/customer data at purchase time, so order history
 //   stays correct even if a product is later renamed or deleted.
 
-generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
-  runtime  = "nodejs"
-}
-
 datasource db {
   provider = "postgresql"
-}
-
-/// Storefront role. ADMIN users manage catalog/orders (admin area comes later).
-enum UserRole {
-  CUSTOMER
-  ADMIN
 }
 
 /// Fulfilment lifecycle of an order.
@@ -45,23 +43,23 @@ enum PaymentStatus {
   REFUNDED
 }
 
-/// Store customer or admin. `passwordHash` is nullable to allow guest checkout
-/// before authentication is introduced.
-model User {
-  id           String   @id @default(cuid())
-  name         String
-  email        String   @unique
-  phone        String?
-  passwordHash String?
-  role         UserRole @default(CUSTOMER)
-  /// Disabled accounts cannot sign in; their history is preserved.
-  active       Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+/// Authorization profile for a Supabase Auth user. Identity never lives
+/// here — passwords belong to Supabase Auth, roles/active to this row.
+/// Managed in SQL (see scripts/create-admin.ts); the app only reads it.
+model Profile {
+  id       String  @id @db.Uuid
+  email    String
+  name     String  @default("")
+  /// Authorization role. ADMIN manages catalog/orders.
+  role     String  @default("CUSTOMER")
+  /// Disabled admins cannot sign in; their history is preserved.
+  active   Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   orders Order[]
 
-  @@map("users")
+  @@map("profiles")
 }
 
 /// Storefront product category (e.g. "Ladies' Suits", "Kurtis", "Sarees").
@@ -165,9 +163,10 @@ model Order {
   status        OrderStatus   @default(PENDING)
   paymentStatus PaymentStatus @default(PENDING)
 
-  /// Placed by a registered user; null for guest orders.
-  userId String?
-  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  /// Placed by a registered Supabase Auth user via their profiles row;
+  /// null for guest orders.
+  userId String? @db.Uuid
+  user   Profile? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   /// Contact details snapshot (works for guest checkout and keeps history).
   customerName  String

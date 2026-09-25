@@ -65,7 +65,6 @@ const POOLER_REGIONS = [
 
 /** Tables the application depends on. */
 const EXPECTED_TABLES = [
-  "users",
   "categories",
   "products",
   "product_images",
@@ -310,7 +309,10 @@ async function main() {
     }
 
     console.log("\n✓ All migrations applied and schema verified:");
-    console.log(`  - Tables (9): ${EXPECTED_TABLES.join(", ")} — key columns present`);
+    console.log(
+      `  - Tables (${EXPECTED_TABLES.length}): ${EXPECTED_TABLES.join(", ")} — key columns present`,
+    );
+    console.log("  - Auth: Supabase Auth → profiles (single source; users table retired)");
     console.log(`  - Functions: ${EXPECTED_FUNCTIONS.join(", ")}`);
     console.log(`  - RLS enabled on all ${EXPECTED_RLS_TABLES.length} tables`);
     console.log("  - Storage bucket: product-images (public read, server-only write)");
