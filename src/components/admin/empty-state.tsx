@@ -37,9 +37,8 @@ export function DatabaseErrorState({ className }: { className?: string }) {
       </span>
       <p className="text-sm font-medium">Database not connected</p>
       <p className="text-muted-foreground max-w-sm text-xs">
-        Configure <code className="font-mono">NEXT_PUBLIC_SUPABASE_URL</code>,{" "}
-        <code className="font-mono">NEXT_PUBLIC_SUPABASE_ANON_KEY</code> and{" "}
-        <code className="font-mono">SUPABASE_SERVICE_ROLE_KEY</code> in{" "}
+        Configure <code className="font-mono">NEXT_PUBLIC_SUPABASE_URL</code> or{" "}
+        <code className="font-mono">EXPO_PUBLIC_SUPABASE_URL</code> and the matching anon key in{" "}
         <code className="font-mono">.env</code> — see .env.example.
       </p>
     </div>

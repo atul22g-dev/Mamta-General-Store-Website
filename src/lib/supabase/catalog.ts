@@ -1,21 +1,24 @@
 import "server-only";
 
-import { getSupabaseAdminClient } from "@/lib/supabase/admin";
+import { getSupabasePublicClient } from "@/lib/supabase/public";
 import type { Category, CategoryRef } from "@/types/category";
 import type { Product, ProductImage, ProductSize, ProductColor } from "@/types/product";
 
 /**
  * Storefront catalog data layer — Supabase (PostgreSQL via supabase-js).
  *
- * Replaces the mock data in `lib/placeholder-data.ts`. Rows map onto the
- * existing domain types (`src/types/*`), so every UI component keeps working
- * unchanged. Table/column names follow `prisma/schema.prisma` (`@@map` names,
- * quoted camelCase columns), and embedded relations use PostgREST's
- * `table ( cols )` syntax.
+ * Rows map onto the existing domain types (`src/types/*`), so every UI
+ * component keeps working unchanged. Table/column names follow
+ * `prisma/schema.prisma` (`@@map` names, quoted camelCase columns), and
+ * embedded relations use PostgREST's `table ( cols )` syntax.
  *
- * The service-role client is used because Row Level Security currently has no
- * data-API policies — same privilege model as the previous direct database
- * connection. Server-side only ("server-only" guard).
+ * The public anon-key client is used: Row Level Security policies (migration
+ * 0007) allow public reads of the catalog and nothing else. Server-side only
+ * ("server-only" guard).
+ *
+ * Graceful schema-lag guard: if the `categories.active` column has not been
+ * applied yet (migration 0008), category-visibility queries fall back to the
+ * pre-feature behaviour (everything visible) instead of crashing pages.
  */
 
 /** PostgREST select string loading a product with all relations. */
@@ -110,9 +113,53 @@ interface CountProductRow {
   categoryId: string;
 }
 
+/** Postgres error for "the column is not there yet" (migration 0008 pending). */
+const SCHEMA_LAG = /column .* does not exist/i;
+let schemaLagLogged = false;
+
+/**
+ * Ids of active categories — products in inactive categories are hidden.
+ * Returns null when the active column is missing (feature unavailable);
+ * callers then skip the visibility filter instead of failing.
+ */
+async function activeCategoryIds(): Promise<string[] | null> {
+  const { data, error } = await getSupabasePublicClient()
+    .from("categories")
+    .select("id")
+    .eq("active", true);
+  if (error) {
+    if (SCHEMA_LAG.test(error.message)) {
+      if (!schemaLagLogged) {
+        schemaLagLogged = true;
+        console.warn(
+          "[catalog] categories.active is missing — run supabase/migrations/0008_category_active.sql. " +
+            "Category visibility filtering is disabled until then.",
+        );
+      }
+      return null;
+    }
+    throw new Error(`Failed to load categories: ${error.message}`);
+  }
+  return ((data ?? []) as { id: string }[]).map((row) => row.id);
+}
+
+/** Active-product count per category (for the zero-products rule). */
+async function activeProductCountByCategory(): Promise<Map<string, number>> {
+  const { data, error } = await getSupabasePublicClient()
+    .from("products")
+    .select("categoryId")
+    .eq("active", true);
+  if (error) throw new Error(`Failed to load products: ${error.message}`);
+  const counts = new Map<string, number>();
+  for (const row of (data ?? []) as CountProductRow[]) {
+    counts.set(row.categoryId, (counts.get(row.categoryId) ?? 0) + 1);
+  }
+  return counts;
+}
+
 /** Query products with relations, ordered for stable gallery output. */
 function productsQuery() {
-  return getSupabaseAdminClient()
+  return getSupabasePublicClient()
     .from("products")
     .select(PRODUCT_SELECT)
     .order("position", { referencedTable: "product_images", ascending: true });
@@ -186,13 +233,20 @@ export async function getShopProducts(options: ShopQuery = {}): Promise<Product[
 
   let builder = productsQuery().eq("active", true);
 
+  // Products in inactive categories are hidden from every storefront listing.
+  const visibleIds = await activeCategoryIds();
+  if (visibleIds !== null) {
+    if (visibleIds.length === 0) return [];
+    builder = builder.in("categoryId", visibleIds);
+  }
+
   // Search: product fields, plus products in categories whose name matches.
   const term = query?.trim();
   if (term) {
     const escaped = term.replace(/[%,()]/g, "");
     if (escaped) {
       const pattern = `%${escaped}%`;
-      const matchingCategories = await getSupabaseAdminClient()
+      const matchingCategories = await getSupabasePublicClient()
         .from("categories")
         .select("id")
         .ilike("name", pattern);
@@ -242,12 +296,18 @@ export async function getShopProducts(options: ShopQuery = {}): Promise<Product[
   return (data as ProductRow[]).map(mapProduct);
 }
 
-/** One active product by slug, or null. */
+/** One active product by slug, or null — hidden when its category is inactive. */
 export async function getProductBySlug(slug: string): Promise<Product | null> {
-  const { data, error } = await productsQuery().eq("slug", slug).eq("active", true).maybeSingle();
+  const [{ data, error }, visibleIds] = await Promise.all([
+    productsQuery().eq("slug", slug).eq("active", true).maybeSingle(),
+    activeCategoryIds(),
+  ]);
 
   if (error) throw new Error(`Failed to load product "${slug}": ${error.message}`);
-  return data ? mapProduct(data as ProductRow) : null;
+  if (!data) return null;
+  const row = data as ProductRow;
+  if (visibleIds !== null && !visibleIds.includes(row.categoryId)) return null;
+  return mapProduct(row);
 }
 
 /** Related active products from the same category, newest first. */
@@ -255,39 +315,115 @@ export async function getRelatedProducts(
   product: Pick<Product, "id" | "category">,
   limit = 4,
 ): Promise<Product[]> {
-  const { data, error } = await productsQuery()
+  const visibleIds = await activeCategoryIds();
+  if (visibleIds !== null && visibleIds.length === 0) return [];
+
+  let builder = productsQuery()
     .eq("active", true)
     .eq("categories.slug", product.category.slug)
-    .neq("id", product.id)
-    .order("createdAt", { ascending: false })
-    .limit(limit);
+    .neq("id", product.id);
+  if (visibleIds !== null) builder = builder.in("categoryId", visibleIds);
+
+  const { data, error } = await builder.order("createdAt", { ascending: false }).limit(limit);
 
   if (error) throw new Error(`Failed to load related products: ${error.message}`);
   return (data as ProductRow[]).map(mapProduct);
 }
 
-/** All categories ordered by name — categories are data, so this stays dynamic. */
+/**
+ * Storefront categories, ordered by name: only ACTIVE categories that have
+ * at least one active product (a zero-product category stays hidden until it
+ * is stocked). Powers the header nav, home tiles, /categories and sitemap.
+ * Falls back to "all categories" while the active column is missing.
+ */
 export async function getCategories(): Promise<Category[]> {
-  const { data, error } = await getSupabaseAdminClient()
-    .from("categories")
-    .select("id, name, slug, description, imageUrl, createdAt, updatedAt")
-    .order("name", { ascending: true });
+  const [categoriesResult, counts] = await Promise.all([
+    getSupabasePublicClient()
+      .from("categories")
+      .select("id, name, slug, description, imageUrl, createdAt, updatedAt")
+      .order("name", { ascending: true }),
+    activeProductCountByCategory().catch(() => new Map<string, number>()),
+  ]);
 
-  if (error) throw new Error(`Failed to load categories: ${error.message}`);
-  return ((data ?? []) as CategoryRow[]).map((row) => ({
-    id: row.id,
-    name: row.name,
-    slug: row.slug,
-    description: row.description,
-    imageUrl: row.imageUrl,
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
-  }));
+  if (categoriesResult.error) {
+    if (!SCHEMA_LAG.test(categoriesResult.error.message)) {
+      throw new Error(`Failed to load categories: ${categoriesResult.error.message}`);
+    }
+    // Column missing: read without the visibility filter (pre-feature view).
+    const fallback = await getSupabasePublicClient()
+      .from("categories")
+      .select("id, name, slug, description, imageUrl, createdAt, updatedAt")
+      .order("name", { ascending: true });
+    if (fallback.error) {
+      throw new Error(`Failed to load categories: ${fallback.error.message}`);
+    }
+    return ((fallback.data ?? []) as CategoryRow[]).map((row) => ({
+      id: row.id,
+      name: row.name,
+      slug: row.slug,
+      description: row.description,
+      imageUrl: row.imageUrl,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+    }));
+  }
+
+  return ((categoriesResult.data ?? []) as CategoryRow[])
+    .filter((row) => (counts.get(row.id) ?? 0) > 0)
+    .map((row) => ({
+      id: row.id,
+      name: row.name,
+      slug: row.slug,
+      description: row.description,
+      imageUrl: row.imageUrl,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+    }));
+}
+
+/** One category by slug, or null — inactive categories resolve to null (404). */
+export async function getCategoryBySlug(slug: string): Promise<Category | null> {
+  const client = getSupabasePublicClient();
+  const columns = "id, name, slug, description, imageUrl, createdAt, updatedAt";
+
+  const filtered = await client
+    .from("categories")
+    .select(columns)
+    .eq("slug", slug)
+    .eq("active", true)
+    .maybeSingle<CategoryRow>();
+
+  let data = filtered.data as CategoryRow | null;
+  if (filtered.error && SCHEMA_LAG.test(filtered.error.message)) {
+    // Column missing: match the pre-feature behaviour (every category visible).
+    const fallback = await client
+      .from("categories")
+      .select(columns)
+      .eq("slug", slug)
+      .maybeSingle<CategoryRow>();
+    if (fallback.error) {
+      throw new Error(`Failed to load category: ${fallback.error.message}`);
+    }
+    data = (fallback.data as CategoryRow | null) ?? null;
+  } else if (filtered.error) {
+    throw new Error(`Failed to load category: ${filtered.error.message}`);
+  }
+
+  if (!data) return null;
+  return {
+    id: data.id,
+    name: data.name,
+    slug: data.slug,
+    description: data.description,
+    imageUrl: data.imageUrl,
+    createdAt: data.createdAt,
+    updatedAt: data.updatedAt,
+  };
 }
 
 /** Lightweight { id, name } list for admin form dropdowns. */
 export async function getCategoryOptions(): Promise<{ id: string; name: string }[]> {
-  const { data, error } = await getSupabaseAdminClient()
+  const { data, error } = await getSupabasePublicClient()
     .from("categories")
     .select("id, name")
     .order("name", { ascending: true });
@@ -301,11 +437,11 @@ export async function getCategoriesWithCounts(): Promise<
   (CategoryRef & { productCount: number })[]
 > {
   const [categoriesResult, productsResult] = await Promise.all([
-    getSupabaseAdminClient()
+    getSupabasePublicClient()
       .from("categories")
       .select("id, name, slug")
       .order("name", { ascending: true }),
-    getSupabaseAdminClient().from("products").select("categoryId").eq("active", true),
+    getSupabasePublicClient().from("products").select("categoryId").eq("active", true),
   ]);
 
   if (categoriesResult.error) {
@@ -317,12 +453,13 @@ export async function getCategoriesWithCounts(): Promise<
     counts.set(row.categoryId, (counts.get(row.categoryId) ?? 0) + 1);
   }
 
-  return ((categoriesResult.data ?? []) as { id: string; name: string; slug: string }[]).map(
-    (row) => ({
+  // Same zero-products rule as getCategories: empty categories stay hidden.
+  return ((categoriesResult.data ?? []) as { id: string; name: string; slug: string }[])
+    .filter((row) => (counts.get(row.id) ?? 0) > 0)
+    .map((row) => ({
       id: row.id,
       name: row.name,
       slug: row.slug,
       productCount: counts.get(row.id) ?? 0,
-    }),
-  );
+    }));
 }

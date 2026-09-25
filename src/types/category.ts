@@ -5,8 +5,8 @@
  * regardless of how the data layer evolves. Data mappers (added when the DB is
  * connected) map rows onto these types.
  *
- * The live category list for navigation/SEO lives in `src/config/categories.ts`
- * until the database is connected.
+ * The live category list for navigation/SEO is read from the database via
+ * `lib/supabase/catalog.ts`.
  */
 export interface Category {
   id: string;

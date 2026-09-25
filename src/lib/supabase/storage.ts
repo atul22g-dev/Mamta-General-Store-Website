@@ -1,6 +1,7 @@
 import "server-only";
 
 import { getSupabaseAdminClient } from "./admin";
+import { supabaseUrl } from "./env";
 
 /**
  * Product-image storage helpers (Supabase Storage).
@@ -9,10 +10,9 @@ import { getSupabaseAdminClient } from "./admin";
  * `products/<productId>/<timestamp>-<slug>.<ext>` so all images for a product
  * live under one prefix and can be replaced/removed per product.
  *
- * Uploads run server-side only (service-role client — the key never reaches
- * the browser). Callers receive a plain public URL to store in
- * `product_images.url`, exactly like the previous external URLs, so product
- * UI is unaffected.
+ * Uploads run under the signed-in admin's session (RLS storage policies in
+ * migration 0007 authorize them) — there is no service-role key in this app.
+ * Callers receive a plain public URL to store in `product_images.url`.
  */
 
 export const PRODUCT_IMAGES_BUCKET = "product-images";
@@ -23,10 +23,13 @@ export const PRODUCT_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
 /** Content-type allow-list for product images. */
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/avif"]);
 
-/** Public URL for an object in the product-images bucket. */
+/**
+ * Public URL for an object in the product-images bucket — pure URL math on
+ * the project host, no client needed (and therefore no request scope).
+ */
 export function productImageUrl(path: string): string {
-  const { data } = getSupabaseAdminClient().storage.from(PRODUCT_IMAGES_BUCKET).getPublicUrl(path);
-  return data.publicUrl;
+  const base = supabaseUrl().replace(/\/$/, "");
+  return `${base}/storage/v1/object/public/${PRODUCT_IMAGES_BUCKET}/${path}`;
 }
 
 /**
@@ -65,7 +68,7 @@ export async function uploadProductImage(productId: string, file: File): Promise
     throw new Error("The selected file is empty.");
   }
 
-  const admin = getSupabaseAdminClient();
+  const admin = await getSupabaseAdminClient();
 
   const extension =
     file.type === "image/png"
@@ -90,8 +93,10 @@ export async function uploadProductImage(productId: string, file: File): Promise
 export async function deleteProductImage(path: string): Promise<void> {
   if (!path) return;
   try {
-    const { error } = await getSupabaseAdminClient()
-      .storage.from(PRODUCT_IMAGES_BUCKET)
+    const { error } = await (
+      await getSupabaseAdminClient()
+    ).storage
+      .from(PRODUCT_IMAGES_BUCKET)
       .remove([path]);
     if (error) throw new Error(error.message);
   } catch (error) {
@@ -103,7 +108,7 @@ export async function deleteProductImage(path: string): Promise<void> {
 /** Delete every image under a product's prefix (best-effort, never throws). */
 export async function deleteAllProductImages(productId: string): Promise<void> {
   try {
-    const admin = getSupabaseAdminClient();
+    const admin = await getSupabaseAdminClient();
     const { data, error } = await admin.storage
       .from(PRODUCT_IMAGES_BUCKET)
       .list(`products/${productId}`, { limit: 100, sortBy: { column: "name", order: "asc" } });

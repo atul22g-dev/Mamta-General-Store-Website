@@ -1,32 +1,44 @@
 import "server-only";
 
-import { createClient } from "@supabase/supabase-js";
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
 
-import { supabaseServiceRoleKey, supabaseUrl } from "./env";
+import { supabaseAnonKey, supabaseUrl } from "./env";
 
 /**
- * Service-role Supabase client — **server only, secret-keyed**.
+ * Admin-capable Supabase client — **per-request, session-scoped**.
  *
- * - Bypasses Row Level Security: for trusted server-side jobs only
- *   (Storage administration, auth administration, privileged writes).
- * - The key never reaches the browser: this module is "server-only" and the
- *   env var is read exclusively here.
- * - No session/cookie handling: it is an administrative client, not a user
- *   client. Use `createSupabaseServerClient` for user-scoped work.
+ * Runs with the anon key under the **signed-in admin's identity**: writes are
+ * authorized by the RLS admin policies (`is_admin()` — profiles.role='ADMIN',
+ * active) in migration 0007. There is no service-role key in this app.
  *
- * Singleton: the admin client holds no per-request state.
+ * Callers are server components/actions that already gate on
+ * `getAdminSession()`; the database enforces the same rule as a backstop, so
+ * a forged or stolen session gains nothing beyond its own profile.
+ *
+ * A fresh client is created per call (cookie mutations are request-scoped);
+ * cookie writes are ignored during Server Component renders, where the
+ * browser client refreshes the token instead.
  */
-let adminClient: ReturnType<typeof createClient> | null = null;
+export async function getSupabaseAdminClient() {
+  const cookieStore = await cookies();
 
-export function getSupabaseAdminClient() {
-  if (!adminClient) {
-    adminClient = createClient(supabaseUrl(), supabaseServiceRoleKey(), {
-      auth: {
-        // The service role is a static secret, not a user session.
-        persistSession: false,
-        autoRefreshToken: false,
+  return createServerClient(supabaseUrl(), supabaseAnonKey(), {
+    cookies: {
+      getAll() {
+        return cookieStore.getAll();
       },
-    });
-  }
-  return adminClient;
+      setAll(cookiesToSet) {
+        try {
+          for (const { name, value, options } of cookiesToSet) {
+            cookieStore.set(name, value, options);
+          }
+        } catch {
+          // Called from a Server Component render — cookie writes are not
+          // allowed there. The browser client refreshes the token instead;
+          // safe to ignore.
+        }
+      },
+    },
+  });
 }

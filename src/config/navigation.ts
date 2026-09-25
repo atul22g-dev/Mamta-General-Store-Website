@@ -1,20 +1,16 @@
-import { liveCategoryRefs, categoryRefs } from "@/config/categories";
 import type { CategoryRef } from "@/types/category";
 
 /**
  * Navigation definitions, consumed by header/footer components.
- * Categories are derived from the registry in `src/config/categories.ts` —
- * never hardcoded here.
+ * Category links come from the database: `(storefront)/layout.tsx` reads live
+ * categories via `lib/supabase/catalog.ts` and passes them as props — nothing
+ * static here.
  */
+
 export interface NavItem {
   label: string;
   href: string;
 }
-
-const toNavItem = ({ name, slug }: CategoryRef): NavItem => ({
-  label: name,
-  href: `/category/${slug}`,
-});
 
 /** Primary storefront navigation: desktop header + mobile menu. */
 export const mainNav: NavItem[] = [
@@ -36,8 +32,6 @@ export const shopNav: NavItem[] = [
   { label: "Cart", href: "/cart" },
 ];
 
-/** Footer/mobile "Categories" link column — all known categories. */
-export const categoryNav: NavItem[] = categoryRefs.map(toNavItem);
-
-/** Storefront-visible categories (header menus, category pages). */
-export const liveCategoryNav: NavItem[] = liveCategoryRefs.map(toNavItem);
+/** Map lightweight category refs onto nav items. */
+export const toNavItems = (categories: CategoryRef[]): NavItem[] =>
+  categories.map(({ name, slug }) => ({ label: name, href: `/category/${slug}` }));

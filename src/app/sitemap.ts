@@ -1,13 +1,13 @@
 import type { MetadataRoute } from "next";
 import { siteUrl } from "@/config/site";
-import { categoryRegistry } from "@/config/categories";
+import { getCategories } from "@/lib/supabase/catalog";
 
-/** Product URLs refresh from the database hourly. */
+/** Product + category URLs refresh from the database hourly. */
 export const revalidate = 3600;
 
 /**
- * Dynamic sitemap. Static + registry category URLs always resolve; product
- * URLs come from the database and are skipped gracefully if it is unreachable.
+ * Dynamic sitemap. Static URLs always resolve; category and product URLs come
+ * from the database and are skipped gracefully if it is unreachable.
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticEntries: MetadataRoute.Sitemap = [
@@ -18,25 +18,28 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${siteUrl}/contact`, changeFrequency: "monthly", priority: 0.4 },
   ];
 
-  const categoryPages: MetadataRoute.Sitemap = categoryRegistry.map((category) => ({
-    url: `${siteUrl}/category/${category.slug}`,
-    changeFrequency: "weekly",
-    priority: 0.8,
-  }));
-
-  let productPages: MetadataRoute.Sitemap = [];
+  let dbEntries: MetadataRoute.Sitemap = [];
   try {
+    const categories = await getCategories();
+    const categoryPages: MetadataRoute.Sitemap = categories.map((category) => ({
+      url: `${siteUrl}/category/${category.slug}`,
+      changeFrequency: "weekly",
+      priority: 0.8,
+    }));
+
     const { getShopProducts } = await import("@/lib/supabase/catalog");
     const products = await getShopProducts({ limit: 1000 });
-    productPages = products.map((product) => ({
+    const productPages: MetadataRoute.Sitemap = products.map((product) => ({
       url: `${siteUrl}/products/${product.slug}`,
       changeFrequency: "weekly",
       priority: 0.7,
     }));
+
+    dbEntries = [...categoryPages, ...productPages];
   } catch (error) {
     // Sitemap must never fail the build/request because the DB is down.
-    console.error("[sitemap] product URLs skipped:", error);
+    console.error("[sitemap] database URLs skipped:", error);
   }
 
-  return [...staticEntries, ...categoryPages, ...productPages];
+  return [...staticEntries, ...dbEntries];
 }

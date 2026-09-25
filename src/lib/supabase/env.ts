@@ -1,61 +1,36 @@
 /**
  * Supabase environment access — the single place Supabase env vars are read.
  *
- * Validation is lazy (on first use, not at import time) so commands that
- * never touch Supabase — `prisma generate`, a plain `next build` — keep
- * working before the project is configured. Every consumer gets a precise
- * error naming the missing variable and where to find its value.
+ * This app shares one Supabase project with the React Native/Expo app, so
+ * each variable accepts either naming convention: the Next.js `NEXT_PUBLIC_*`
+ * name or the Expo `EXPO_PUBLIC_*` name. Set whichever you prefer in `.env`.
  *
- * Secrets (service-role key, DB password) live only in `.env`, which is
- * gitignored. `.env.example` documents every variable with an empty value.
- *
- * Variables (all from the Supabase dashboard → Project Settings → API):
- * - NEXT_PUBLIC_SUPABASE_URL        project URL, safe for the browser
- * - NEXT_PUBLIC_SUPABASE_ANON_KEY   public anon key, RLS-scoped
- * - SUPABASE_SERVICE_ROLE_KEY       secret; server-only, bypasses RLS
- * - SUPABASE_DB_PASSWORD            secret; only for building DATABASE_URL
+ * Only PUBLIC variables are used — the URL and the anon/publishable key.
+ * There is no service-role key and no database password in this app: every
+ * privileged operation runs under the signed-in admin's session, authorized
+ * by Row Level Security policies (supabase/migrations/0007_rls_policies.sql).
  */
 
-function requireEnv(name: string): string {
-  const value = process.env[name];
-  if (!value) {
-    throw new Error(
-      `${name} is not set. Find it in your Supabase dashboard (Project Settings → API) and add it to .env — see .env.example.`,
-    );
+function requirePublicEnv(...names: string[]): string {
+  for (const name of names) {
+    const value = process.env[name];
+    if (value) return value;
   }
-  return value;
-}
-
-/**
- * A publishable key (sb_publishable_…) is RLS-scoped and must never sit in
- * the service-role slot: server queries silently return zero rows and the
- * Auth-admin API rejects it. Catch the mix-up at the source.
- */
-function requireSecretKey(name: string): string {
-  const value = requireEnv(name);
-  if (value.startsWith("sb_publishable_") || value.startsWith("eyJ")) {
-    throw new Error(
-      `${name} holds a publishable/anon key, not the secret service key. ` +
-        "Supabase dashboard → Project Settings → API → Secret keys → copy the sb_secret_… key into .env.",
-    );
-  }
-  return value;
+  throw new Error(
+    `${names.join(" or ")} is not set. Find both values in your Supabase dashboard ` +
+      "(Project Settings → API) and add them to .env — see .env.example.",
+  );
 }
 
 /** Project URL (public, safe on the client). */
 export function supabaseUrl(): string {
-  return requireEnv("NEXT_PUBLIC_SUPABASE_URL");
-}
-
-/** Anonymous key (public, RLS-scoped — safe on the client). */
-export function supabaseAnonKey(): string {
-  return requireEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY");
+  return requirePublicEnv("NEXT_PUBLIC_SUPABASE_URL", "EXPO_PUBLIC_SUPABASE_URL");
 }
 
 /**
- * Service-role key — **secret**. Bypasses Row Level Security.
- * Must only ever be used on the server (all consumers import "server-only").
+ * Anonymous/publishable key (public, RLS-scoped — safe on the client).
+ * Accepts either the Next.js or Expo variable name.
  */
-export function supabaseServiceRoleKey(): string {
-  return requireSecretKey("SUPABASE_SERVICE_ROLE_KEY");
+export function supabaseAnonKey(): string {
+  return requirePublicEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY");
 }

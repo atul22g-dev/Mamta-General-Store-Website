@@ -11,8 +11,8 @@ export const SITE_DESCRIPTION =
   "Beautiful unstitched dress materials for women at Mamta General Store, Jatwar — cotton, printed, embroidered and festive collections. Visit our local shop or order by India Post.";
 
 /**
- * Category strings live in `src/config/categories.ts` (the category registry).
- * Import from there instead of adding category names/slugs here.
+ * Categories live in the database (`categories` table) — nothing static here.
+ * The storefront reads them via `lib/supabase/catalog.ts`.
  */
 
 /** Default currency for all prices (stored in minor units, e.g. paise). */

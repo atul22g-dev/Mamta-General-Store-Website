@@ -70,7 +70,10 @@ export async function loginAction(
     // Server-side authorization: the Auth user must have an active ADMIN
     // profile. Otherwise sign the session out immediately — a valid
     // non-admin session must never linger or reach admin routes.
-    const { data: profile } = await getSupabaseAdminClient()
+    // Runs under the user's own JWT — profiles_select_own allows this read.
+    const { data: profile } = await (
+      await getSupabaseAdminClient()
+    )
       .from("profiles")
       .select("name, role, active")
       .eq("id", data.user.id)

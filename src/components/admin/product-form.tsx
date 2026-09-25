@@ -8,6 +8,7 @@ import { AlertCircle, Loader2 } from "lucide-react";
 import type { AdminProductDetail } from "@/lib/admin-products";
 import { saveProductAction, type ProductFormState } from "@/app/admin/products/actions";
 import { slugifyName } from "@/lib/validation/product";
+import { compressImageFile, PRODUCT_IMAGE_INPUT_MAX_BYTES } from "@/lib/images/compress-image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,6 +30,8 @@ const initialState: ProductFormState = {};
 
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/avif"];
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+/** Mirrors the server-side cap in the save action. */
+const MAX_PRODUCT_IMAGES = 5;
 
 function FieldError({ errors }: { errors?: string[] }) {
   if (!errors?.length) return null;
@@ -41,52 +44,97 @@ function FieldError({ errors }: { errors?: string[] }) {
 
 const inputInvalid = (errors?: string[]) => (errors?.length ? { "aria-invalid": true } : {});
 
-/**
- * Image-upload state: client-side type/size validation mirrors the server
- * rules. The selected (valid) File is held in state; the preview element
- * (see ImagePreview) renders it and owns the object-URL lifecycle.
- */
-function useProductImage() {
-  const [pendingFile, setPendingFile] = React.useState<File | null>(null);
-  const [imageFileError, setImageFileError] = React.useState<string | null>(null);
+/** A selected photo plus the stable id React keys on (assigned at pick time). */
+interface SelectedImage {
+  id: string;
+  file: File;
+}
 
-  function handleImageChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0] ?? null;
-
-    if (!file) {
-      setImageFileError(null);
-      setPendingFile(null);
-      return;
-    }
-    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-      setImageFileError("Unsupported image type. Use JPEG, PNG, WebP or AVIF.");
-      event.target.value = "";
-      return;
-    }
-    if (file.size > MAX_IMAGE_BYTES) {
-      setImageFileError("Image is larger than 5 MB.");
-      event.target.value = "";
-      return;
-    }
-
-    setImageFileError(null);
-    setPendingFile(file);
-  }
-
-  return { pendingFile, imageFileError, handleImageChange };
+/** Stable per-item id; randomUUID where available, unique fallback elsewhere. */
+function newImageId(): string {
+  return crypto.randomUUID?.() ?? `img-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
 /**
- * Live preview of the selected file. Rendered as a FileReader data URL —
- * unlike a Blob object URL, a data URL needs no revocation lifecycle, so the
- * preview can never leak a pinned file. With no file selected, the stored
- * image (edit mode) shows instead.
+ * Multi-image upload state (up to 5). Client-side type/size validation
+ * mirrors the server rules; invalid files are skipped with a message. Photos
+ * are optimized in the browser (resize + re-encode) at selection time — all
+ * accepted files together, since compression is independent per photo — so
+ * the previews and the hidden input the form submits carry the compressed
+ * files. Each preview element (see FileImagePreview) renders its own file
+ * and owns its reader lifecycle.
  */
-function ImagePreview({ file, fallbackUrl }: { file: File | null; fallbackUrl: string }) {
+function useProductImages() {
+  const [files, setFiles] = React.useState<SelectedImage[]>([]);
+  const [filesError, setFilesError] = React.useState<string | null>(null);
+  const [isOptimizing, setIsOptimizing] = React.useState(false);
+
+  async function addFiles(list: FileList | null) {
+    if (!list || list.length === 0) return;
+    // Materialize before the first await: the caller clears the picker right
+    // after this call, which detaches the FileList.
+    const selected = Array.from(list);
+    setFilesError(null);
+    setIsOptimizing(true);
+    try {
+      // Validate everything first, then optimize the accepted files together.
+      const remaining = MAX_PRODUCT_IMAGES - files.length;
+      const accepted: SelectedImage[] = [];
+      for (const original of selected) {
+        if (accepted.length >= remaining) {
+          setFilesError(`Up to ${MAX_PRODUCT_IMAGES} images can be added.`);
+          break;
+        }
+        if (!ALLOWED_IMAGE_TYPES.includes(original.type)) {
+          setFilesError(
+            `"${original.name}" is not a supported image type. Use JPEG, PNG, WebP or AVIF.`,
+          );
+          continue;
+        }
+        if (original.size > PRODUCT_IMAGE_INPUT_MAX_BYTES) {
+          setFilesError(`"${original.name}" is larger than 25 MB.`);
+          continue;
+        }
+        accepted.push({ id: newImageId(), file: original });
+      }
+
+      // Resize/compress in the browser before anything is uploaded.
+      const optimized = await Promise.all(
+        accepted.map(async (item) => ({ ...item, file: await compressImageFile(item.file) })),
+      );
+
+      const next = [...files];
+      for (const item of optimized) {
+        if (item.file.size > MAX_IMAGE_BYTES) {
+          setFilesError(
+            `"${item.file.name}" is still larger than 5 MB after optimization — try a smaller photo.`,
+          );
+          continue;
+        }
+        next.push(item);
+      }
+      setFiles(next);
+    } finally {
+      setIsOptimizing(false);
+    }
+  }
+
+  function removeAt(id: string) {
+    setFiles((current) => current.filter((item) => item.id !== id));
+  }
+
+  return { files, filesError, isOptimizing, addFiles, removeAt };
+}
+
+/**
+ * Live preview of one selected file, rendered as a FileReader data URL —
+ * unlike a Blob object URL, a data URL needs no revocation lifecycle, so
+ * previews can never leak a pinned file.
+ */
+function FileImagePreview({ file }: { file: File }) {
   const [dataUrl, setDataUrl] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    if (!file) return;
     let cancelled = false;
     const reader = new FileReader();
     reader.onload = () => {
@@ -100,16 +148,13 @@ function ImagePreview({ file, fallbackUrl }: { file: File | null; fallbackUrl: s
     };
   }, [file]);
 
-  const src = file ? dataUrl : fallbackUrl;
-  if (!src) return null;
+  if (!dataUrl) {
+    return <div aria-hidden="true" className="size-20 animate-pulse rounded-lg border bg-muted" />;
+  }
 
   return (
     /* eslint-disable-next-line @next/next/no-img-element -- local preview only */
-    <img
-      src={src}
-      alt="Selected product preview"
-      className="mt-2 max-h-48 rounded-lg border object-contain"
-    />
+    <img src={dataUrl} alt="" className="size-20 rounded-lg border object-cover" />
   );
 }
 
@@ -211,8 +256,8 @@ function BasicsSection({
   );
 }
 
-/** Pricing & inventory: price, original price, stock. */
-function PricingInventorySection({
+/** Pricing: selling price and original price. */
+function PricingSection({
   product,
   errors,
   isPending,
@@ -223,9 +268,7 @@ function PricingInventorySection({
 }) {
   return (
     <fieldset className="space-y-5" disabled={isPending}>
-      <legend className="mb-3 text-sm font-semibold tracking-wide uppercase">
-        Pricing &amp; inventory
-      </legend>
+      <legend className="mb-3 text-sm font-semibold tracking-wide uppercase">Pricing</legend>
 
       <div className="grid gap-5 sm:grid-cols-2">
         <div className="space-y-2">
@@ -258,27 +301,12 @@ function PricingInventorySection({
           />
           <FieldError errors={errors?.discountPrice} />
         </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="stock">Stock</Label>
-          <Input
-            id="stock"
-            name="stock"
-            type="number"
-            min="0"
-            step="1"
-            placeholder="empty = not tracked"
-            defaultValue={product?.stock ?? ""}
-            {...inputInvalid(errors?.stock)}
-          />
-          <FieldError errors={errors?.stock} />
-        </div>
       </div>
     </fieldset>
   );
 }
 
-/** Image & visibility: upload with live preview, URL fallback, toggle switches. */
+/** Image & visibility: multi-upload with live previews, URL fallback, toggles. */
 function ImageVisibilitySection({
   product,
   errors,
@@ -288,7 +316,23 @@ function ImageVisibilitySection({
   errors: ProductFormState["errors"];
   isPending: boolean;
 }) {
-  const { pendingFile, imageFileError, handleImageChange } = useProductImage();
+  const { files, filesError, isOptimizing, addFiles, removeAt } = useProductImages();
+  const isEdit = Boolean(product);
+
+  /**
+   * The visible picker is cleared after each selection (so the same file can
+   * be re-picked), which means the browser never submits those files with
+   * the form. A hidden file input mirrors the accumulated selection via
+   * DataTransfer and is the field the form actually submits.
+   */
+  const filesInputRef = React.useRef<HTMLInputElement>(null);
+  React.useEffect(() => {
+    const input = filesInputRef.current;
+    if (!input) return;
+    const transfer = new DataTransfer();
+    for (const item of files) transfer.items.add(item.file);
+    input.files = transfer.files;
+  }, [files]);
 
   return (
     <fieldset className="space-y-5" disabled={isPending}>
@@ -297,26 +341,73 @@ function ImageVisibilitySection({
       </legend>
 
       <div className="space-y-2">
-        <Label htmlFor="imageFile">Product image</Label>
+        <Label htmlFor="imageFiles">
+          Product images{files.length > 0 ? ` (${files.length}/${MAX_PRODUCT_IMAGES})` : ""}
+        </Label>
         <Input
-          id="imageFile"
-          name="imageFile"
+          id="imageFiles"
           type="file"
+          multiple
           accept="image/jpeg,image/png,image/webp,image/avif"
-          onChange={handleImageChange}
-          aria-invalid={Boolean(imageFileError)}
-          {...(imageFileError ? { "aria-describedby": "image-file-error" } : {})}
+          disabled={isOptimizing || files.length >= MAX_PRODUCT_IMAGES}
+          onChange={(event) => {
+            addFiles(event.target.files);
+            event.target.value = ""; // allow re-selecting the same file
+          }}
         />
-        <p id="image-file-hint" className="text-muted-foreground text-xs">
-          JPEG, PNG, WebP or AVIF — up to 5 MB. Stored in Supabase Storage.
+        {/* The picker above is cleared on change; the form submits this hidden
+            input, kept in sync with the accumulated selection. */}
+        <input
+          ref={filesInputRef}
+          type="file"
+          name="imageFiles"
+          multiple
+          className="hidden"
+          aria-hidden="true"
+          tabIndex={-1}
+        />
+        <p id="image-files-hint" className="text-muted-foreground text-xs">
+          Up to {MAX_PRODUCT_IMAGES} images — JPEG, PNG, WebP or AVIF. Large photos are resized and
+          compressed automatically before upload. The first image is the cover
+          {isEdit
+            ? " (uploading replaces it; extra photos are added to the gallery)"
+            : " shown on cards and listings"}
+          . Stored in Supabase Storage.
         </p>
-        {imageFileError && (
-          <p id="image-file-error" role="alert" className="text-destructive text-xs">
-            {imageFileError}
+        {isOptimizing && (
+          <p role="status" className="text-muted-foreground text-xs">
+            Optimizing images…
           </p>
         )}
-        <ImagePreview file={pendingFile} fallbackUrl={product?.imageUrl ?? ""} />
-        <FieldError errors={errors?.imageUrl} />
+        {filesError && (
+          <p role="alert" className="text-destructive text-xs">
+            {filesError}
+          </p>
+        )}
+
+        {files.length > 0 && (
+          <ul className="flex flex-wrap gap-3 pt-1">
+            {files.map((item, index) => (
+              <li key={item.id} className="relative">
+                <FileImagePreview file={item.file} />
+                {index === 0 && (
+                  <span className="bg-primary text-primary-foreground absolute -top-2 left-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-medium">
+                    Cover
+                  </span>
+                )}
+                <button
+                  type="button"
+                  onClick={() => removeAt(item.id)}
+                  aria-label={`Remove ${item.file.name}`}
+                  className="bg-background hover:bg-destructive hover:text-destructive-foreground absolute -top-2 -right-2 flex size-6 items-center justify-center rounded-full border text-sm shadow-xs transition-colors"
+                >
+                  ×
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        {!isEdit && <FieldError errors={errors?.imageUrl} />}
       </div>
 
       <div className="space-y-2">
@@ -329,8 +420,8 @@ function ImageVisibilitySection({
           defaultValue={product?.imageUrl ?? ""}
           {...inputInvalid(errors?.imageUrl)}
         />
-        <p className="text-muted-foreground text-xs">Used when no file is uploaded above.</p>
-        <FieldError errors={errors?.imageUrl} />
+        <p className="text-muted-foreground text-xs">Used when no files are uploaded above.</p>
+        {isEdit && <FieldError errors={errors?.imageUrl} />}
       </div>
 
       <div className="flex flex-wrap gap-6">
@@ -425,7 +516,7 @@ export function ProductForm({
         errors={errors}
         isPending={isPending}
       />
-      <PricingInventorySection product={product} errors={errors} isPending={isPending} />
+      <PricingSection product={product} errors={errors} isPending={isPending} />
       <ImageVisibilitySection product={product} errors={errors} isPending={isPending} />
 
       <FormActions isPending={isPending} isEdit={Boolean(product)} />

@@ -16,22 +16,41 @@
  *      bucket) and prints a summary — hand-made tables with wrong shapes
  *      are reported as drift instead of silently passing.
  *
- * Requires DATABASE_URL in .env (server-side secret, never committed).
+ * Requires DATABASE_URL — set up once with `npm run db:login`, which writes
+ * scripts/db.env (gitignored; the Next.js app never reads it). .env's
+ * DATABASE_URL also works as a fallback.
  * Our migrations are additive and idempotent; a failed deploy rolls back
  * and leaves the database exactly as it was.
  */
+import { readFileSync, existsSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 
 import "dotenv/config";
 import { Client } from "pg";
 
+/**
+ * Load DATABASE_URL from scripts/db.env (preferred — the app's .env no
+ * longer holds secrets), falling back to .env via dotenv.
+ */
+function loadDbUrl(): string | undefined {
+  const dbEnvPath = join(process.cwd(), "scripts", "db.env");
+  if (existsSync(dbEnvPath)) {
+    const line = readFileSync(dbEnvPath, "utf8")
+      .split(/\r?\n/)
+      .find((line) => /^\s*DATABASE_URL\s*=/.test(line));
+    const value = line?.split("=").slice(1).join("=").trim().replace(/^"|"$/g, "");
+    if (value) return value;
+  }
+  return process.env.DATABASE_URL;
+}
+
 const MIGRATIONS_DIR = join(process.cwd(), "supabase", "migrations");
 
 /** Pooler regions, most-likely first. Wrong regions fail fast (bad tenant). */
 const POOLER_REGIONS = [
+  "ap-southeast-1", // this project's region (aws-0); probe first for speed
   "ap-south-1",
-  "ap-southeast-1",
   "ap-northeast-1",
   "us-east-1",
   "eu-west-2",
@@ -61,7 +80,18 @@ const EXPECTED_TABLES = [
 const EXPECTED_COLUMNS: Record<string, string[]> = {
   users: ["id", "email", "role", "active"],
   categories: ["id", "name", "slug", "description", "imageUrl"],
-  products: ["id", "name", "slug", "price", "discountPrice", "stock", "sku", "featured", "active", "categoryId"],
+  products: [
+    "id",
+    "name",
+    "slug",
+    "price",
+    "discountPrice",
+    "stock",
+    "sku",
+    "featured",
+    "active",
+    "categoryId",
+  ],
   product_images: ["id", "url", "alt", "position", "productId"],
   product_sizes: ["id", "label", "productId"],
   product_colors: ["id", "name", "hex", "productId"],
@@ -153,19 +183,23 @@ async function resolveClient(dbUrl: string): Promise<Client> {
         await client.end().catch(() => {});
       }
     }
-
     fail(
-      "Could not connect directly or via any pooler region. Verify the database password " +
-        "(Project Settings → Database) and that the project is not paused.",
+      "Could not connect directly or via any pooler region. " +
+        "Most likely the database password in scripts/db.env is stale — reset it under " +
+        "Supabase dashboard → Project Settings → Database → Connection string → " +
+        "'Reset database password', copy the fresh URI into scripts/db.env, and re-run. " +
+        "(Also check the project is not paused.)",
     );
   }
 }
 
 async function main() {
-  const dbUrl = process.env.DATABASE_URL;
+  const dbUrl = loadDbUrl();
   if (!dbUrl) {
     fail(
-      "DATABASE_URL is not set. Add it to .env (Supabase dashboard → Project Settings → Database → Connection string → URI).",
+      "DATABASE_URL is not set. Create scripts/db.env (copy scripts/db.env.example) and paste " +
+        "your connection string: Supabase dashboard → Project Settings → Database → " +
+        "Connection string → URI.",
     );
   }
 
@@ -243,7 +277,8 @@ async function main() {
       );
       const present = new Set(columns.rows.map((row) => row.column_name));
       for (const column of EXPECTED_COLUMNS[table] ?? []) {
-        if (!present.has(column)) problems.push(`table "${table}" is missing column "${column}" (drift)`);
+        if (!present.has(column))
+          problems.push(`table "${table}" is missing column "${column}" (drift)`);
       }
     }
 

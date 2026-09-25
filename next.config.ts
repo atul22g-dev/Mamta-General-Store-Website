@@ -16,6 +16,14 @@ const supabaseHostname = (() => {
 })();
 
 const nextConfig: NextConfig = {
+  experimental: {
+    serverActions: {
+      // Server Actions cap request bodies at 1 MB by default, which
+      // multi-image product uploads exceed. Client-side optimization keeps
+      // 5 photos around 1–2.5 MB; this adds headroom as a safety net.
+      bodySizeLimit: "10mb",
+    },
+  },
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com" },

@@ -10,6 +10,12 @@ import {
   type OrderStatus,
 } from "@/lib/supabase/admin-orders";
 
+/**
+ * Order server actions. This module is imported by client components, so it
+ * must not export anything except async functions ("use server" boundary);
+ * all server-only imports are confined here.
+ */
+
 /** Status update for one order. Admin session required; input validated. */
 export async function updateOrderStatusAction(formData: FormData): Promise<void> {
   const session = await getAdminSession();
@@ -43,5 +49,3 @@ export async function deleteOrderAction(formData: FormData): Promise<void> {
   revalidatePath("/admin/orders");
   revalidatePath("/admin/dashboard");
 }
-
-export { ORDER_STATUSES };

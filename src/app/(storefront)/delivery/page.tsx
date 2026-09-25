@@ -79,8 +79,8 @@ export default function DeliveryPage() {
           {DELIVERY_NOTE}
         </p>
         <p className="text-muted-foreground mt-2 text-xs leading-relaxed">
-          Delivery times and charges depend on your location and India Post&apos;s service — we confirm
-          both with you before dispatch, so there are never surprises.
+          Delivery times and charges depend on your location and India Post&apos;s service — we
+          confirm both with you before dispatch, so there are never surprises.
         </p>
         <div className="mt-5 flex flex-col gap-3 sm:flex-row">
           {siteContact.whatsappUrl && (

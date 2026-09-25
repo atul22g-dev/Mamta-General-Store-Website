@@ -47,7 +47,9 @@ async function count(
   table: "products" | "categories" | "orders",
   filters?: Record<string, boolean>,
 ): Promise<number> {
-  let builder = getSupabaseAdminClient().from(table).select("id", { count: "exact", head: true });
+  let builder = (await getSupabaseAdminClient())
+    .from(table)
+    .select("id", { count: "exact", head: true });
   for (const [column, value] of Object.entries(filters ?? {})) {
     builder = builder.eq(column, value);
   }
@@ -78,7 +80,7 @@ interface RecentOrderRow {
 }
 
 export async function getDashboardData(): Promise<DashboardData> {
-  const client = getSupabaseAdminClient();
+  const client = await getSupabaseAdminClient();
 
   const [
     totalProducts,
@@ -115,16 +117,18 @@ export async function getDashboardData(): Promise<DashboardData> {
 
   return {
     stats: { totalProducts, activeProducts, categories, orders },
-    recentProducts: ((recentProductsResult.data ?? []) as RecentProductRow[]).map((row) => ({
-      id: row.id,
-      name: row.name,
-      slug: row.slug,
-      active: row.active,
-      featured: row.featured,
-      price: row.price,
-      categoryName: row.categories?.name ?? null,
-      createdAt: new Date(row.createdAt),
-    })),
+    recentProducts: ((recentProductsResult.data ?? []) as unknown as RecentProductRow[]).map(
+      (row) => ({
+        id: row.id,
+        name: row.name,
+        slug: row.slug,
+        active: row.active,
+        featured: row.featured,
+        price: row.price,
+        categoryName: row.categories?.name ?? null,
+        createdAt: new Date(row.createdAt),
+      }),
+    ),
     recentOrders: ((recentOrdersResult.data ?? []) as RecentOrderRow[]).map((row) => ({
       id: row.id,
       orderNumber: row.orderNumber,

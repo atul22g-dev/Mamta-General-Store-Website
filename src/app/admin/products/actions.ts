@@ -15,6 +15,7 @@ import {
   uploadProductImage,
   deleteProductImage,
   deleteAllProductImages,
+  type UploadResult,
 } from "@/lib/supabase/storage";
 
 export interface ProductFormState {
@@ -60,7 +61,6 @@ export async function saveProductAction(
     price: formData.get("price"),
     discountPrice: formData.get("discountPrice"),
     imageUrl: formData.get("imageUrl"),
-    stock: formData.get("stock"),
     active: formData.get("active") === "on",
     featured: formData.get("featured") === "on",
     isNewArrival: formData.get("isNewArrival") === "on",
@@ -75,13 +75,23 @@ export async function saveProductAction(
   const data = parsed.data;
   const id = formData.get("id")?.toString() || undefined;
 
-  // Image resolution: an uploaded file wins; otherwise the URL field is used.
-  const imageFile = formData.get("imageFile");
-  const hasFile = imageFile instanceof File && imageFile.size > 0;
+  // Image resolution: uploaded files (up to 5) win; otherwise the URL field
+  // becomes the cover. Exactly one of the two is required.
+  const imageFilesRaw = formData
+    .getAll("imageFiles")
+    .filter((entry): entry is File => entry instanceof File && entry.size > 0);
+  const imageFiles = imageFilesRaw.slice(0, 5);
+  const hasFile = imageFiles.length > 0;
 
   if (!hasFile && !data.imageUrl) {
     return {
-      errors: { imageUrl: ["Upload an image file or provide an image URL"] },
+      errors: {
+        imageUrl: [
+          imageFilesRaw.length > 5
+            ? `Up to 5 images can be uploaded (received ${imageFilesRaw.length}).`
+            : "Upload an image file or provide an image URL",
+        ],
+      },
     };
   }
 
@@ -98,7 +108,7 @@ export async function saveProductAction(
   }
 
   const productValues = toDatabaseValues(data);
-  const client = getSupabaseAdminClient();
+  const client = await getSupabaseAdminClient();
 
   // The product id: existing on edit, generated up-front on create so the
   // upload lands directly under the final storage prefix (no move needed).
@@ -127,16 +137,38 @@ export async function saveProductAction(
       return { errors: { categoryId: ["Choose a valid category"] } };
     }
 
-    // 1. Upload the file (if any) — before any database writes so a failed
-    //    upload leaves the product data untouched.
-    let uploadedUrl: string | null = null;
-    let uploadedPath: string | null = null;
+    // 1. Upload the files (if any) — before any database writes so a failed
+    //    upload leaves the product data untouched. Uploads are independent —
+    //    start them together instead of one after another. allSettled (not
+    //    all) so a single failed upload still lets us roll back every object
+    //    that DID reach storage.
+    let coverUrl: string | null = null;
+    let coverPath: string | null = null;
+    const extraUploads: UploadResult[] = [];
     if (hasFile) {
       try {
-        const uploaded = await uploadProductImage(productId, imageFile as File);
-        uploadedUrl = uploaded.url;
-        uploadedPath = uploaded.path;
+        const settled = await Promise.allSettled(
+          imageFiles.map((file) => uploadProductImage(productId, file)),
+        );
+        const firstRejection = settled.find(
+          (outcome): outcome is PromiseRejectedResult => outcome.status === "rejected",
+        );
+        if (firstRejection) throw firstRejection.reason;
+        settled.forEach((outcome, index) => {
+          const uploaded = (outcome as PromiseFulfilledResult<UploadResult>).value;
+          if (index === 0) {
+            coverUrl = uploaded.url;
+            coverPath = uploaded.path;
+          } else {
+            extraUploads.push(uploaded);
+          }
+        });
       } catch (uploadError) {
+        const rollbackPaths = [coverPath, ...extraUploads.map((u) => u.path)].filter(
+          (path): path is string => Boolean(path),
+        );
+        // Cleanup targets are independent objects — remove them together.
+        await Promise.all(rollbackPaths.map((path) => deleteProductImage(path)));
         console.error("[admin-products] image upload failed:", uploadError);
         return {
           formError:
@@ -147,7 +179,7 @@ export async function saveProductAction(
       }
     }
 
-    const imageUrl = uploadedUrl ?? data.imageUrl ?? null;
+    const imageUrl = coverUrl ?? data.imageUrl ?? null;
 
     if (id) {
       // 2a. Update the product row.
@@ -157,20 +189,27 @@ export async function saveProductAction(
         .eq("id", id);
       if (updateError) throw updateError;
 
-      // 3a. Replace the primary image row (position 0).
+      // 3a. Replace the primary image row (position 0), then append the
+      //      extra uploads to the gallery (positions 1–4).
       const { error: imageDeleteError } = await client
         .from("product_images")
         .delete()
         .eq("productId", id)
         .eq("position", 0);
       if (imageDeleteError) throw imageDeleteError;
-      const { error: imageInsertError } = await client.from("product_images").insert({
-        id: randomUUID(),
-        productId: id,
-        url: imageUrl,
-        alt: data.name,
-        position: 0,
-      } as never);
+      const galleryRows = [
+        { id: randomUUID(), productId: id, url: imageUrl, alt: data.name, position: 0 },
+        ...extraUploads.map((upload, index) => ({
+          id: randomUUID(),
+          productId: id,
+          url: upload.url,
+          alt: `${data.name} — photo ${index + 2}`,
+          position: index + 1,
+        })),
+      ];
+      const { error: imageInsertError } = await client
+        .from("product_images")
+        .insert(galleryRows as never);
       if (imageInsertError) throw imageInsertError;
     } else {
       // 2b. Create the product with the pre-generated id.
@@ -179,20 +218,26 @@ export async function saveProductAction(
         .insert({ id: productId, ...productValues } as never);
       if (insertError) throw insertError;
 
-      // 3b. Insert the primary image row.
-      const { error: imageInsertError } = await client.from("product_images").insert({
-        id: randomUUID(),
-        productId,
-        url: imageUrl,
-        alt: data.name,
-        position: 0,
-      } as never);
+      // 3b. Insert the gallery: cover at position 0, extras at 1–4.
+      const galleryRows = [
+        { id: randomUUID(), productId, url: imageUrl, alt: data.name, position: 0 },
+        ...extraUploads.map((upload, index) => ({
+          id: randomUUID(),
+          productId,
+          url: upload.url,
+          alt: `${data.name} — photo ${index + 2}`,
+          position: index + 1,
+        })),
+      ];
+      const { error: imageInsertError } = await client
+        .from("product_images")
+        .insert(galleryRows as never);
       if (imageInsertError) throw imageInsertError;
     }
 
     // 4. Cleanup: remove the replaced storage object only after the database
     //    is consistent (only when a new file replaced an uploaded image).
-    if (id && uploadedPath && previousImageUrl) {
+    if (id && coverPath && previousImageUrl) {
       const previousPath = productImagePathFromUrl(previousImageUrl);
       if (previousPath) {
         await deleteProductImage(previousPath);
@@ -224,7 +269,7 @@ export async function deleteProductAction(formData: FormData): Promise<void> {
   await deleteAllProductImages(id);
 
   try {
-    const { error } = await getSupabaseAdminClient().from("products").delete().eq("id", id);
+    const { error } = await (await getSupabaseAdminClient()).from("products").delete().eq("id", id);
     if (error) throw error;
   } catch {
     // Deletion failures are non-fatal for the list render, as before.
@@ -244,7 +289,9 @@ export async function toggleProductActiveAction(formData: FormData): Promise<voi
   if (!id) return;
 
   try {
-    const { error } = await getSupabaseAdminClient()
+    const { error } = await (
+      await getSupabaseAdminClient()
+    )
       .from("products")
       .update({ active: next } as never)
       .eq("id", id);
@@ -267,7 +314,9 @@ export async function toggleProductFeaturedAction(formData: FormData): Promise<v
   if (!id) return;
 
   try {
-    const { error } = await getSupabaseAdminClient()
+    const { error } = await (
+      await getSupabaseAdminClient()
+    )
       .from("products")
       .update({ featured: next } as never)
       .eq("id", id);
@@ -278,4 +327,5 @@ export async function toggleProductFeaturedAction(formData: FormData): Promise<v
 
   revalidatePath("/admin/products");
   revalidatePath("/");
+  revalidatePath("/shop");
 }

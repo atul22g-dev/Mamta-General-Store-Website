@@ -24,6 +24,8 @@ export interface AdminOrderItem {
   id: string;
   productName: string;
   productSlug: string;
+  /** Cover image URL of the ordered product, when it still has one. */
+  productImage: string | null;
   quantity: number;
   unitPrice: number;
   lineTotal: number;
@@ -63,7 +65,7 @@ const LIST_SELECT = `
   id, "orderNumber", status, "customerName", "customerPhone",
   "shippingLine1", "shippingCity", "shippingState", "shippingPostalCode",
   total, "createdAt",
-  order_items ( id, "productName", "productSlug", quantity, "unitPrice", "lineTotal" )
+  order_items ( id, "productId", "productName", "productSlug", quantity, "unitPrice", "lineTotal" )
 `;
 
 interface ListRow {
@@ -81,6 +83,7 @@ interface ListRow {
   order_items:
     | {
         id: string;
+        productId: string | null;
         productName: string;
         productSlug: string;
         quantity: number;
@@ -93,7 +96,7 @@ interface ListRow {
 /** Orders with items, filters, search and pagination (admin list). */
 export async function listAdminOrders(params: OrderListParams = {}): Promise<OrderListResult> {
   const { status = "all", page = 1, pageSize = 20 } = params;
-  const client = getSupabaseAdminClient();
+  const client = await getSupabaseAdminClient();
 
   let query = client
     .from("orders")
@@ -122,8 +125,34 @@ export async function listAdminOrders(params: OrderListParams = {}): Promise<Ord
 
   const { data, count, error } = await query;
   if (error) throw new Error(`Failed to load orders: ${error.message}`);
+  const orderRows = (data ?? []) as unknown as ListRow[];
 
-  const rows = ((data ?? []) as ListRow[]).map((row) => ({
+  // Resolve each ordered product's cover image (position 0) in one query —
+  // rows snapshot product name/slug/price, so images are the only live
+  // lookup. Missing/legacy rows map to null and render a placeholder.
+  const productIds = [
+    ...new Set(
+      orderRows.flatMap((row) =>
+        (row.order_items ?? [])
+          .map((item) => item.productId)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    ),
+  ];
+  const coverByProduct = new Map<string, string>();
+  if (productIds.length > 0) {
+    const { data: covers, error: coversError } = await client
+      .from("product_images")
+      .select("productId, url")
+      .in("productId", productIds)
+      .eq("position", 0);
+    if (coversError) throw new Error(`Failed to load product images: ${coversError.message}`);
+    for (const cover of (covers ?? []) as { productId: string; url: string }[]) {
+      coverByProduct.set(cover.productId, cover.url);
+    }
+  }
+
+  const rows = orderRows.map((row) => ({
     id: row.id,
     orderNumber: row.orderNumber,
     status: row.status,
@@ -140,6 +169,7 @@ export async function listAdminOrders(params: OrderListParams = {}): Promise<Ord
       id: item.id,
       productName: item.productName,
       productSlug: item.productSlug,
+      productImage: item.productId ? (coverByProduct.get(item.productId) ?? null) : null,
       quantity: item.quantity,
       unitPrice: item.unitPrice,
       lineTotal: item.lineTotal,
@@ -149,9 +179,21 @@ export async function listAdminOrders(params: OrderListParams = {}): Promise<Ord
   return { rows, total: count ?? 0 };
 }
 
+/**
+ * Permanently delete an order and its line items. Intended for test,
+ * duplicate or spam orders — real orders should be CANCELLED instead so
+ * revenue history stays intact. Line items cascade (schema-level FK).
+ */
+export async function deleteOrder(id: string): Promise<void> {
+  const { error } = await (await getSupabaseAdminClient()).from("orders").delete().eq("id", id);
+  if (error) throw new Error(`Failed to delete order: ${error.message}`);
+}
+
 /** Update an order's fulfilment status. */
 export async function updateOrderStatus(id: string, status: OrderStatus): Promise<void> {
-  const { error } = await getSupabaseAdminClient()
+  const { error } = await (
+    await getSupabaseAdminClient()
+  )
     .from("orders")
     .update({ status } as never)
     .eq("id", id);

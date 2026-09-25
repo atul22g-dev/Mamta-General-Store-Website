@@ -12,8 +12,7 @@ import { CallToAction } from "@/components/home/call-to-action";
 
 export const metadata: Metadata = {
   title: {
-    absolute:
-      "Mamta General Store — Women's Unstitched Dress Material in Jatwar, Haryana",
+    absolute: "Mamta General Store — Women's Unstitched Dress Material in Jatwar, Haryana",
   },
   description:
     "Beautiful unstitched dress materials for women at Mamta General Store, Jatwar — cotton, printed, embroidered and festive collections. Visit our shop near the Post Office or order by India Post.",

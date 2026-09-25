@@ -59,7 +59,7 @@ export async function addProductImagesAction(
   if (files.length === 0) return { error: "Choose at least one image." };
   if (files.length > 8) return { error: "Up to 8 images can be added at once." };
 
-  const client = getSupabaseAdminClient();
+  const client = await getSupabaseAdminClient();
 
   // Product must exist; slug is needed to revalidate its page.
   const { data: product } = await client
@@ -121,7 +121,7 @@ export async function deleteProductImageAction(formData: FormData): Promise<void
   const productId = formData.get("productId")?.toString();
   if (!imageId || !productId) return;
 
-  const client = getSupabaseAdminClient();
+  const client = await getSupabaseAdminClient();
 
   // Product slug (for revalidation) and the image row are independent reads.
   const [product, image] = await Promise.all([
@@ -134,6 +134,10 @@ export async function deleteProductImageAction(formData: FormData): Promise<void
       .maybeSingle<{ url: string }>(),
   ]);
 
+  // Storage path is derived from the row we just read: the delete below must
+  // only run once the URL is captured, or the cleanup target would be lost.
+  const storagePath = image.data ? productImagePathFromUrl(image.data.url) : null;
+
   const { error } = await client.from("product_images").delete().eq("id", imageId);
   if (error) {
     console.error("[admin-product-images] delete failed:", error);
@@ -141,10 +145,7 @@ export async function deleteProductImageAction(formData: FormData): Promise<void
   }
 
   // Storage cleanup is best-effort and only for bucket-hosted objects.
-  if (image.data) {
-    const path = productImagePathFromUrl(image.data.url);
-    if (path) await deleteProductImage(path);
-  }
+  if (storagePath) await deleteProductImage(storagePath);
 
   revalidateProductSurfaces(product.data?.slug ?? null);
 }

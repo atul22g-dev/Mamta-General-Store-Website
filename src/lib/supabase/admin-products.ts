@@ -68,7 +68,7 @@ export async function slugOrSkuTaken(
   sku: string | null,
   excludeId?: string,
 ): Promise<{ slugTaken: boolean; skuTaken: boolean }> {
-  const client = getSupabaseAdminClient();
+  const client = await getSupabaseAdminClient();
 
   const slugQuery = client.from("products").select("id").eq("slug", slug).limit(1);
   const skuQuery = sku ? client.from("products").select("id").eq("sku", sku).limit(1) : null;
@@ -95,7 +95,7 @@ export async function listAdminProducts(
 ): Promise<ProductListResult> {
   const { query, categoryId, status = "all", page = 1, pageSize = 10 } = params;
 
-  const client = getSupabaseAdminClient();
+  const client = await getSupabaseAdminClient();
 
   // Count query mirrors the filters exactly.
   let countBuilder = client.from("products").select("id", { count: "exact", head: true });
@@ -128,7 +128,7 @@ export async function listAdminProducts(
   const { data, error } = await builder;
   if (error) throw new Error(`Failed to list products: ${error.message}`);
 
-  const rows = (data as ListRow[]).map((row) => {
+  const rows = (data as unknown as ListRow[]).map((row) => {
     const firstImage = (row.product_images ?? [])
       .slice()
       .sort((a, b) => a.position - b.position)[0];
@@ -174,7 +174,9 @@ export interface AdminProductDetail {
 export async function getAdminProductImages(
   productId: string,
 ): Promise<{ id: string; url: string; alt: string | null; position: number }[]> {
-  const { data, error } = await getSupabaseAdminClient()
+  const { data, error } = await (
+    await getSupabaseAdminClient()
+  )
     .from("product_images")
     .select("id, url, alt, position")
     .eq("productId", productId)
@@ -185,7 +187,9 @@ export async function getAdminProductImages(
 }
 
 export async function getAdminProduct(id: string): Promise<AdminProductDetail | null> {
-  const { data, error } = await getSupabaseAdminClient()
+  const { data, error } = await (
+    await getSupabaseAdminClient()
+  )
     .from("products")
     .select(`${LIST_SELECT}, description, brand`)
     .eq("id", id)
@@ -194,7 +198,10 @@ export async function getAdminProduct(id: string): Promise<AdminProductDetail | 
   if (error) throw new Error(`Failed to load product: ${error.message}`);
   if (!data) return null;
 
-  const row = data as ListRow & { description: string | null; brand: string | null };
+  const row = data as unknown as ListRow & {
+    description: string | null;
+    brand: string | null;
+  };
   const firstImage = (row.product_images ?? []).slice().sort((a, b) => a.position - b.position)[0];
 
   return {

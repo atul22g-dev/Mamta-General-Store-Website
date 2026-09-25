@@ -43,3 +43,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Maintenance-script database credentials (never committed)
+/scripts/db.env
+
+# Maintenance-script service key (never committed; rotate after use)
+/scripts/admin.env

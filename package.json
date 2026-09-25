@@ -9,8 +9,9 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "format:check": "prettier --check .",
+    "db:login": "tsx scripts/db-url.ts",
     "db:deploy": "tsx scripts/db-deploy.ts",
-    "create-admin": "tsx scripts/create-admin.ts owner@mamtastore.in admin",
+    "create-admin": "tsx scripts/create-admin.ts",
     "doctor": "npx react-doctor@latest"
   },
   "dependencies": {

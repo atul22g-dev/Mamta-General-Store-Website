@@ -67,15 +67,6 @@ export const productFormSchema = z
         .max(1000, "URL too long")
         .optional(),
     ),
-    stock: z.preprocess(
-      (value) => (value === "" || value === null ? null : Number(value)),
-      z
-        .number({ error: "Enter a number" })
-        .int("Whole numbers only")
-        .min(0, "Stock cannot be negative")
-        .max(1_000_000, "Stock too large")
-        .nullable(),
-    ),
     active: z.boolean().default(false),
     featured: z.boolean().default(false),
     isNewArrival: z.boolean().default(false),
@@ -96,7 +87,9 @@ export function toDatabaseValues(data: ProductFormData) {
     description: data.description ? data.description : null,
     price: data.price,
     discountPrice: data.discountPrice ?? null,
-    stock: data.stock,
+    // Stock is not managed in the admin form: products are saved as untracked
+    // (null = always available; checkout skips the stock decrement).
+    stock: null,
     featured: data.featured,
     isNewArrival: data.isNewArrival,
     active: data.active,

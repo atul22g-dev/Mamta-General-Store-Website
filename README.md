@@ -24,14 +24,23 @@ collection and built to grow with more product categories over time.
    cp .env.example .env
    ```
 
-   - `DATABASE_URL` — PostgreSQL connection string
+   - `NEXT_PUBLIC_SUPABASE_URL` (or `EXPO_PUBLIC_SUPABASE_URL`) — Supabase project URL (Dashboard → Project Settings → API)
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY` (or `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`) — public anon/publishable key
    - `NEXT_PUBLIC_SITE_URL` — public base URL (used for SEO metadata, sitemap, robots)
 
-3. Create the database schema once a PostgreSQL server is running:
+   Only public variables are used — there is no service-role key or database
+   password in this app. Admin operations run under the signed-in admin's
+   session, authorized by Row Level Security policies.
+
+3. Create the database schema:
 
    ```bash
-   npx prisma migrate dev --name init
+   npm run db:deploy
    ```
+
+   (Requires `DATABASE_URL` in `scripts/db.env` for this setup step — copy
+   `scripts/db.env.example`, paste your connection string, then run. Or
+   apply `supabase/migrations/*.sql` via the Supabase dashboard SQL Editor.)
 
 4. Start the dev server:
 

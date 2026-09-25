@@ -162,29 +162,36 @@ export function ProductGallery({
         )}
       </div>
 
-      {/* Zoom lightbox — native <dialog> for correct focus/Esc/backdrop semantics */}
+      {/* Zoom lightbox — native <dialog> for correct focus/Esc/backdrop semantics.
+          Click-away closing lives on a plain wrapper div (mouse convenience
+          only — keyboard users have Esc and the Close button), so the
+          <dialog> element itself carries no interaction handlers. */}
       <dialog
         ref={dialogRef}
         aria-label={`${productName} — zoomed photo`}
         className="fixed inset-0 z-50 m-auto max-h-full w-auto max-w-full bg-transparent p-0 backdrop:bg-background/95 backdrop:p-4 sm:backdrop:p-10"
-        onClick={() => dialogRef.current?.close()}
         onClose={() => setZoomed(false)}
       >
-        <div className="relative flex items-center justify-center">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={active.url}
-            alt={active.alt ?? productName}
-            className="max-h-[90vh] max-w-full rounded-lg object-contain shadow-soft-lg"
-          />
-          <button
-            type="button"
-            aria-label="Close zoom"
-            onClick={() => dialogRef.current?.close()}
-            className="text-muted-foreground hover:text-foreground absolute -top-10 right-0 rounded-full border bg-card px-3 py-1.5 text-sm"
-          >
-            Close ✕
-          </button>
+        <div
+          onClick={() => dialogRef.current?.close()}
+          className="fixed inset-0 flex items-center justify-center"
+        >
+          <div className="relative" onClick={(event) => event.stopPropagation()}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={active.url}
+              alt={active.alt ?? productName}
+              className="max-h-[90vh] max-w-full rounded-lg object-contain shadow-soft-lg"
+            />
+            <button
+              type="button"
+              aria-label="Close zoom"
+              onClick={() => dialogRef.current?.close()}
+              className="text-muted-foreground hover:text-foreground absolute -top-10 right-0 rounded-full border bg-card px-3 py-1.5 text-sm"
+            >
+              Close ✕
+            </button>
+          </div>
         </div>
       </dialog>
     </div>

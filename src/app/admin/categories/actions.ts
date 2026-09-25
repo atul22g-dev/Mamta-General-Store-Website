@@ -5,7 +5,12 @@ import { z } from "zod";
 
 import { getAdminSession } from "@/lib/auth/session";
 import { slugifyName } from "@/lib/validation/product";
-import { createCategory, deleteCategory, updateCategory } from "@/lib/supabase/admin-categories";
+import {
+  createCategory,
+  deleteCategory,
+  toggleCategoryActive,
+  updateCategory,
+} from "@/lib/supabase/admin-categories";
 
 const categorySchema = z.object({
   id: z.string().optional(),
@@ -51,6 +56,7 @@ export async function createCategoryAction(
     slug,
     description: parsed.data.description ?? null,
     imageUrl: parsed.data.imageUrl || null,
+    active: formData.get("active") === "on",
   });
   if (result.error) return { error: result.error };
 
@@ -88,6 +94,25 @@ export async function updateCategoryAction(
 
   revalidateCategorySurfaces();
   return { success: "Category updated." };
+}
+
+/**
+ * Toggle a category's storefront visibility (admin-gated). Inactive
+ * categories disappear from the storefront together with their products.
+ */
+export async function toggleCategoryActiveAction(formData: FormData): Promise<void> {
+  if (!(await getAdminSession())) throw new Error("Unauthorized");
+
+  const id = formData.get("id")?.toString();
+  const next = formData.get("next") === "true";
+  if (!id) return;
+
+  try {
+    await toggleCategoryActive(id, next);
+  } catch {
+    // Non-fatal for the list render; the row keeps its previous state.
+  }
+  revalidateCategorySurfaces();
 }
 
 /** Delete a category (admin-gated; blocked while products reference it). */

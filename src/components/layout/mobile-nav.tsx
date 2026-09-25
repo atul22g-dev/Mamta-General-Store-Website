@@ -1,17 +1,17 @@
 "use client";
 
-import { categoryNav, mainNav } from "@/config/navigation";
+import { mainNav, type NavItem } from "@/config/navigation";
 import { SheetClose } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { NavLink } from "@/components/layout/nav-link";
 
 /**
- * Mobile navigation menu content: primary links, then categories.
- * Rendered inside the header's sheet; each link is a dialog close target
- * (`SheetClose asChild` renders a single anchor), so tapping a link closes
- * the menu and navigates in one interaction.
+ * Mobile navigation menu content: primary links, then categories (passed in
+ * from the database via the header). Rendered inside the header's sheet; each
+ * link is a dialog close target (`SheetClose asChild` renders a single
+ * anchor), so tapping a link closes the menu and navigates in one interaction.
  */
-export function MobileNav() {
+export function MobileNav({ categories }: { categories: NavItem[] }) {
   return (
     <nav aria-label="Mobile navigation" className="flex flex-1 flex-col overflow-y-auto px-4 pb-6">
       <ul className="space-y-1">
@@ -28,14 +28,14 @@ export function MobileNav() {
         ))}
       </ul>
 
-      {categoryNav.length > 0 && (
+      {categories.length > 0 && (
         <>
           <Separator className="my-4" />
           <p className="px-3 pb-2 text-xs font-medium tracking-widest text-muted-foreground uppercase">
             Categories
           </p>
           <ul className="space-y-1">
-            {categoryNav.map((item) => (
+            {categories.map((item) => (
               <li key={item.href}>
                 <SheetClose asChild>
                   <NavLink

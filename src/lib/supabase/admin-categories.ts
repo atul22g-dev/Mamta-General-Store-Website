@@ -5,7 +5,8 @@ import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 /**
  * Admin category management. Categories are plain rows — the storefront
  * (navigation, category pages, sitemap) reads them live, so changes apply
- * without any code changes.
+ * without any code changes. Inactive categories stay listed here with a
+ * Show/Hide toggle; the storefront hides them (migration 0008's active flag).
  */
 
 export interface AdminCategory {
@@ -14,16 +15,18 @@ export interface AdminCategory {
   slug: string;
   description: string | null;
   imageUrl: string | null;
+  /** Inactive categories are hidden from the storefront. */
+  active: boolean;
   productCount: number;
 }
 
 /** All categories with active-product counts, ordered by name. */
 export async function listAdminCategories(): Promise<AdminCategory[]> {
-  const client = getSupabaseAdminClient();
+  const client = await getSupabaseAdminClient();
   const [categoriesResult, productsResult] = await Promise.all([
     client
       .from("categories")
-      .select("id, name, slug, description, imageUrl")
+      .select("id, name, slug, description, imageUrl, active")
       .order("name", { ascending: true }),
     client.from("products").select("categoryId").eq("active", true),
   ]);
@@ -46,6 +49,7 @@ export async function listAdminCategories(): Promise<AdminCategory[]> {
     slug: row.slug,
     description: row.description,
     imageUrl: row.imageUrl,
+    active: row.active,
     productCount: counts.get(row.id) ?? 0,
   }));
 }
@@ -56,16 +60,17 @@ export async function createCategory(input: {
   slug: string;
   description: string | null;
   imageUrl: string | null;
+  /** Defaults to active (visible on the storefront). */
+  active?: boolean;
 }): Promise<{ error?: string }> {
-  const { error } = await getSupabaseAdminClient()
-    .from("categories")
-    .insert({
-      id: input.slug,
-      name: input.name,
-      slug: input.slug,
-      description: input.description,
-      imageUrl: input.imageUrl,
-    } as never);
+  const { error } = await (await getSupabaseAdminClient()).from("categories").insert({
+    id: input.slug,
+    name: input.name,
+    slug: input.slug,
+    description: input.description,
+    imageUrl: input.imageUrl,
+    active: input.active ?? true,
+  } as never);
   if (error) {
     if (error.code === "23505") return { error: "A category with this slug already exists." };
     return { error: error.message };
@@ -80,7 +85,9 @@ export async function updateCategory(input: {
   description: string | null;
   imageUrl: string | null;
 }): Promise<{ error?: string }> {
-  const { error } = await getSupabaseAdminClient()
+  const { error } = await (
+    await getSupabaseAdminClient()
+  )
     .from("categories")
     .update({
       name: input.name,
@@ -93,11 +100,26 @@ export async function updateCategory(input: {
 }
 
 /**
+ * Toggle a category's storefront visibility. Inactive categories vanish from
+ * every storefront surface and their products stop showing; the admin panel
+ * keeps listing them so they can be switched back on.
+ */
+export async function toggleCategoryActive(id: string, next: boolean): Promise<void> {
+  const { error } = await (
+    await getSupabaseAdminClient()
+  )
+    .from("categories")
+    .update({ active: next } as never)
+    .eq("id", id);
+  if (error) throw new Error(`Failed to update category: ${error.message}`);
+}
+
+/**
  * Delete a category. The schema restricts deletion while products reference
  * it, so the caller sees a clear message instead of data loss.
  */
 export async function deleteCategory(id: string): Promise<{ error?: string }> {
-  const { error } = await getSupabaseAdminClient().from("categories").delete().eq("id", id);
+  const { error } = await (await getSupabaseAdminClient()).from("categories").delete().eq("id", id);
   if (error) {
     if (error.code === "23503") {
       return { error: "This category still has products. Move them first." };

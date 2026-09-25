@@ -40,7 +40,8 @@ export async function getAdminSession(): Promise<AdminSession | null> {
     if (error || !user) return null;
 
     // Server-side authorization: role must be ADMIN on an active profile.
-    const { data: profile } = await getSupabaseAdminClient()
+    // Runs under the user's own JWT — profiles_select_own allows this read.
+    const { data: profile } = await (await getSupabaseAdminClient())
       .from("profiles")
       .select("name, role, active")
       .eq("id", user.id)

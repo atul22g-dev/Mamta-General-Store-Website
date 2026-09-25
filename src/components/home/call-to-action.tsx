@@ -1,21 +1,33 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
-import { liveCategories } from "@/config/categories";
+import { getCategories } from "@/lib/supabase/catalog";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 
-/** Closing call to action: one clear next step on an ink background. */
-export function CallToAction() {
+/**
+ * Closing call to action: one clear next step on an ink background. The
+ * category names line comes live from the database (best-effort).
+ */
+export async function CallToAction() {
+  let categoryNames: string[] = [];
+  try {
+    categoryNames = (await getCategories()).map((category) => category.name);
+  } catch {
+    // Cosmetic line only — the section still renders without it.
+  }
+
   return (
     <section
       className="bg-primary py-16 text-primary-foreground sm:py-20"
       aria-labelledby="cta-heading"
     >
       <Container className="flex flex-col items-center text-center">
-        <p className="text-xs font-medium tracking-widest uppercase opacity-70">
-          {liveCategories.map((category) => category.name).join(" · ")}
-        </p>
+        {categoryNames.length > 0 && (
+          <p className="text-xs font-medium tracking-widest uppercase opacity-70">
+            {categoryNames.join(" · ")}
+          </p>
+        )}
         <h2
           id="cta-heading"
           className="font-display mt-3 max-w-xl text-3xl font-medium tracking-tight text-balance sm:text-4xl"

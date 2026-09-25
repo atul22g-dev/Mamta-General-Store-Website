@@ -1,6 +1,6 @@
 import "server-only";
 
-import { getSupabaseAdminClient } from "@/lib/supabase/admin";
+import { getSupabasePublicClient } from "@/lib/supabase/public";
 
 /**
  * Cheap database reachability probe. Pages call this to distinguish
@@ -9,7 +9,7 @@ import { getSupabaseAdminClient } from "@/lib/supabase/admin";
  */
 export async function dbHealth(): Promise<boolean> {
   try {
-    const { error } = await getSupabaseAdminClient().rpc("db_health");
+    const { error } = await getSupabasePublicClient().rpc("db_health");
     return !error;
   } catch {
     return false;

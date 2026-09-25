@@ -3,8 +3,11 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
-import { findCategoryBySlug } from "@/config/categories";
-import { getShopProducts, getCategoriesWithCounts } from "@/lib/supabase/catalog";
+import {
+  getCategoryBySlug,
+  getShopProducts,
+  getCategoriesWithCounts,
+} from "@/lib/supabase/catalog";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { Container } from "@/components/ui/container";
 import { SectionHeading } from "@/components/ui/section-heading";
@@ -18,12 +21,17 @@ interface CategoryPageProps {
 
 export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const category = findCategoryBySlug(slug);
+  let category: Awaited<ReturnType<typeof getCategoryBySlug>>;
+  try {
+    category = await getCategoryBySlug(slug);
+  } catch {
+    return { title: "Category temporarily unavailable" };
+  }
   if (!category) return { title: "Category not found" };
 
   return {
     title: category.name,
-    description: `Browse the ${category.name.toLowerCase()} collection at Mamta General Store. ${category.description}`,
+    description: `Browse the ${category.name.toLowerCase()} collection at Mamta General Store. ${category.description ?? ""}`,
   };
 }
 
@@ -76,13 +84,13 @@ async function CategoryProducts({ slug }: { slug: string }) {
 }
 
 /**
- * Data-driven category page: lists live products from the database for any
- * category slug. Registry config supplies presentation metadata; adding a
- * category needs no route or code changes.
+ * Data-driven category page: the category and its products both come from the
+ * database — adding a category in the admin panel needs no route or code
+ * changes. Inactive categories resolve to null and 404 here.
  */
 export default async function CategoryPage({ params }: CategoryPageProps) {
   const { slug } = await params;
-  const category = findCategoryBySlug(slug);
+  const category = await getCategoryBySlug(slug);
   if (!category) notFound();
 
   return (
@@ -92,7 +100,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
           align="center"
           eyebrow="Collection"
           title={category.name}
-          description={category.description}
+          description={category.description ?? undefined}
         />
         <div className="mt-10">
           <Suspense fallback={<ProductGridSkeleton count={8} />}>

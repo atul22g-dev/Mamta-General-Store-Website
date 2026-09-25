@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { LogOut, Store } from "lucide-react";
+import { KeyRound, LogOut, Store } from "lucide-react";
 
 import { requireAdmin } from "@/lib/auth/session";
 import { logoutAction } from "@/app/admin/login/actions";
@@ -40,6 +40,14 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <div className="flex items-center gap-3">
             <DatabaseStatus />
             <span className="text-muted-foreground hidden text-sm sm:inline">{session.name}</span>
+            <Link
+              href="/admin/change-password"
+              className="text-muted-foreground hover:text-foreground hover:bg-accent inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors"
+            >
+              <KeyRound aria-hidden="true" className="size-4" />
+              <span className="hidden sm:inline">Password</span>
+              <span className="sr-only sm:hidden">Change password</span>
+            </Link>
             <form action={logoutAction}>
               <button
                 type="submit"

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
-import { getSupabaseAdminClient } from "@/lib/supabase/admin";
+import { getSupabasePublicClient } from "@/lib/supabase/public";
 import { checkoutSchema } from "@/lib/validation/checkout";
 
 export interface PlaceOrderState {
@@ -78,7 +78,9 @@ export async function placeOrderAction(
   // 3. Place the order atomically in the database.
   try {
     const place = async (orderNumber: string): Promise<string | null> => {
-      const { data, error } = await getSupabaseAdminClient().rpc("place_order", {
+      // Public anon client: place_order is SECURITY DEFINER and granted to
+      // anon — guest checkout needs no privileged key.
+      const { data, error } = await getSupabasePublicClient().rpc("place_order", {
         p_items: cart,
         p_customer: {
           customerName: customer.data.customerName,

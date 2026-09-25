@@ -14,7 +14,6 @@ import {
   type CatalogFilters,
   type PriceBandId,
 } from "@/lib/catalog";
-import { liveCategories } from "@/config/categories";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -110,7 +109,7 @@ export function ShopView({
     <FilterPanel
       filters={filters}
       priceBand={bandFromFilters(filters)}
-      categories={categories ?? liveCategories}
+      categories={categories ?? []}
       counts={counts}
       resultCount={visible.length}
       onFiltersChange={setFilters}

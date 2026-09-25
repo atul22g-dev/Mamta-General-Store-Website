@@ -2,11 +2,12 @@
 
 import * as React from "react";
 import { useActionState } from "react";
-import { Loader2, Pencil, Plus, Trash2, X } from "lucide-react";
+import { Eye, EyeOff, Loader2, Pencil, Plus, Trash2, X } from "lucide-react";
 
 import {
   createCategoryAction,
   deleteCategoryAction,
+  toggleCategoryActiveAction,
   updateCategoryAction,
   type CategoryActionState,
 } from "@/app/admin/categories/actions";
@@ -38,9 +39,9 @@ function Feedback({ state }: { state: CategoryActionState }) {
 }
 
 /**
- * Admin category manager: create new categories, rename/re-describe existing
- * ones inline, delete when allowed. Storefront changes apply immediately —
- * categories are data, not code.
+ * Admin category manager: create new categories (with storefront visibility),
+ * rename/re-describe existing ones inline, hide/show and delete when allowed.
+ * Storefront changes apply immediately — categories are data, not code.
  */
 export function CategoryManager({ categories }: { categories: AdminCategory[] }) {
   const [createState, createAction, isCreating] = useActionState(
@@ -81,6 +82,15 @@ export function CategoryManager({ categories }: { categories: AdminCategory[] })
             maxLength={300}
           />
         </div>
+        <label className="mt-3 flex items-center gap-2.5 text-sm font-medium">
+          <input
+            type="checkbox"
+            name="active"
+            defaultChecked
+            className="accent-[var(--primary)] size-4 rounded"
+          />
+          Visible on the storefront (hide to prepare it before launch)
+        </label>
         <Feedback state={createState} />
         <Button type="submit" size="sm" className="mt-3" disabled={isCreating}>
           {isCreating ? <Loader2 className="animate-spin" /> : <Plus />}
@@ -148,6 +158,11 @@ export function CategoryManager({ categories }: { categories: AdminCategory[] })
                   <p className="flex items-center gap-2 font-medium">
                     <span className="truncate">{category.name}</span>
                     <Badge variant="secondary">{category.productCount} products</Badge>
+                    {category.active ? (
+                      <Badge className="bg-emerald-100 text-emerald-700">Active</Badge>
+                    ) : (
+                      <Badge variant="outline">Inactive</Badge>
+                    )}
                   </p>
                   <p className="text-muted-foreground mt-0.5 truncate text-xs">
                     /category/{category.slug}
@@ -155,6 +170,23 @@ export function CategoryManager({ categories }: { categories: AdminCategory[] })
                   </p>
                 </div>
                 <div className="flex shrink-0 gap-1.5">
+                  <form action={toggleCategoryActiveAction}>
+                    <input type="hidden" name="id" value={category.id} />
+                    <input type="hidden" name="next" value={category.active ? "false" : "true"} />
+                    <Button
+                      type="submit"
+                      variant="ghost"
+                      size="sm"
+                      aria-label={
+                        category.active
+                          ? `Hide ${category.name} from the storefront`
+                          : `Show ${category.name} on the storefront`
+                      }
+                    >
+                      {category.active ? <EyeOff /> : <Eye />}
+                      {category.active ? "Hide" : "Show"}
+                    </Button>
+                  </form>
                   <Button
                     variant="ghost"
                     size="sm"
