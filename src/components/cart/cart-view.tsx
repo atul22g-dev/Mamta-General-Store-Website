@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowRight, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 
 import { useCart } from "@/components/cart/cart-provider";
+import { SafeImage } from "@/components/product/safe-image";
 import { Button } from "@/components/ui/button";
 import { ImageArea } from "@/components/ui/image-area";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -75,11 +76,11 @@ export function CartView() {
                 <Link href={`/products/${item.slug}`} className="shrink-0" aria-label={item.name}>
                   <ImageArea ratio="4/5" className="w-20 sm:w-24 lg:w-28" placeholder={false}>
                     {item.imageUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
+                      <SafeImage
                         src={item.imageUrl}
                         alt={item.name}
-                        loading="lazy"
+                        fill
+                        sizes="112px"
                         className="absolute inset-0 size-full object-cover"
                       />
                     ) : null}

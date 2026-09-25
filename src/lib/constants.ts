@@ -17,3 +17,17 @@ export const SITE_DESCRIPTION =
 
 /** Default currency for all prices (stored in minor units, e.g. paise). */
 export const DEFAULT_CURRENCY = "INR";
+
+/**
+ * Flat shipping charge per order, in paise (₹100). Display-only source of
+ * truth: the order itself is calculated by the place_order RPC (migration
+ * 0015), which stores the same value — keep the two in sync.
+ */
+export const FLAT_SHIPPING_PAISE = 10_000;
+
+/**
+ * Per-line quantity cap. The cart UI, localStorage sanitization and the
+ * checkout zod schema all enforce 1..MAX_CART_QUANTITY; place_order (RPC)
+ * re-validates server-side.
+ */
+export const MAX_CART_QUANTITY = 99;

@@ -1,6 +1,9 @@
 "use client";
 
 import * as React from "react";
+
+import { MAX_CART_QUANTITY } from "@/lib/constants";
+
 import { createStore } from "./cart-store";
 
 /**
@@ -59,10 +62,14 @@ function makeItemId(productId: string, sizeId: string | null, colorId: string | 
   return [productId, sizeId ?? "-", colorId ?? "-"].join(":");
 }
 
+/**
+ * Coerce any quantity (typed input, tampered localStorage) into a usable
+ * line quantity: a whole number in 1..min(max, MAX_CART_QUANTITY).
+ */
 function sanitizeQuantity(quantity: unknown, max: number | null): number {
   const parsed = Number(quantity);
   if (!Number.isFinite(parsed) || parsed < 1) return 1;
-  const capped = max === null ? parsed : Math.min(parsed, max);
+  const capped = Math.min(parsed, MAX_CART_QUANTITY, max ?? Infinity);
   return Math.floor(capped);
 }
 
@@ -105,13 +112,18 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           line.id === id
             ? {
                 ...line,
-                quantity: sanitizeQuantity(line.quantity + item.quantity, line.maxQuantity),
+                // Clamp again: addItem can also be called with a product
+                // whose stored maxQuantity is stale (restocked down).
+                quantity: sanitizeQuantity(
+                  Math.max(line.quantity, item.quantity),
+                  line.maxQuantity,
+                ),
               }
             : line,
         );
       }
 
-      return [...current, { ...item, id }];
+      return [...current, { ...item, quantity: sanitizeQuantity(item.quantity, item.maxQuantity ?? null), id }];
     });
   }, []);
 

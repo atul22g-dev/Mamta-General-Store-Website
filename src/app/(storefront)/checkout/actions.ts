@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { getSupabasePublicClient } from "@/lib/supabase/public";
+import { MAX_CART_QUANTITY } from "@/lib/constants";
 import { checkoutSchema } from "@/lib/validation/checkout";
 
 export interface PlaceOrderState {
@@ -18,7 +19,7 @@ const cartSchema = z
   .array(
     z.object({
       productId: z.string().min(1),
-      quantity: z.number().int().min(1).max(99),
+      quantity: z.number().int().min(1).max(MAX_CART_QUANTITY),
       sizeId: z.string().nullable(),
       colorId: z.string().nullable(),
     }),
@@ -75,6 +76,13 @@ export async function placeOrderAction(
     return { error: "Your cart is empty." };
   }
 
+  // One line per product: a duplicated productId would double-decrement
+  // stock for a single visible line (the RPC rejects it too).
+  const productIds = cart.map((line) => line.productId);
+  if (new Set(productIds).size !== productIds.length) {
+    return { error: "Your cart has duplicate items. Please refresh the page and try again." };
+  }
+
   // 3. Place the order atomically in the database.
   try {
     const place = async (orderNumber: string): Promise<string | null> => {
@@ -122,8 +130,8 @@ export async function placeOrderAction(
   } catch (error) {
     const message = error instanceof Error ? error.message : "Could not place the order.";
     // Domain errors (out of stock etc.) are safe to show; anything else is generic.
-    if (/out of stock|no longer available/i.test(message)) {
-      return { error: message.replace(/^(OUT_OF_STOCK|PRODUCT_GONE):\s*/i, "") };
+    if (/out of stock|no longer available|invalid quantity|duplicate lines/i.test(message)) {
+      return { error: message.replace(/^(OUT_OF_STOCK|PRODUCT_GONE|CART_INVALID):\s*/i, "") };
     }
     console.error("[checkout]", error);
     return {

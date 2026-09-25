@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
+import { FLAT_SHIPPING_PAISE } from "@/lib/constants";
 import { formatPrice } from "@/lib/utils";
 
 const initialState: PlaceOrderState = {};
@@ -50,9 +51,9 @@ export function CheckoutForm() {
   const [state, formAction, isPending] = useActionState(checkoutAction, initialState);
   const placedOrderNumber = state.orderNumber ?? null;
 
-  // Flat ₹100 shipping on every order — must match the place_order RPC
-  // (migration 0010), which is the server-side source of truth.
-  const shipping = 10000;
+  // Display-only mirror of the server's flat shipping (place_order RPC is
+  // the authority — it re-prices everything before storing the order).
+  const shipping = FLAT_SHIPPING_PAISE;
   const total = subtotal + shipping;
 
   if (placedOrderNumber) {
