@@ -23,8 +23,7 @@ function ProductJsonLd({
 }: {
   product: NonNullable<Awaited<ReturnType<typeof getProductBySlug>>>;
 }) {
-  const hasDiscount =
-    product.discountPrice !== null && product.discountPrice > product.price;
+  const hasDiscount = product.discountPrice !== null && product.discountPrice > product.price;
   const data = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -166,10 +165,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
   return (
     <Container className="flex flex-1 flex-col py-8 pb-28 sm:py-12 lg:pb-12">
       <ProductJsonLd product={product} />
-      <BreadcrumbJsonLd
-        category={product.category}
-        productName={product.name}
-      />
+      <BreadcrumbJsonLd category={product.category} productName={product.name} />
       {/* Breadcrumb */}
       <nav aria-label="Breadcrumb" className="mb-8">
         <ol className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">

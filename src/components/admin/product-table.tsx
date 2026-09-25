@@ -20,7 +20,13 @@ function ProductThumb({ imageUrl, size }: { imageUrl: string | null; size: "sm" 
       }`}
     >
       {imageUrl ? (
-        <SafeImage src={imageUrl} alt="" fill sizes="48px" className="absolute inset-0 size-full object-cover" />
+        <SafeImage
+          src={imageUrl}
+          alt=""
+          fill
+          sizes="48px"
+          className="absolute inset-0 size-full object-cover"
+        />
       ) : (
         <ImageOff aria-hidden="true" className="text-muted-foreground size-4" />
       )}

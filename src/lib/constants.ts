@@ -24,8 +24,7 @@ export const SITE_TAGLINE = "Women's Unstitched Suit Materials";
  */
 export const SITE_POSITIONING_SHORT = "Women's Unstitched Suit Materials";
 
-export const SITE_POSITIONING_WITH_DUPATTA =
-  "Women's Unstitched Suit Materials with Dupatta";
+export const SITE_POSITIONING_WITH_DUPATTA = "Women's Unstitched Suit Materials with Dupatta";
 
 export const SITE_DESCRIPTION =
   "Women's unstitched suit materials with dupatta at Mamta General Store, Jatwar — a variety of fabrics, colours and designs. Visit our local shop or order by India Post.";

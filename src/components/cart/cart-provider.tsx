@@ -116,16 +116,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                 // doubles the line), then clamped: the incoming quantity can
                 // also come from a product whose stored maxQuantity is stale
                 // (restocked down).
-                quantity: sanitizeQuantity(
-                  line.quantity + item.quantity,
-                  line.maxQuantity,
-                ),
+                quantity: sanitizeQuantity(line.quantity + item.quantity, line.maxQuantity),
               }
             : line,
         );
       }
 
-      return [...current, { ...item, quantity: sanitizeQuantity(item.quantity, item.maxQuantity ?? null), id }];
+      return [
+        ...current,
+        { ...item, quantity: sanitizeQuantity(item.quantity, item.maxQuantity ?? null), id },
+      ];
     });
   }, []);
 

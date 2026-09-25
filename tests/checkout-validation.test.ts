@@ -32,9 +32,9 @@ describe("customer details validation (6)", () => {
 
   it("normalizes +91, spaces and dashes in mobile numbers", () => {
     expect(normalizeMobile("+91 98765-43210")).toBe("9876543210");
-    expect(
-      checkoutSchema.safeParse({ ...validCustomer, mobile: "+91 98765-43210" }).success,
-    ).toBe(true);
+    expect(checkoutSchema.safeParse({ ...validCustomer, mobile: "+91 98765-43210" }).success).toBe(
+      true,
+    );
   });
 
   it("rejects invalid mobile numbers", () => {
@@ -57,9 +57,9 @@ describe("customer details validation (6)", () => {
 
   it("rejects names with digits or too-short names", () => {
     expect(checkoutSchema.safeParse({ ...validCustomer, customerName: "A" }).success).toBe(false);
-    expect(
-      checkoutSchema.safeParse({ ...validCustomer, customerName: "Test 123" }).success,
-    ).toBe(false);
+    expect(checkoutSchema.safeParse({ ...validCustomer, customerName: "Test 123" }).success).toBe(
+      false,
+    );
   });
 });
 

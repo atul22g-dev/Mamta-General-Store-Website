@@ -12,7 +12,15 @@
 const Module = require("node:module");
 const path = require("node:path");
 
-const wasmNative = path.join(__dirname, "..", "node_modules", "@rollup", "wasm-node", "dist", "native.js");
+const wasmNative = path.join(
+  __dirname,
+  "..",
+  "node_modules",
+  "@rollup",
+  "wasm-node",
+  "dist",
+  "native.js",
+);
 
 const originalLoad = Module._load;
 Module._load = function (request, parent, isMain) {

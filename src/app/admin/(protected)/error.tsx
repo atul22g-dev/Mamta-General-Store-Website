@@ -29,13 +29,11 @@ export default function AdminError({
       </span>
       <h2 className="mt-5 text-xl font-semibold">Something went wrong</h2>
       <p className="text-muted-foreground mt-2 max-w-sm text-sm">
-        The page could not be loaded. Your session may have expired — signing
-        out and back in usually resolves it.
+        The page could not be loaded. Your session may have expired — signing out and back in
+        usually resolves it.
       </p>
       {error.digest && (
-        <p className="text-muted-foreground/60 mt-2 font-mono text-xs">
-          Error ID: {error.digest}
-        </p>
+        <p className="text-muted-foreground/60 mt-2 font-mono text-xs">Error ID: {error.digest}</p>
       )}
       <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
         <button

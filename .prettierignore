@@ -5,3 +5,7 @@ build
 generated
 src/generated
 package-lock.json
+
+# Tool-local config/data owned by external tools or the user — formatting
+# them in CI would create churn outside the codebase's own files.
+.freebuff

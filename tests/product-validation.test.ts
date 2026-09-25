@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  productFormSchema,
-  slugifyName,
-  toDatabaseValues,
-} from "@/lib/validation/product";
+import { productFormSchema, slugifyName, toDatabaseValues } from "@/lib/validation/product";
 
 const base = {
   name: "Rosewood Pink Suit Material",
@@ -61,9 +57,7 @@ describe("product name/field validation (5)", () => {
   });
 
   it("caps field lengths", () => {
-    expect(
-      productFormSchema.safeParse({ ...base, name: "x".repeat(121) }).success,
-    ).toBe(false);
+    expect(productFormSchema.safeParse({ ...base, name: "x".repeat(121) }).success).toBe(false);
     expect(productFormSchema.safeParse({ ...base, sku: "s".repeat(61) }).success).toBe(false);
   });
 });

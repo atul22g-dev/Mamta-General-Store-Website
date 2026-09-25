@@ -1,0 +1,67 @@
+# CI — the quality gate for every push and pull request.
+#
+# Runs the full check suite on the committed tree: install → typecheck →
+# lint → formatting → unit tests → production build. Any failing step fails
+# the job (the workflow reports ✗ on the commit/PR and blocks branch
+# protection from merging).
+#
+# Secrets: none are used or needed. The build reads only NEXT_PUBLIC_* vars
+# from the repository's own committed config surfaces; no environment
+# secrets are referenced here, so nothing can leak into logs.
+#
+# Migrations: deliberately absent. Database migrations run from a developer
+# machine with `npm run db:deploy` — never automatically from a PR, which
+# could touch the production database before the code is reviewed or merged.
+
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+# One run per ref: a new push cancels the previous in-flight run so results
+# always reflect the latest commit.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Typecheck · Lint · Format · Test · Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Order matters: cheap static checks fail fast before the slower
+      # install-heavy build; tests run before the build so a logic regression
+      # is reported as a test failure, not a build error.
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Formatting
+        run: npm run format:check
+
+      - name: Tests
+        run: npm test
+
+      - name: Production build
+        run: npm run build

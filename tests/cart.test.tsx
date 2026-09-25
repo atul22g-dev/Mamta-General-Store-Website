@@ -36,7 +36,8 @@ async function renderCart(): Promise<React.ReactElement> {
       colorId: null,
       colorName: null,
       quantity: 1,
-      maxQuantity: 5,      } as Omit<CartItem, "id">;
+      maxQuantity: 5,
+    } as Omit<CartItem, "id">;
     return (
       <div>
         <span data-testid="count">{count}</span>
