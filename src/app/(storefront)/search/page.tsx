@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 
-import { getShopProducts } from "@/lib/supabase/catalog";
+import { getCategories, getShopProducts } from "@/lib/supabase/catalog";
 import { Container } from "@/components/ui/container";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { ShopView } from "@/components/shop/shop-view";
@@ -30,9 +30,14 @@ async function SearchResults({ query }: { query: string }) {
       </div>
     );
   }
+  const categories = await getCategories().catch(() => []);
   return (
     <Suspense fallback={<ProductGridSkeleton count={8} />}>
-      <ShopView products={products} initialQuery={query} />
+      <ShopView
+        products={products}
+        categories={categories.map(({ id, name, slug }) => ({ id, name, slug }))}
+        initialQuery={query}
+      />
     </Suspense>
   );
 }

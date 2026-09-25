@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { Container } from "@/components/ui/container";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { ShopView } from "@/components/shop/shop-view";
-import { getShopProducts } from "@/lib/supabase/catalog";
+import { getCategories, getShopProducts } from "@/lib/supabase/catalog";
 import { ProductGridSkeleton } from "@/components/product/product-grid-skeleton";
 
 export const metadata: Metadata = {
@@ -22,7 +22,12 @@ interface ShopPageProps {
   searchParams: Promise<{ q?: string; category?: string }>;
 }
 
-/** The catalog loads from the database, then the interactive view takes over. */
+/**
+ * The catalog loads from the database, then the interactive view takes over.
+ * Categories load alongside products so the filter panel can list them; if
+ * categories fail but products don't, filtering degrades gracefully (search,
+ * price and stock filters still work — just no category checkboxes).
+ */
 async function ShopProducts({
   initialQuery,
   initialCategory,
@@ -41,9 +46,15 @@ async function ShopProducts({
       </div>
     );
   }
+  const categories = await getCategories().catch(() => []);
   return (
     <Suspense fallback={<ProductGridSkeleton count={8} />}>
-      <ShopView products={products} initialQuery={initialQuery} initialCategory={initialCategory} />
+      <ShopView
+        products={products}
+        categories={categories.map(({ id, name, slug }) => ({ id, name, slug }))}
+        initialQuery={initialQuery}
+        initialCategory={initialCategory}
+      />
     </Suspense>
   );
 }
