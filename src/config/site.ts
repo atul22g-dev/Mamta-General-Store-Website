@@ -1,4 +1,9 @@
-import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE } from "@/lib/constants";
+import {
+  SITE_DESCRIPTION,
+  SITE_NAME,
+  SITE_POSITIONING_WITH_DUPATTA,
+  SITE_TAGLINE,
+} from "@/lib/constants";
 
 /**
  * Central business + site configuration. This is the single source of truth
@@ -11,6 +16,8 @@ import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE } from "@/lib/constants";
 export const siteConfig = {
   name: SITE_NAME,
   tagline: SITE_TAGLINE,
+  /** Store-level positioning line (accuracy rules in lib/constants.ts). */
+  positioning: SITE_POSITIONING_WITH_DUPATTA,
   description: SITE_DESCRIPTION,
   locale: "en_IN",
   keywords: [

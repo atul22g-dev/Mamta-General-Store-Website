@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { SITE_DESCRIPTION, SITE_NAME, SITE_POSITIONING_WITH_DUPATTA } from "@/lib/constants";
 import { Hero } from "@/components/home/hero";
 import { FeaturedProducts } from "@/components/home/featured-products";
 import { NewArrivals } from "@/components/home/new-arrivals";
@@ -10,11 +11,12 @@ import { CallToAction } from "@/components/home/call-to-action";
 
 export const metadata: Metadata = {
   title: {
-    absolute:
-      "Mamta General Store — Women's Unstitched Suit Material with Dupatta in Jatwar, Haryana",
+    absolute: `${SITE_NAME} — ${SITE_POSITIONING_WITH_DUPATTA} in Jatwar, Haryana`,
   },
-  description:
-    "Women's unstitched suit materials with dupatta at Mamta General Store, Jatwar — a variety of fabrics, colours and designs. Visit our shop near the Post Office or order by India Post.",
+  description: `${SITE_DESCRIPTION.replace(
+    "Visit our local shop or order by India Post.",
+    "Visit our shop near the Post Office or order by India Post.",
+  )}`,
 };
 
 /**

@@ -17,7 +17,7 @@ const perks = [
   {
     icon: Ruler,
     title: "Unstitched Suit Materials",
-    description: "Suit fabric with dupatta in a variety of fabrics, colours and designs.",
+    description: "Suit fabric in a variety of fabrics, colours and designs — ready for tailoring.",
   },
   {
     icon: ShieldCheck,

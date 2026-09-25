@@ -3,7 +3,7 @@ import { ExternalLink, MapPin } from "lucide-react";
 
 import { mainNav } from "@/config/navigation";
 import { GOOGLE_MAPS_URL, SHOP_ADDRESS, siteContact, siteConfig } from "@/config/site";
-import { SITE_NAME } from "@/lib/constants";
+import { SITE_POSITIONING_SHORT, SITE_NAME } from "@/lib/constants";
 import { Container } from "@/components/ui/container";
 import { Separator } from "@/components/ui/separator";
 
@@ -19,9 +19,7 @@ export function SiteFooter() {
         <div className="flex flex-col items-center gap-6 text-center">
           <div className="max-w-md space-y-2">
             <p className="font-display text-lg font-medium tracking-tight">{SITE_NAME}</p>
-            <p className="text-sm text-muted-foreground">
-              Women&apos;s Unstitched Suit Materials with Dupatta
-            </p>
+            <p className="text-sm text-muted-foreground">{SITE_POSITIONING_SHORT}</p>
             <p className="text-muted-foreground inline-flex items-start justify-center gap-1.5 text-sm">
               <MapPin aria-hidden="true" className="mt-0.5 size-3.5 shrink-0" />
               <span className="text-balance">{SHOP_ADDRESS}</span>

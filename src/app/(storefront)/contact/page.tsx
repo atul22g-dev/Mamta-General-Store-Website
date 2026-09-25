@@ -5,15 +5,15 @@ import { GOOGLE_MAPS_URL, siteContact } from "@/config/site";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { SectionHeading } from "@/components/ui/section-heading";
-import { SITE_NAME } from "@/lib/constants";
+import { SITE_POSITIONING_WITH_DUPATTA, SITE_NAME } from "@/lib/constants";
 
 export const metadata: Metadata = {
   title: "Contact",
-  description: `Contact ${SITE_NAME}, Jatwar — call, WhatsApp or visit the shop for women's unstitched suit materials with dupatta. Get directions on Google Maps.`,
+  description: `Contact ${SITE_NAME}, Jatwar — call, WhatsApp or visit the shop for ${SITE_POSITIONING_WITH_DUPATTA.toLowerCase()}. Get directions on Google Maps.`,
   alternates: { canonical: "/contact" },
   openGraph: {
     title: `Contact — ${SITE_NAME}`,
-    description: `Contact ${SITE_NAME}, Jatwar — call, WhatsApp or visit the shop for women's unstitched suit materials with dupatta.`,
+    description: `Contact ${SITE_NAME}, Jatwar — call, WhatsApp or visit the shop for ${SITE_POSITIONING_WITH_DUPATTA.toLowerCase()}.`,
     type: "website",
     url: "/contact",
   },

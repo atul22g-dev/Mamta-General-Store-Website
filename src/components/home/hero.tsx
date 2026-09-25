@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, MapPin, Phone } from "lucide-react";
 
-import { GOOGLE_MAPS_URL, siteContact } from "@/config/site";
+import { GOOGLE_MAPS_URL, siteConfig, siteContact } from "@/config/site";
 import { heroImages } from "@/lib/placeholder-data";
 import { getNewArrivals } from "@/lib/supabase/catalog";
 import { Button } from "@/components/ui/button";
@@ -56,7 +56,7 @@ export async function Hero() {
         {/* Copy */}
         <div className="animate-fade-up order-2 text-center lg:order-1 lg:text-left">
           <p className="text-muted-foreground text-xs font-medium tracking-widest uppercase">
-            Women&apos;s Unstitched Suit Material with Dupatta · Jatwar
+            {siteConfig.positioning} · Jatwar
           </p>
           <h1
             id="hero-heading"
@@ -65,7 +65,7 @@ export async function Hero() {
             Beautiful Unstitched Suit Materials for Every Occasion
           </h1>
           <p className="text-muted-foreground mx-auto mt-4 max-w-md text-sm text-pretty leading-relaxed sm:mt-5 sm:text-base lg:mx-0">
-            Discover elegant, comfortable and affordable suit materials with dupatta from Mamta
+            Discover elegant, comfortable and affordable unstitched suit materials from Mamta
             General Store, Jatwar.
           </p>
           <div className="mt-6 flex flex-col gap-3 sm:mt-8 sm:flex-row sm:items-center">

@@ -7,6 +7,26 @@ export const SITE_NAME = "Mamta General Store";
 
 export const SITE_TAGLINE = "Women's Unstitched Suit Materials";
 
+/**
+ * Store positioning — the ONE description of what this business sells.
+ *
+ * Accuracy rules (content audit):
+ * - The store sells women's UNSTITCHED suit materials: fabric the customer
+ *   gets tailored. Never describe products as stitched, ready-made, or a
+ *   "complete set".
+ * - "with dupatta" is a STORE-LEVEL phrase: the catalog's suit materials
+ *   are sold with a dupatta (every product name in the database carries
+ *   it). It is NOT a per-product claim — individual product pages speak
+ *   only from the database (name/description), never from this constant.
+ * - Never claim a piece list (top / bottom / salwar / kameez) anywhere:
+ *   what each product includes is defined only by that product's own
+ *   database record.
+ */
+export const SITE_POSITIONING_SHORT = "Women's Unstitched Suit Materials";
+
+export const SITE_POSITIONING_WITH_DUPATTA =
+  "Women's Unstitched Suit Materials with Dupatta";
+
 export const SITE_DESCRIPTION =
   "Women's unstitched suit materials with dupatta at Mamta General Store, Jatwar — a variety of fabrics, colours and designs. Visit our local shop or order by India Post.";
 
