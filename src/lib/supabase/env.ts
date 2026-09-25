@@ -30,7 +30,25 @@ export function supabaseUrl(): string {
 /**
  * Anonymous/publishable key (public, RLS-scoped — safe on the client).
  * Accepts either the Next.js or Expo variable name.
+ *
+ * SECURITY GUARD: a secret key (sb_secret_… or a legacy service-role JWT)
+ * here would ship RLS-bypassing credentials to every browser. Refuse to
+ * start rather than leak. Publishable keys start with `sb_publishable_`
+ * or are legacy anon JWTs (`eyJ…` with role=anon).
  */
 export function supabaseAnonKey(): string {
-  return requirePublicEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY");
+  const key = requirePublicEnv(
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+    "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
+    "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
+  );
+  if (key.startsWith("sb_secret_") || key.startsWith("sb_secret ")) {
+    throw new Error(
+      "FATAL: NEXT_PUBLIC_SUPABASE_ANON_KEY holds a SECRET key (sb_secret_…). " +
+        "Secret keys bypass Row Level Security and would be shipped to every browser. " +
+        "Use the publishable key (sb_publishable_…) instead — Supabase dashboard → " +
+        "Project Settings → API.",
+    );
+  }
+  return key;
 }
