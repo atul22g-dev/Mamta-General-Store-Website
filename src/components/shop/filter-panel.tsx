@@ -1,6 +1,7 @@
 "use client";
 
-import { Check, Search } from "lucide-react";
+import * as React from "react";
+import { Check, Search, X } from "lucide-react";
 
 import type { CatalogFilters } from "@/lib/catalog";
 import type { CategoryRef } from "@/types/category";
@@ -45,6 +46,7 @@ export function FilterPanel({
   onFiltersChange,
   onPriceBandChange,
 }: FilterPanelProps) {
+  const searchInputRef = React.useRef<HTMLInputElement>(null);
   const selectedCategories = new Set(filters.categories);
   const toggleCategory = (slug: string) => {
     const next = filters.categories.includes(slug)
@@ -68,13 +70,31 @@ export function FilterPanel({
             className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
           />
           <Input
+            ref={searchInputRef}
             type="search"
             value={filters.query}
             onChange={(event) => onFiltersChange({ ...filters, query: event.target.value })}
             placeholder="Search products…"
             aria-label="Search products"
-            className="pl-9"
+            className="pr-9 pl-9 [&::-webkit-search-cancel-button]:hidden"
           />
+          {/* Visual icon is 28px; the ::before expands the tap target to the
+              44px minimum on touch without shifting the layout. */}
+          {filters.query !== "" && (
+            <button
+              type="button"
+              aria-label="Clear search"
+              onClick={() => {
+                onFiltersChange({ ...filters, query: "" });
+                // Keep keyboard users anchored: the button unmounts on click,
+                // which would otherwise drop focus to <body>.
+                searchInputRef.current?.focus();
+              }}
+              className="text-muted-foreground hover:text-foreground focus-visible:ring-ring/50 absolute top-1/2 right-2 flex size-7 -translate-y-1/2 items-center justify-center rounded-full transition-colors focus-visible:ring-[3px] focus-visible:outline-none before:absolute before:top-1/2 before:left-1/2 before:size-11 before:-translate-x-1/2 before:-translate-y-1/2 before:rounded-full"
+            >
+              <X aria-hidden="true" className="size-4" />
+            </button>
+          )}
         </div>
       </FilterGroup>
 

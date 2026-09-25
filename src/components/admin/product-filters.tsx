@@ -26,6 +26,7 @@ export function ProductFilters({ categories }: { categories: CategoryOption[] })
   // Lazy initializer: the function runs once on mount, not on every render.
   const [query, setQuery] = React.useState(() => searchParams.get("q") ?? "");
   const debounceRef = React.useRef<ReturnType<typeof setTimeout>>(null);
+  const searchInputRef = React.useRef<HTMLInputElement>(null);
 
   const updateParams = React.useCallback(
     (changes: Record<string, string | null>) => {
@@ -55,21 +56,28 @@ export function ProductFilters({ categories }: { categories: CategoryOption[] })
         <Search
           aria-hidden="true"
           className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2"
-        />
+        />{" "}
         <Input
+          ref={searchInputRef}
           type="search"
           value={query}
           onChange={(event) => onQueryChange(event.target.value)}
           placeholder="Search name, SKU or slug…"
           aria-label="Search products"
-          className="pl-9 md:pl-9"
+          className="pl-9"
         />
+        {/* Visual icon is 28px; the ::before expands the tap target to the
+            44px minimum on touch without shifting the layout. */}
         {query && (
           <button
             type="button"
             aria-label="Clear search"
-            onClick={() => onQueryChange("")}
-            className="text-muted-foreground hover:text-foreground absolute top-1/2 right-2.5 -translate-y-1/2"
+            onClick={() => {
+              onQueryChange("");
+              // Button unmounts on click — keep keyboard focus on the input.
+              searchInputRef.current?.focus();
+            }}
+            className="text-muted-foreground hover:text-foreground focus-visible:ring-ring/50 absolute top-1/2 right-2.5 flex size-7 -translate-y-1/2 items-center justify-center rounded-full transition-colors focus-visible:ring-[3px] focus-visible:outline-none before:absolute before:top-1/2 before:left-1/2 before:size-11 before:-translate-y-1/2 before:-translate-x-1/2 before:rounded-full"
           >
             <X aria-hidden="true" className="size-4" />
           </button>
