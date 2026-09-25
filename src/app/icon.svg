@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Mamta General Store favicon: striped shop awning over a doorway.
+       Colors mirror the design tokens in src/app/globals.css:
+       ink primary (near-black warm) + cream background + soft rose accent. -->
+  <!-- Ink background — matches the header brand block -->
+  <rect width="512" height="512" rx="116" fill="#26231F"/>
+  <!-- Awning silhouette: canopy bar + four scallops, striped via clip -->
+  <clipPath id="awning">
+    <rect x="112" y="144" width="288" height="64" rx="18"/>
+    <circle cx="148" cy="208" r="36"/>
+    <circle cx="220" cy="208" r="36"/>
+    <circle cx="292" cy="208" r="36"/>
+    <circle cx="364" cy="208" r="36"/>
+  </clipPath>
+  <g clip-path="url(#awning)">
+    <rect x="112" y="144" width="288" height="100" fill="#F7F3EA"/>
+    <rect x="148" y="144" width="36" height="100" fill="#E8B4B0"/>
+    <rect x="220" y="144" width="36" height="100" fill="#E8B4B0"/>
+    <rect x="292" y="144" width="36" height="100" fill="#E8B4B0"/>
+    <rect x="364" y="144" width="36" height="100" fill="#E8B4B0"/>
+  </g>
+  <!-- Shop door with rose knob -->
+  <rect x="222" y="292" width="68" height="108" rx="10" fill="#F7F3EA"/>
+  <circle cx="272" cy="348" r="6" fill="#E8B4B0"/>
+</svg>
