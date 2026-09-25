@@ -4,10 +4,8 @@ import {
   discountPercent,
   filterAndSort,
   filterProducts,
-  findProductBySlug,
   isAvailable,
   parseSort,
-  relatedProducts,
   sortProducts,
 } from "@/lib/catalog";
 import { formatPrice } from "@/lib/utils";
@@ -102,29 +100,11 @@ describe("category filtering (11)", () => {
 });
 
 describe("slug handling (12)", () => {
-  it("finds an active product by exact slug", () => {
-    expect(findProductBySlug(products, "rosewood-pink-embroidered-suit-material")?.id).toBe("p1");
-  });
-
-  it("returns undefined for unknown or inactive slugs", () => {
-    expect(findProductBySlug(products, "nope")).toBeUndefined();
-    expect(findProductBySlug(products, "inactive-draft-product")).toBeUndefined();
-  });
-
   it("slugifies names for URLs", async () => {
     const { slugify } = await import("@/lib/utils");
     expect(slugify("Women's Rosewood Pink Suit")).toBe("womens-rosewood-pink-suit");
     expect(slugify("  Festive & Premium Collection ")).toBe("festive-premium-collection");
     expect(slugify("---trimmed---")).toBe("trimmed");
-  });
-});
-
-describe("related products", () => {
-  it("excludes the product itself and inactive items, newest first, limited", () => {
-    // From p1 (suit-material): same-category active items are p3 (Jan 4) and
-    // p5 (inactive → excluded), so only p3 qualifies, newest first.
-    const related = relatedProducts(products, products[0]!, 4);
-    expect(related.map((p) => p.id)).toEqual(["p3"]);
   });
 });
 

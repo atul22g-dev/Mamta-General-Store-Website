@@ -19,9 +19,6 @@ const globalForLimiter = globalThis as unknown as {
 const attempts: Map<string, Attempt> = globalForLimiter.__mgs_login_attempts ?? new Map();
 globalForLimiter.__mgs_login_attempts = attempts;
 
-/** Max attempts per key per window. */
-export const LOGIN_RATE_LIMIT = MAX_ATTEMPTS;
-
 export interface RateLimitResult {
   allowed: boolean;
   /** Seconds until the oldest attempt leaves the window (when blocked). */

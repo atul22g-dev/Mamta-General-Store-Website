@@ -98,3 +98,19 @@ src/
 3. Optionally extend `src/app/sitemap.ts`.
 
 No schema or route changes are needed — `/category/[slug]` handles any category.
+
+
+## Create Admin
+
+1. Create A User in Database
+
+
+2.Insert The Query
+```
+ insert into profiles (id, email, name, role, active)
+ select id, 'owner@mamtastore.in', 'admin', 'ADMIN', true
+ from auth.users where email = 'owner@mamtastore.in'
+ on conflict (id) do update
+   set email = excluded.email, name = excluded.name,
+       role = 'ADMIN', active = true;
+```

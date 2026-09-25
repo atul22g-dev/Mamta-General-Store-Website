@@ -1,7 +1,8 @@
 # Create Product Image
 
-[mida](https://www.mida.so/amazon-listing-images?)
+## [Mida Website](https://www.mida.so/amazon-listing-images?)
 
+### Suits Image Prompt
 🛍️ I would generate these 5 images for your listing
 Image 1 — Main Meesho Product Image
 

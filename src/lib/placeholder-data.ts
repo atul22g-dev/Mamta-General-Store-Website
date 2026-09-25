@@ -1,21 +1,18 @@
 import { unsplash } from "@/lib/images";
 
 /**
- * Hero imagery (fashion editorial placeholders).
+ * Hero fallback imagery (fashion editorial placeholders).
  *
- * Product catalog data now comes from Supabase (`lib/supabase/catalog.ts`).
- * These two images remain homepage presentation placeholders — not catalog
- * data — until real brand photography is available.
+ * Product catalog data comes from Supabase (`lib/supabase/catalog.ts`).
+ * This single image is the homepage hero's fallback while the catalog is
+ * empty or the database is unreachable — the hero otherwise shows a real
+ * shop product.
  */
 
-/** Hero imagery (fashion editorial placeholders). */
+/** Hero fallback imagery (fashion editorial placeholder). */
 export const heroImages = {
   main: {
     url: unsplash("photo-1591369822096-ffd140ec948f", 1200),
     alt: "Woman wearing an elegant traditional suit",
-  },
-  secondary: {
-    url: unsplash("photo-1515372039744-b8f02a3ae446", 600),
-    alt: "Detail of a stylish outfit",
   },
 };

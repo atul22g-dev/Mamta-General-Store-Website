@@ -1,11 +1,11 @@
 import type { Product, ProductSort } from "@/types/product";
 
 /**
- * Catalog query helpers — pure functions over Product[].
+ * Catalog query helpers — pure functions over Product[] used by the shop's
+ * interactive filtering (ShopView). Money is in minor units (paise).
  *
- * Today they run on mock data; when the database is connected these same
- * signatures translate to Prisma `where`/`orderBy` clauses, so callers don't
- * change. Money is in minor units (paise).
+ * Product *lookups* (by slug, related items) happen in SQL instead
+ * (`lib/supabase/catalog.ts`) so pages never ship the whole catalog.
  */
 
 export interface CatalogFilters {
@@ -19,12 +19,6 @@ export interface CatalogFilters {
   /** Only in-stock products. */
   inStockOnly: boolean;
 }
-
-export const DEFAULT_FILTERS: CatalogFilters = {
-  query: "",
-  categories: [],
-  inStockOnly: false,
-};
 
 export const SORT_OPTIONS = [
   { value: "newest", label: "Newest" },
@@ -130,22 +124,4 @@ export function discountPercent(product: Product): number | null {
   const { price, discountPrice } = product;
   if (!discountPrice || discountPrice <= price) return null;
   return Math.round(((discountPrice - price) / discountPrice) * 100);
-}
-
-/** Find an active product by slug (storefront lookup). */
-export function findProductBySlug(products: Product[], slug: string): Product | undefined {
-  return products.find((product) => product.slug === slug && product.active);
-}
-
-/**
- * Related products from the same category (excluding the product itself),
- * newest first.
- */
-export function relatedProducts(products: Product[], product: Product, limit = 4): Product[] {
-  return sortProducts(
-    products.filter(
-      (p) => p.active && p.category.slug === product.category.slug && p.id !== product.id,
-    ),
-    "newest",
-  ).slice(0, limit);
 }
