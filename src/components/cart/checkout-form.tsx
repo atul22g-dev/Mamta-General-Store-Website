@@ -50,7 +50,9 @@ export function CheckoutForm() {
   const [state, formAction, isPending] = useActionState(checkoutAction, initialState);
   const placedOrderNumber = state.orderNumber ?? null;
 
-  const shipping = subtotal >= 99900 ? 0 : 9900;
+  // Flat ₹100 shipping on every order — must match the place_order RPC
+  // (migration 0010), which is the server-side source of truth.
+  const shipping = 10000;
   const total = subtotal + shipping;
 
   if (placedOrderNumber) {
@@ -121,8 +123,8 @@ export function CheckoutForm() {
   return (
     <form action={formAction} className="grid gap-10 lg:grid-cols-[1fr_360px]">
       <input type="hidden" name="cart" value={cartPayload} />
-      {/* Contact + shipping */}
-      <div className="space-y-5">
+      {/* Contact + shipping — min-w-0 keeps long form content shrinking */}
+      <div className="min-w-0 space-y-5">
         {state.error && !Object.keys(errors).length && (
           <div
             role="alert"
@@ -140,7 +142,7 @@ export function CheckoutForm() {
               id="customerName"
               name="customerName"
               autoComplete="name"
-              placeholder="Priya Sharma"
+              placeholder="Enter your full name"
               required
               {...invalid(errors.customerName)}
             />
@@ -154,7 +156,7 @@ export function CheckoutForm() {
               type="tel"
               inputMode="numeric"
               autoComplete="tel"
-              placeholder="98765 43210"
+              placeholder="Enter 10-digit mobile number"
               required
               {...invalid(errors.mobile)}
             />
@@ -189,7 +191,7 @@ export function CheckoutForm() {
                 id="city"
                 name="city"
                 autoComplete="address-level2"
-                placeholder="Ambala"
+                placeholder="Enter your city"
                 required
                 {...invalid(errors.city)}
               />
@@ -201,7 +203,7 @@ export function CheckoutForm() {
                 id="state"
                 name="state"
                 autoComplete="address-level1"
-                placeholder="Haryana"
+                placeholder="Enter your state"
                 required
                 {...invalid(errors.state)}
               />
@@ -214,7 +216,7 @@ export function CheckoutForm() {
                 name="pinCode"
                 inputMode="numeric"
                 autoComplete="postal-code"
-                placeholder="134003"
+                placeholder="Enter 6-digit PIN code"
                 maxLength={6}
                 required
                 {...invalid(errors.pinCode)}
@@ -237,7 +239,7 @@ export function CheckoutForm() {
       </div>
 
       {/* Order summary */}
-      <aside className="bg-card h-fit rounded-2xl border p-6 shadow-soft lg:sticky lg:top-24">
+      <aside className="bg-card h-fit min-w-0 rounded-2xl border p-6 shadow-soft lg:sticky lg:top-24">
         <h2 className="text-sm font-semibold tracking-wide uppercase">
           Order summary ({count} item{count === 1 ? "" : "s"})
         </h2>
@@ -265,7 +267,7 @@ export function CheckoutForm() {
           </div>
           <div className="flex justify-between">
             <dt className="text-muted-foreground">Shipping</dt>
-            <dd className="tabular-nums">{shipping === 0 ? "Free" : formatPrice(shipping)}</dd>
+            <dd className="tabular-nums">{formatPrice(shipping)}</dd>
           </div>
           <div className="flex justify-between border-t pt-3 text-base font-semibold">
             <dt>Total</dt>
@@ -288,7 +290,7 @@ export function CheckoutForm() {
         </Button>
         <p className="text-muted-foreground mt-4 flex items-center justify-center gap-1.5 text-center text-xs">
           <ShieldCheck aria-hidden="true" className="size-3.5" />
-          Free shipping on orders over ₹999 · Easy returns
+          Flat ₹100 shipping across India · Easy returns
         </p>
       </aside>
     </form>

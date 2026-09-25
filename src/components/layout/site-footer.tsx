@@ -19,10 +19,12 @@ export function SiteFooter() {
         <div className="flex flex-col items-center gap-6 text-center">
           <div className="max-w-md space-y-2">
             <p className="font-display text-lg font-medium tracking-tight">{SITE_NAME}</p>
-            <p className="text-sm text-muted-foreground">Women&apos;s Unstitched Dress Materials</p>
+            <p className="text-sm text-muted-foreground">
+              Women&apos;s Unstitched Suit Materials with Dupatta
+            </p>
             <p className="text-muted-foreground inline-flex items-start justify-center gap-1.5 text-sm">
               <MapPin aria-hidden="true" className="mt-0.5 size-3.5 shrink-0" />
-              {SHOP_ADDRESS}
+              <span className="text-balance">{SHOP_ADDRESS}</span>
             </p>
           </div>
 

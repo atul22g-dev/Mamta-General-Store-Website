@@ -158,6 +158,10 @@
   body {
     @apply bg-background text-foreground antialiased;
     text-rendering: optimizeLegibility;
+    /* Guarantee: nothing can push the page wider than the viewport (fixed
+       bars, long strings, transformed elements). `clip` keeps position:
+       sticky working, unlike `overflow-x: hidden` on an ancestor. */
+    overflow-x: clip;
   }
 
   ::selection {

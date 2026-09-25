@@ -9,7 +9,7 @@ import { SectionHeading } from "@/components/ui/section-heading";
 
 export const metadata: Metadata = {
   title: "About Us",
-  description: `${SITE_NAME} is a local shop near the Post Office in Jatwar, Haryana, offering women's unstitched dress materials — daily wear, festive and premium collections, delivered across India by India Post.`,
+  description: `${SITE_NAME} is a local shop near the Post Office in Jatwar, Haryana, offering women's unstitched suit materials with dupatta — daily wear, festive and premium collections, delivered across India by India Post.`,
 };
 
 /** About the local shop — a modern editorial layout with only verifiable facts. */
@@ -22,8 +22,8 @@ export default function AboutPage() {
           <SectionHeading
             align="left"
             eyebrow="About Us"
-            title="A small Jatwar shop for beautiful unstitched dress materials"
-            description="Every piece is a complete set — top, bottom and dupatta — so you can have it tailored exactly the way you like it."
+            title="A small Jatwar shop for beautiful unstitched suit materials with dupatta"
+            description="Beautiful unstitched suit materials with dupatta in a variety of fabrics, colours and designs — so you can have it tailored exactly the way you like it."
           />
           <div className="text-muted-foreground mt-5 space-y-4 text-sm leading-relaxed sm:text-base">
             <p>
@@ -71,8 +71,8 @@ export default function AboutPage() {
       <div className="mt-12 grid gap-4 sm:grid-cols-3 sm:gap-6">
         {[
           {
-            title: "Complete sets",
-            text: "Top, bottom and dupatta in every piece — ready for tailoring.",
+            title: "Unstitched Suit Materials",
+            text: "Suit fabric with dupatta, available in a variety of fabrics and designs — ready for tailoring.",
           },
           {
             title: "Checked by hand",

@@ -62,6 +62,10 @@ export function OrderCard({
               day: "numeric",
               month: "short",
               year: "numeric",
+              // Pinned so the server-rendered HTML and the browser agree —
+              // the shop and its customers are all in India (IST), and an
+              // unpinned timezone would format differently on each side.
+              timeZone: "Asia/Kolkata",
             })}
           </p>
         </div>

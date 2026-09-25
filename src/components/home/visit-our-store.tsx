@@ -51,7 +51,7 @@ export function VisitOurStore() {
           <SectionHeading
             eyebrow="Local shop"
             title="Visit Our Local Shop"
-            description="Come see and feel the fabrics in person — choose your dress material with your own eyes."
+            description="Come see and feel the fabrics in person — choose your suit material with your own eyes."
             align="left"
           />
           <ul className="mt-6 space-y-3">

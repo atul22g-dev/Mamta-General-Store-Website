@@ -88,7 +88,7 @@ export function ProductCard({ product, className }: { product: Product; classNam
 
       <Link
         href={`/products/${product.slug}`}
-        className="border-input hover:border-ring/60 hover:bg-accent/50 mt-3 inline-flex h-10 w-full items-center justify-center rounded-lg border text-xs font-medium tracking-wide shadow-xs transition-all duration-200 ease-gentle hover:text-accent-foreground md:h-9"
+        className="border-input hover:border-ring/60 hover:bg-accent/50 mt-3 inline-flex h-10 w-full items-center justify-center rounded-lg border text-xs font-medium tracking-wide shadow-xs transition-colors duration-200 ease-gentle hover:text-accent-foreground md:h-9"
       >
         View product
       </Link>

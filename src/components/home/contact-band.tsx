@@ -26,29 +26,33 @@ export function ContactBand() {
           description="Ask about availability, prices or anything else — we're happy to help."
         />
 
-        <div className="mt-8 flex w-full max-w-md flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-center">
+        {/* Mobile-first CTA stack: call is primary and full-width; WhatsApp
+            and Directions share a row so the band stays compact on phones. */}
+        <div className="mt-8 w-full max-w-md space-y-3 sm:max-w-none">
           {siteContact.phone && (
-            <Button size="lg" asChild className="w-full sm:w-auto">
+            <Button size="lg" asChild className="w-full">
               <a href={`tel:${siteContact.phone}`}>
                 <Phone />
                 Call {siteContact.phone}
               </a>
             </Button>
           )}
-          {siteContact.whatsappUrl && (
-            <Button size="lg" variant="outline" asChild className="w-full sm:w-auto">
-              <a href={siteContact.whatsappUrl} target="_blank" rel="noopener noreferrer">
-                <MessageCircle />
-                WhatsApp
+          <div className="grid grid-cols-2 gap-3">
+            {siteContact.whatsappUrl && (
+              <Button size="lg" variant="outline" asChild className="w-full">
+                <a href={siteContact.whatsappUrl} target="_blank" rel="noopener noreferrer">
+                  <MessageCircle />
+                  WhatsApp
+                </a>
+              </Button>
+            )}
+            <Button size="lg" variant="ghost" asChild className="w-full">
+              <a href={GOOGLE_MAPS_URL} target="_blank" rel="noopener noreferrer">
+                <Navigation />
+                Directions
               </a>
             </Button>
-          )}
-          <Button size="lg" variant="ghost" asChild className="w-full sm:w-auto">
-            <a href={GOOGLE_MAPS_URL} target="_blank" rel="noopener noreferrer">
-              <Navigation />
-              Directions
-            </a>
-          </Button>
+          </div>
         </div>
 
         <ul className="text-muted-foreground mt-10 space-y-2.5 text-sm">

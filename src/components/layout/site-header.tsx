@@ -44,7 +44,7 @@ export function SiteHeader({ className }: { className?: string }) {
                   <Menu />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-80">
+              <SheetContent side="left" className="w-[85vw] max-w-80">
                 <SheetHeader>
                   <SheetTitle className="font-display text-lg">{SITE_NAME}</SheetTitle>
                   <SheetDescription className="sr-only">Site navigation</SheetDescription>
@@ -54,10 +54,11 @@ export function SiteHeader({ className }: { className?: string }) {
             </Sheet>
           </div>
 
-          {/* Brand */}
+          {/* Brand — absolutely centered on mobile needs w-max, otherwise the
+              shrink-to-fit width is capped at half the viewport and wraps. */}
           <Link
             href="/"
-            className="absolute left-1/2 -translate-x-1/2 font-display text-lg font-medium tracking-tight transition-opacity hover:opacity-80 sm:static sm:translate-x-0 lg:mr-8"
+            className="absolute left-1/2 w-max -translate-x-1/2 font-display text-lg font-medium tracking-tight transition-opacity hover:opacity-80 sm:static sm:w-auto sm:translate-x-0 lg:mr-8"
           >
             {SITE_NAME}
           </Link>

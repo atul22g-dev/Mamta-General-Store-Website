@@ -2,29 +2,33 @@
 
 [mida](https://www.mida.so/amazon-listing-images?)
 
-
 🛍️ I would generate these 5 images for your listing
 Image 1 — Main Meesho Product Image
+
 ```
-White background + complete unstitched suit set.
+White background + the unstitched suit material with dupatta.
 ```
 
 Image 2 — Embroidery Close-Up
+
 ```
 Create a high-resolution close-up of the original embroidery, showing the pink and white floral work and fine stitching. Preserve the exact embroidery design and colors. Soft studio lighting, realistic fabric texture, premium e-commerce photography, no redesign.
 ```
 
 Image 3 — Dupatta/Fabric Detail
+
 ```
-Show the complete coordinated fabric and dupatta neatly arranged, emphasizing the fabric quality, fall and original color. Preserve the exact product without modification. Clean white background, realistic textile photography.
+Show the fabric and dupatta neatly arranged, emphasizing the fabric quality, fall and original color. Preserve the exact product without modification. Clean white background, realistic textile photography.
 ```
 
 Image 4 — Premium Website Image
+
 ```
-Create a luxury Indian ethnic-fashion e-commerce product photograph using the exact original suit material. Arrange the complete set elegantly on a clean neutral studio surface, with sophisticated soft lighting and subtle natural shadow. Preserve every original embroidery detail and the exact olive/sage green color. Photorealistic, premium fashion catalogue quality.
+Create a luxury Indian ethnic-fashion e-commerce product photograph using the exact original suit material. Arrange the suit material with dupatta elegantly on a clean neutral studio surface, with sophisticated soft lighting and subtle natural shadow. Preserve every original embroidery detail and the exact olive/sage green color. Photorealistic, premium fashion catalogue quality.
 ```
 
 Image 5 — Model Image
+
 ```
 If you want a model wearing the suit, use:
 

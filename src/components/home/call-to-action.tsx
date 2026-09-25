@@ -32,7 +32,7 @@ export async function CallToAction() {
           id="cta-heading"
           className="font-display mt-3 max-w-xl text-3xl font-medium tracking-tight text-balance sm:text-4xl"
         >
-          Find the dress material that feels made for you
+          Find the suit material that feels made for you
         </h2>
         <p className="mt-4 max-w-md text-pretty leading-relaxed opacity-80">
           Explore the collection — delivered across India by India Post.

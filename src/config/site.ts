@@ -15,14 +15,14 @@ export const siteConfig = {
   locale: "en_IN",
   keywords: [
     "Mamta General Store",
-    "unstitched dress material",
-    "women's dress material Jatwar",
-    "dress material shop Jatwar",
-    "dress material near Jatwar",
+    "unstitched suit material",
+    "women's suit material Jatwar",
+    "suit material shop Jatwar",
+    "suit material near Jatwar",
     "women's ethnic wear",
     "salwar suit material",
-    "top bottom dupatta set",
-    "Ambala dress material shop",
+    "suit material with dupatta",
+    "Ambala suit material shop",
     "India Post delivery",
   ],
 } as const;
@@ -38,7 +38,7 @@ export const GOOGLE_MAPS_URL = "https://maps.app.goo.gl/YoC5KUXBHETsjzJy9";
 export const DELIVERY_NOTE = "Delivered across India by India Post";
 
 /** The shop's full postal address, as displayed in the local-shop section. */
-export const SHOP_ADDRESS = "Near Post Office, Jatwar, Haryana 134201, India";
+export const SHOP_ADDRESS = "Mamta General Store, Near Post Office, Jatwar, Haryana 134201, India";
 
 /** Public site URL without a trailing slash. */
 export const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(
@@ -61,7 +61,7 @@ export const siteContact: {
 } = {
   address: SHOP_ADDRESS,
   phone: "9729292342",
-  email: "ranimamta82616@gmail.com",
+  email: null,
   whatsappUrl: "https://wa.me/919729292342",
-  timings: null,
+  timings: "Mon – Sun: 9:00 AM – 1:00 PM | 3:00 PM – 8:00 PM",
 };

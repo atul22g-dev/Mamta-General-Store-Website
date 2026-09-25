@@ -45,6 +45,16 @@ export const productFormSchema = z
         .transform((value) => value ?? ""),
     ),
     categoryId: z.string().min(1, "Choose a category"),
+    /** Optional merchant product code; unique when provided. */
+    sku: z.preprocess(
+      (value) => (value == null || String(value).trim() === "" ? undefined : value),
+      z
+        .string()
+        .trim()
+        .max(60, "SKU is too long")
+        .optional()
+        .transform((value) => value ?? null),
+    ),
     description: z
       .string()
       .trim()
@@ -84,6 +94,7 @@ export function toDatabaseValues(data: ProductFormData) {
   return {
     name: data.name,
     slug: data.slug,
+    sku: data.sku,
     description: data.description ? data.description : null,
     price: data.price,
     discountPrice: data.discountPrice ?? null,

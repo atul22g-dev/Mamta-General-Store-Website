@@ -7,7 +7,7 @@ const perks = [
   {
     icon: Sparkles,
     title: "Hand-checked fabrics",
-    description: "Every dress material is inspected for fabric, work and finish.",
+    description: "Every suit material is inspected for fabric, work and finish.",
   },
   {
     icon: PackageCheck,
@@ -16,8 +16,8 @@ const perks = [
   },
   {
     icon: Ruler,
-    title: "Complete sets",
-    description: "Clear top, bottom and dupatta details on every product.",
+    title: "Unstitched Suit Materials",
+    description: "Suit fabric with dupatta in a variety of fabrics, colours and designs.",
   },
   {
     icon: ShieldCheck,

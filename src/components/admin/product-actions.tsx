@@ -24,7 +24,7 @@ import {
 import { cn } from "@/lib/utils";
 
 const iconButton =
-  "text-muted-foreground hover:text-foreground hover:bg-accent inline-flex size-8 items-center justify-center rounded-md transition-colors disabled:opacity-50";
+  "text-muted-foreground hover:text-foreground hover:bg-accent focus-visible:ring-ring/50 inline-flex size-10 items-center justify-center rounded-md outline-none transition-colors focus-visible:ring-[3px] disabled:opacity-50 md:size-8";
 
 function RowButton({
   title,

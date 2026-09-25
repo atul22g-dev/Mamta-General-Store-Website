@@ -62,7 +62,7 @@ export function ProductFilters({ categories }: { categories: CategoryOption[] })
           onChange={(event) => onQueryChange(event.target.value)}
           placeholder="Search name, SKU or slug…"
           aria-label="Search products"
-          className="pl-9"
+          className="pl-9 md:pl-9"
         />
         {query && (
           <button
@@ -76,7 +76,9 @@ export function ProductFilters({ categories }: { categories: CategoryOption[] })
         )}
       </div>
 
-      <div className="flex gap-3">
+      {/* Selects stack full-width on phones so long category names stay
+          readable; share the row from sm: up. */}
+      <div className="flex flex-col gap-3 sm:flex-row">
         <Select
           value={category}
           onValueChange={(value) => updateParams({ category: value === "all" ? null : value })}

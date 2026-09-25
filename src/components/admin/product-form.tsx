@@ -224,6 +224,23 @@ function BasicsSection({
       </div>
 
       <div className="space-y-2">
+        <Label htmlFor="sku">SKU (optional)</Label>
+        <Input
+          id="sku"
+          name="sku"
+          defaultValue={product?.sku ?? ""}
+          maxLength={60}
+          placeholder="e.g. MGS-SUIT-001"
+          aria-describedby="sku-hint"
+          {...inputInvalid(errors?.sku)}
+        />
+        <p id="sku-hint" className="text-muted-foreground text-xs">
+          Your own product code — shown only in the admin list.
+        </p>
+        <FieldError errors={errors?.sku} />
+      </div>
+
+      <div className="space-y-2">
         <Label htmlFor="categoryId">Category *</Label>
         <Select name="categoryId" value={categoryId} onValueChange={setCategoryId} required>
           <SelectTrigger id="categoryId" aria-invalid={Boolean(errors?.categoryId)}>

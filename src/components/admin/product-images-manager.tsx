@@ -1,12 +1,14 @@
 "use client";
 
 import * as React from "react";
-import { useActionState } from "react";
-import { ImagePlus, Loader2, Trash2 } from "lucide-react";
+import { useActionState, useState, useTransition } from "react";
+import { ArrowDown, ArrowUp, Check, Crown, ImagePlus, Loader2, Trash2 } from "lucide-react";
 
 import {
   addProductImagesAction,
   deleteProductImageAction,
+  reorderProductImagesAction,
+  setCoverImageAction,
   type ProductImagesActionState,
 } from "@/app/admin/products/images";
 import { Button } from "@/components/ui/button";
@@ -26,34 +28,202 @@ const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/avi
 /** Per-file cap for the optimized file (mirrors the server-side rule). */
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
+const reorderButton =
+  "text-muted-foreground hover:text-foreground hover:bg-accent focus-visible:ring-ring/50 inline-flex size-10 items-center justify-center rounded-md outline-none transition-colors focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-40 md:size-8";
+
+const crownButton =
+  "text-muted-foreground hover:text-foreground hover:bg-accent focus-visible:ring-ring/50 inline-flex size-10 items-center justify-center rounded-md outline-none transition-colors focus-visible:ring-[3px] active:scale-[0.97] disabled:pointer-events-none disabled:opacity-40 md:size-8";
+
+/** A React 19 form action: the curried dispatch from useActionState. */
+type ImagesFormAction = (formData: FormData) => void | Promise<void>;
+
 /**
- * Product gallery manager (edit page): shows all images, adds any number of
- * new ones (multi-file), deletes individual images with confirmation. The
- * position-0 primary image is shown too but its replacement lives in the
- * main product form. Picked photos are optimized in the browser (resize +
- * re-encode, all accepted files together) before upload.
+ * Reject unsupported types and oversized originals before any compression
+ * work starts. Mirrors the server-side rules; the last rejection wins for
+ * the message, matching the previous single-error display.
  */
-export function ProductImagesManager({
+function selectValidImages(selected: File[]): { accepted: File[]; error: string | null } {
+  const accepted: File[] = [];
+  let error: string | null = null;
+  for (const original of selected) {
+    if (!ALLOWED_IMAGE_TYPES.includes(original.type)) {
+      error = `"${original.name}" is not a supported image type. Use JPEG, PNG, WebP or AVIF.`;
+      continue;
+    }
+    if (original.size > PRODUCT_IMAGE_INPUT_MAX_BYTES) {
+      error = `"${original.name}" is larger than 25 MB.`;
+      continue;
+    }
+    accepted.push(original);
+  }
+  return { accepted, error };
+}
+
+/** The position-0 photo: badge, preview and explainer. Pure display. */
+function CoverCard({ cover, productName }: { cover: ManagedImage; productName: string }) {
+  return (
+    <div className="flex items-center gap-4">
+      <div className="bg-muted relative size-20 shrink-0 overflow-hidden rounded-lg border ring-2 ring-primary/20 sm:size-24">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={cover.url}
+          alt={cover.alt ?? `${productName} cover photo`}
+          loading="lazy"
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+      </div>
+      <div>
+        <span className="bg-primary text-primary-foreground inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium">
+          <Crown aria-hidden="true" className="size-3" />
+          Cover
+        </span>
+        <p className="text-muted-foreground mt-1 text-xs">
+          Shown across the shop. Promote another photo below to change it.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * One gallery row: thumb, label, move controls, set-cover, delete.
+ * The row owns its two tiny forms (cover / delete) so its hidden imageId is
+ * always scoped to that row — a shared form would submit every row's fields
+ * and always resolve to the first photo — plus its own deleting flag for
+ * the pending fade-out.
+ */
+function GalleryImageRow({
+  image,
+  index,
+  galleryLength,
   productId,
   productName,
-  images,
+  coverAction,
+  isCoverPending,
+  isReordering,
+  onMove,
 }: {
+  image: ManagedImage;
+  /** Index within the gallery slice (0 = first gallery photo, not the cover). */
+  index: number;
+  galleryLength: number;
   productId: string;
   productName: string;
-  images: ManagedImage[];
+  coverAction: ImagesFormAction;
+  isCoverPending: boolean;
+  isReordering: boolean;
+  onMove: (delta: -1 | 1) => void;
 }) {
-  const [state, formAction, isPending] = useActionState(addProductImagesAction, initialState);
-  const formRef = React.useRef<HTMLFormElement>(null);
-  const [deletingId, setDeletingId] = React.useState<string | null>(null);
-  const [isOptimizing, setIsOptimizing] = React.useState(false);
-  const [selectError, setSelectError] = React.useState<string | null>(null);
-  const sorted = [...images].sort((a, b) => a.position - b.position);
+  const [deleting, setDeleting] = useState(false);
+  const photoNumber = index + 2; // 1-based, after the cover.
 
-  /**
-   * Photos are optimized in the browser (resize + re-encode) before upload:
-   * the picked files are swapped for their compressed versions right in the
-   * input, so the form submits the small files, not the originals.
-   */
+  return (
+    <li className="flex items-center gap-2 p-3 sm:gap-3">
+      <div
+        className={cn(
+          "bg-muted relative size-14 shrink-0 overflow-hidden rounded-lg border sm:size-16",
+          deleting && "opacity-40",
+        )}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={image.url}
+          alt={image.alt ?? `${productName} photo`}
+          loading="lazy"
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+      </div>
+      <p className="text-muted-foreground min-w-0 flex-1 truncate text-xs">
+        {index === 0 ? "First gallery photo" : `Gallery photo ${photoNumber}`}
+      </p>
+
+      <div className="flex shrink-0 flex-col gap-0.5">
+        <button
+          type="button"
+          aria-label={`Move photo ${photoNumber} up`}
+          disabled={index === 0 || isReordering}
+          onClick={() => onMove(-1)}
+          className={reorderButton}
+        >
+          <ArrowUp aria-hidden="true" className="size-4" />
+        </button>
+        <button
+          type="button"
+          aria-label={`Move photo ${photoNumber} down`}
+          disabled={index === galleryLength - 1 || isReordering}
+          onClick={() => onMove(1)}
+          className={reorderButton}
+        >
+          <ArrowDown aria-hidden="true" className="size-4" />
+        </button>
+      </div>
+
+      {/* Set as cover — row-scoped form. */}
+      <form action={coverAction}>
+        <input type="hidden" name="productId" value={productId} />
+        <input type="hidden" name="imageId" value={image.id} />
+        <button
+          type="submit"
+          disabled={isCoverPending}
+          aria-label={`Set photo ${photoNumber} as cover`}
+          title="Set as cover"
+          className={crownButton}
+        >
+          {isCoverPending ? (
+            <Loader2 aria-hidden="true" className="size-4 animate-spin" />
+          ) : (
+            <Crown aria-hidden="true" className="size-4" />
+          )}
+        </button>
+      </form>
+
+      {/* Delete — row-scoped form. */}
+      <form
+        action={deleteProductImageAction}
+        onSubmit={(event) => {
+          if (!window.confirm(`Delete this photo? This cannot be undone.`)) {
+            event.preventDefault();
+            return;
+          }
+          setDeleting(true);
+        }}
+      >
+        <input type="hidden" name="imageId" value={image.id} />
+        <input type="hidden" name="productId" value={productId} />
+        <Button
+          type="submit"
+          variant="ghost"
+          size="sm"
+          className="text-muted-foreground hover:text-destructive"
+          aria-label={`Delete photo ${photoNumber} of ${productName}`}
+        >
+          <Trash2 />
+          <span className="sr-only sm:not-sr-only">Delete</span>
+        </Button>
+      </form>
+    </li>
+  );
+}
+
+/**
+ * The add-photos form. It owns the optimizing/error state because nothing
+ * else in the manager needs it; picked photos are optimized in the browser
+ * (resize + re-encode) before upload, so the form submits small files.
+ */
+function AddPhotosForm({
+  productId,
+  state,
+  formAction,
+  isPending,
+}: {
+  productId: string;
+  state: ProductImagesActionState;
+  formAction: ImagesFormAction;
+  isPending: boolean;
+}) {
+  const [isOptimizing, setIsOptimizing] = useState(false);
+  const [selectError, setSelectError] = useState<string | null>(null);
+
   async function handleFilesChange(event: React.ChangeEvent<HTMLInputElement>) {
     const input = event.currentTarget;
     const selected = Array.from(input.files ?? []);
@@ -61,22 +231,8 @@ export function ProductImagesManager({
     setSelectError(null);
     setIsOptimizing(true);
     try {
-      // Validate first, then optimize the accepted files together —
-      // compression is independent per photo, so none waits for the previous.
-      const accepted: File[] = [];
-      for (const original of selected) {
-        if (!ALLOWED_IMAGE_TYPES.includes(original.type)) {
-          setSelectError(
-            `"${original.name}" is not a supported image type. Use JPEG, PNG, WebP or AVIF.`,
-          );
-          continue;
-        }
-        if (original.size > PRODUCT_IMAGE_INPUT_MAX_BYTES) {
-          setSelectError(`"${original.name}" is larger than 25 MB.`);
-          continue;
-        }
-        accepted.push(original);
-      }
+      const { accepted, error } = selectValidImages(selected);
+      if (error) setSelectError(error);
 
       const optimized = await Promise.all(accepted.map((file) => compressImageFile(file)));
 
@@ -90,12 +246,112 @@ export function ProductImagesManager({
         }
         transfer.items.add(file);
       }
-      // Replace the selection with the optimized files (an empty transfer
-      // clears the input, re-triggering the required validation on submit).
       input.files = transfer.files;
     } finally {
       setIsOptimizing(false);
     }
+  }
+
+  return (
+    <form action={formAction} className="border-border rounded-xl border border-dashed p-4">
+      <input type="hidden" name="productId" value={productId} />
+      <label htmlFor="gallery-images" className="text-sm font-medium">
+        Add photos
+      </label>
+      <p className="text-muted-foreground mt-0.5 text-xs">
+        JPEG, PNG, WebP or AVIF · large photos are compressed automatically · up to 8 at a time
+      </p>
+      <input
+        id="gallery-images"
+        name="imageFiles"
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/avif"
+        multiple
+        required
+        disabled={isOptimizing}
+        onChange={handleFilesChange}
+        className="mt-2 block w-full text-sm file:mr-3 file:rounded-md file:border-0 file:bg-secondary file:px-3 file:py-1.5 file:text-sm file:font-medium hover:file:bg-secondary/70"
+      />
+      {isOptimizing && (
+        <p role="status" className="text-muted-foreground mt-2 text-sm">
+          Optimizing images…
+        </p>
+      )}
+      {selectError && (
+        <p className="text-destructive mt-2 text-sm" role="alert">
+          {selectError}
+        </p>
+      )}
+      {state.error && (
+        <p className="text-destructive mt-2 text-sm" role="alert">
+          {state.error}
+        </p>
+      )}
+      {state.added != null && state.added > 0 && (
+        <p className="text-emerald-600 mt-2 text-sm" role="status">
+          Added {state.added} photo{state.added === 1 ? "" : "s"}.
+        </p>
+      )}
+      <Button type="submit" size="sm" className="mt-3" disabled={isPending || isOptimizing}>
+        {isPending ? <Loader2 className="animate-spin" /> : <ImagePlus />}
+        {isPending ? "Uploading…" : "Upload photos"}
+      </Button>
+    </form>
+  );
+}
+
+/**
+ * Photo management on the edit page: shows all images, adds any number of
+ * new ones (multi-file, mobile picker), deletes with confirmation, reorders
+ * gallery photos with explicit up/down buttons, and lets any gallery photo
+ * be promoted to the cover with one tap. All controls work with touch,
+ * keyboard and mouse (no drag gestures).
+ *
+ * Structure: this component owns only the shared photo list and reorder
+ * state — the cover card, gallery rows and add-photos form are separate
+ * components above, each owning their own slice of state and forms.
+ */
+export function ProductImagesManager({
+  productId,
+  productName,
+  images,
+}: {
+  productId: string;
+  productName: string;
+  images: ManagedImage[];
+}) {
+  const [state, formAction, isPending] = useActionState(addProductImagesAction, initialState);
+  const [coverState, coverAction, isCoverPending] = useActionState(
+    setCoverImageAction,
+    initialState,
+  );
+  const [order, setOrder] = useState<ManagedImage[] | null>(null);
+  const [isReordering, startReorder] = useTransition();
+
+  const sorted = React.useMemo(() => [...images].sort((a, b) => a.position - b.position), [images]);
+  const [cover, ...gallery] = order ?? sorted;
+
+  /**
+   * Optimistic gallery move; persisted in a transition. Operates on the
+   * gallery slice only — the cover (first item) never moves, and the
+   * payload lists gallery rows as 1..n so the cover keeps position 0.
+   */
+  function move(galleryIndex: number, delta: -1 | 1) {
+    const current = order ?? sorted;
+    const target = galleryIndex + delta;
+    if (target < 0 || target >= gallery.length) return;
+    const nextGallery = [...current.slice(1)];
+    [nextGallery[galleryIndex], nextGallery[target]] = [
+      nextGallery[target],
+      nextGallery[galleryIndex],
+    ];
+    setOrder([current[0], ...nextGallery]);
+    startReorder(async () => {
+      const data = new FormData();
+      data.set("productId", productId);
+      nextGallery.forEach((item, i) => data.append("order", `${i + 1}:${item.id}`));
+      await reorderProductImagesAction(initialState, data);
+    });
   }
 
   return (
@@ -105,111 +361,59 @@ export function ProductImagesManager({
           Product photos ({sorted.length})
         </h2>
         <p className="text-muted-foreground mt-1 text-sm">
-          Front, detail, fabric and design photos help customers choose. The first photo is the
-          cover used across the shop.
+          The cover is the first photo — shown on cards and listings. Tap a photo&apos;s crown to
+          make it the cover, or use the arrows to reorder.
         </p>
       </div>
 
-      {sorted.length > 0 && (
-        <ul className="grid grid-cols-3 gap-3 sm:grid-cols-4">
-          {sorted.map((image) => (
-            <li key={image.id} className="group relative">
-              <div
-                className={cn(
-                  "bg-muted relative aspect-square overflow-hidden rounded-lg border",
-                  deletingId === image.id && "opacity-40",
-                )}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={image.url}
-                  alt={image.alt ?? `${productName} photo`}
-                  loading="lazy"
-                  className="absolute inset-0 h-full w-full object-cover"
-                />
-                {image.position === 0 && (
-                  <span className="bg-primary text-primary-foreground absolute top-1.5 left-1.5 rounded-full px-2 py-0.5 text-[10px] font-medium">
-                    Cover
-                  </span>
-                )}
-              </div>
-              <form action={deleteProductImageAction} className="mt-1.5">
-                <input type="hidden" name="imageId" value={image.id} />
-                <input type="hidden" name="productId" value={productId} />
-                <Button
-                  type="submit"
-                  variant="ghost"
-                  size="sm"
-                  className="text-muted-foreground hover:text-destructive w-full"
-                  aria-label={`Delete photo ${image.position + 1} of ${productName}`}
-                  onClick={(event) => {
-                    if (!window.confirm(`Delete this photo? This cannot be undone.`)) {
-                      event.preventDefault();
-                      return;
-                    }
-                    setDeletingId(image.id);
-                  }}
-                >
-                  <Trash2 />
-                  Delete
-                </Button>
-              </form>
-            </li>
+      {/* Cover (position 0). */}
+      {cover && <CoverCard cover={cover} productName={productName} />}
+
+      {gallery.length > 0 && (
+        <ul className="divide-y rounded-xl border">
+          {gallery.map((image, index) => (
+            <GalleryImageRow
+              key={image.id}
+              image={image}
+              index={index}
+              galleryLength={gallery.length}
+              productId={productId}
+              productName={productName}
+              coverAction={coverAction}
+              isCoverPending={isCoverPending}
+              isReordering={isReordering}
+              onMove={(delta) => move(index, delta)}
+            />
           ))}
         </ul>
       )}
 
-      <form
-        ref={formRef}
-        action={formAction}
-        onSubmit={() => {
-          // Let the browser validate nothing extra; pending state shows below.
-        }}
-        className="border-border rounded-xl border border-dashed p-4"
-      >
-        <input type="hidden" name="productId" value={productId} />
-        <label htmlFor="gallery-images" className="text-sm font-medium">
-          Add photos
-        </label>
-        <p className="text-muted-foreground mt-0.5 text-xs">
-          JPEG, PNG, WebP or AVIF · large photos are compressed automatically · up to 8 at a time
+      {/* Reorder feedback — transition errors surface here too. */}
+      {isReordering && (
+        <p className="text-muted-foreground text-xs" role="status">
+          Saving new order…
         </p>
-        <input
-          id="gallery-images"
-          name="imageFiles"
-          type="file"
-          accept="image/jpeg,image/png,image/webp,image/avif"
-          multiple
-          required
-          disabled={isOptimizing}
-          onChange={handleFilesChange}
-          className="mt-2 block w-full text-sm file:mr-3 file:rounded-md file:border-0 file:bg-secondary file:px-3 file:py-1.5 file:text-sm file:font-medium hover:file:bg-secondary/70"
-        />
-        {isOptimizing && (
-          <p role="status" className="text-muted-foreground mt-2 text-sm">
-            Optimizing images…
-          </p>
-        )}
-        {selectError && (
-          <p className="text-destructive mt-2 text-sm" role="alert">
-            {selectError}
-          </p>
-        )}
-        {state.error && (
-          <p className="text-destructive mt-2 text-sm" role="alert">
-            {state.error}
-          </p>
-        )}
-        {state.added != null && state.added > 0 && (
-          <p className="text-emerald-600 mt-2 text-sm" role="status">
-            Added {state.added} photo{state.added === 1 ? "" : "s"}.
-          </p>
-        )}
-        <Button type="submit" size="sm" className="mt-3" disabled={isPending || isOptimizing}>
-          {isPending ? <Loader2 className="animate-spin" /> : <ImagePlus />}
-          {isPending ? "Uploading…" : "Upload photos"}
-        </Button>
-      </form>
+      )}
+
+      {/* Cover-change feedback lives outside the list so it survives re-renders. */}
+      {coverState.error && (
+        <p className="text-destructive text-sm" role="alert">
+          {coverState.error}
+        </p>
+      )}
+      {coverState.newCoverUrl && (
+        <p className="text-emerald-600 flex items-center gap-1.5 text-sm" role="status">
+          <Check aria-hidden="true" className="size-4" />
+          Cover photo updated — it now shows across the shop.
+        </p>
+      )}
+
+      <AddPhotosForm
+        productId={productId}
+        state={state}
+        formAction={formAction}
+        isPending={isPending}
+      />
     </section>
   );
 }

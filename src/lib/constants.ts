@@ -5,10 +5,10 @@
 
 export const SITE_NAME = "Mamta General Store";
 
-export const SITE_TAGLINE = "Women's Unstitched Dress Materials";
+export const SITE_TAGLINE = "Women's Unstitched Suit Materials";
 
 export const SITE_DESCRIPTION =
-  "Beautiful unstitched dress materials for women at Mamta General Store, Jatwar — cotton, printed, embroidered and festive collections. Visit our local shop or order by India Post.";
+  "Women's unstitched suit materials with dupatta at Mamta General Store, Jatwar — a variety of fabrics, colours and designs. Visit our local shop or order by India Post.";
 
 /**
  * Categories live in the database (`categories` table) — nothing static here.

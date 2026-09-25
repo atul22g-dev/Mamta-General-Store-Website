@@ -35,7 +35,6 @@ export function LoginForm({ redirectTo }: { redirectTo?: string }) {
           required
           aria-invalid={Boolean(state.error)}
           aria-describedby={state.error ? "login-error" : undefined}
-          className="h-11"
         />
       </div>
 
@@ -50,7 +49,6 @@ export function LoginForm({ redirectTo }: { redirectTo?: string }) {
           minLength={8}
           aria-invalid={Boolean(state.error)}
           aria-describedby={state.error ? "login-error" : undefined}
-          className="h-11"
         />
       </div>
 
@@ -65,7 +63,7 @@ export function LoginForm({ redirectTo }: { redirectTo?: string }) {
         </p>
       )}
 
-      <Button type="submit" className="h-11 w-full" disabled={isPending}>
+      <Button type="submit" className="w-full" disabled={isPending}>
         {isPending ? (
           <>
             <Loader2 aria-hidden="true" className="size-4 animate-spin" />

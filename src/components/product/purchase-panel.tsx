@@ -333,56 +333,11 @@ function CartActions({
   );
 }
 
-/** Fixed bottom bar on mobile: price + Add to Cart stay reachable while scrolling. */
-function StickyBuyBar({
-  show,
-  price,
-  added,
-  canAdd,
-  onAddToCart,
-}: {
-  show: boolean;
-  price: number;
-  added: boolean;
-  canAdd: boolean;
-  onAddToCart: () => void;
-}) {
-  return (
-    <div
-      aria-hidden={!show}
-      className={cn(
-        "bg-background/95 fixed inset-x-0 bottom-0 z-40 border-t px-4 py-3 backdrop-blur-md transition-all duration-300 ease-gentle lg:hidden",
-        "pb-[calc(0.75rem+env(safe-area-inset-bottom))]",
-        show ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-full opacity-0",
-      )}
-    >
-      <div className="flex items-center gap-3">
-        <div className="min-w-0">
-          <p className="text-muted-foreground text-[11px] uppercase">Price</p>
-          <p className="text-base font-semibold tabular-nums">
-            {formatPrice(price, DEFAULT_CURRENCY)}
-          </p>
-        </div>
-        <Button
-          className="ml-auto h-11 flex-1 sm:flex-none sm:px-8"
-          disabled={!canAdd}
-          onClick={onAddToCart}
-          tabIndex={show ? 0 : -1}
-        >
-          {added ? <Check /> : <ShoppingBag />}
-          {added ? "Added" : canAdd ? "Add to Cart" : "Unavailable"}
-        </Button>
-      </div>
-    </div>
-  );
-}
-
 /**
  * Product purchase panel: modern price block with savings callout, pill-style
  * size/color pickers, quantity selector, trust strip and Add to Cart /
- * Buy Now actions — plus a sticky mobile buy bar that appears once the main
- * actions scroll out of view. State and cart wiring live here; the sections
- * are presentational.
+ * Buy Now actions. State and cart wiring live here; the sections are
+ * presentational.
  */
 export function PurchasePanel({ product, className }: { product: Product; className?: string }) {
   const available = isAvailable(product);
@@ -438,17 +393,6 @@ export function PurchasePanel({ product, className }: { product: Product; classN
     router.push("/checkout");
   };
 
-  // The sticky mobile bar appears only when the real actions are off-screen.
-  const actionsRef = React.useRef<HTMLDivElement>(null);
-  const [showStickyBar, setShowStickyBar] = React.useState(false);
-  React.useEffect(() => {
-    const actions = actionsRef.current;
-    if (!actions) return;
-    const observer = new IntersectionObserver(([entry]) => setShowStickyBar(!entry.isIntersecting));
-    observer.observe(actions);
-    return () => observer.disconnect();
-  }, []);
-
   const hasVariants = product.sizes.length > 0 || product.colors.length > 0;
 
   return (
@@ -481,27 +425,17 @@ export function PurchasePanel({ product, className }: { product: Product; classN
           onIncrease={() => setQuantity((q) => Math.min(maxQuantity, q + 1))}
         />
 
-        <div ref={actionsRef}>
-          <CartActions
-            added={added}
-            canAdd={canAdd}
-            onAddToCart={handleAddToCart}
-            onBuyNow={handleBuyNow}
-          />
-        </div>
+        <CartActions
+          added={added}
+          canAdd={canAdd}
+          onAddToCart={handleAddToCart}
+          onBuyNow={handleBuyNow}
+        />
 
         <TrustStrip />
       </div>
 
       <ContactOrderBlock productName={product.name} unavailable={!available} />
-
-      <StickyBuyBar
-        show={showStickyBar}
-        price={product.price}
-        added={added}
-        canAdd={canAdd}
-        onAddToCart={handleAddToCart}
-      />
     </div>
   );
 }

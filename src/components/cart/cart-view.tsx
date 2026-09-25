@@ -43,7 +43,7 @@ export function CartView() {
         </span>
         <h2 className="font-display mt-5 text-2xl font-semibold">Your cart is empty</h2>
         <p className="text-muted-foreground mt-2 max-w-xs text-sm">
-          Beautiful dress materials are waiting. Browse the collection and find your next favorite.
+          Beautiful suit materials are waiting. Browse the collection and find your next favorite.
         </p>
         <Button asChild className="mt-6">
           <Link href="/shop">
@@ -61,8 +61,9 @@ export function CartView() {
 
   return (
     <div className="grid gap-10 lg:grid-cols-[1fr_360px]">
-      {/* Lines */}
-      <div>
+      {/* Lines — min-w-0 lets the grid track shrink below the truncated
+          product-name width instead of overflowing the viewport. */}
+      <section className="min-w-0" aria-label="Cart items">
         <ul className="divide-y border-y">
           {items.map((item) => {
             const soldOut = item.maxQuantity !== null && item.maxQuantity < 1;
@@ -70,9 +71,9 @@ export function CartView() {
               !soldOut && item.maxQuantity !== null && item.quantity > item.maxQuantity;
 
             return (
-              <li key={item.id} className="flex gap-4 py-5">
+              <li key={item.id} className="flex gap-3 py-5 sm:gap-4">
                 <Link href={`/products/${item.slug}`} className="shrink-0" aria-label={item.name}>
-                  <ImageArea ratio="4/5" className="w-24 sm:w-28" placeholder={false}>
+                  <ImageArea ratio="4/5" className="w-20 sm:w-24 lg:w-28" placeholder={false}>
                     {item.imageUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -86,30 +87,31 @@ export function CartView() {
                 </Link>
 
                 <div className="flex min-w-0 flex-1 flex-col">
-                  <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <Link
                         href={`/products/${item.slug}`}
-                        className="truncate text-sm font-medium transition-colors hover:opacity-80 sm:text-base"
+                        className="block truncate text-sm font-medium transition-colors hover:opacity-80 sm:text-base"
                       >
                         {item.name}
                       </Link>
-                      <p className="text-muted-foreground mt-0.5 text-xs">
+                      <p className="text-muted-foreground mt-0.5 truncate text-xs">
                         {[item.sizeLabel, item.colorName].filter(Boolean).join(" · ") || "Standard"}
+                        {item.quantity > 1 && ` · ${formatPrice(item.unitPrice)} each`}
                       </p>
                     </div>
                     <button
                       type="button"
                       aria-label={`Remove ${item.name} from cart`}
                       onClick={() => removeItem(item.id)}
-                      className="text-muted-foreground hover:text-destructive inline-flex size-8 shrink-0 items-center justify-center rounded-md transition-colors"
+                      className="text-muted-foreground hover:bg-accent/60 hover:text-destructive inline-flex size-10 shrink-0 items-center justify-center rounded-md outline-none transition-colors focus-visible:ring-[3px] focus-visible:ring-ring/50 md:size-9"
                     >
                       <Trash2 aria-hidden="true" className="size-4" />
                     </button>
                   </div>
 
                   <div className="mt-auto flex items-end justify-between gap-3 pt-3">
-                    {/* Quantity stepper */}
+                    {/* Quantity stepper — 40px+ touch targets on mobile */}
                     <div className="flex items-center rounded-lg border">
                       <button
                         type="button"
@@ -123,7 +125,7 @@ export function CartView() {
                             ? removeItem(item.id)
                             : setQuantity(item.id, item.quantity - 1)
                         }
-                        className="flex size-9 items-center justify-center rounded-l-lg transition-colors hover:bg-accent/60 disabled:opacity-40"
+                        className="flex size-10 items-center justify-center rounded-l-lg transition-colors hover:bg-accent/60 disabled:opacity-40 md:size-9"
                         disabled={soldOut}
                       >
                         <Minus aria-hidden="true" className="size-4" />
@@ -131,7 +133,7 @@ export function CartView() {
                       <span
                         aria-live="polite"
                         aria-label={`Quantity of ${item.name}`}
-                        className="w-9 text-center text-sm font-semibold tabular-nums"
+                        className="w-10 text-center text-sm font-semibold tabular-nums"
                       >
                         {item.quantity}
                       </span>
@@ -139,7 +141,7 @@ export function CartView() {
                         type="button"
                         aria-label={`Increase quantity of ${item.name}`}
                         onClick={() => setQuantity(item.id, item.quantity + 1)}
-                        className="flex size-9 items-center justify-center rounded-r-lg transition-colors hover:bg-accent/60 disabled:opacity-40"
+                        className="flex size-10 items-center justify-center rounded-r-lg transition-colors hover:bg-accent/60 disabled:opacity-40 md:size-9"
                         disabled={
                           soldOut ||
                           (item.maxQuantity !== null && item.quantity >= item.maxQuantity)
@@ -149,13 +151,8 @@ export function CartView() {
                       </button>
                     </div>
 
-                    <p className="text-sm font-semibold tabular-nums">
+                    <p className="text-sm font-semibold tabular-nums sm:text-base">
                       {formatPrice(item.unitPrice * item.quantity)}
-                      {item.quantity > 1 && (
-                        <span className="text-muted-foreground ml-1.5 text-xs font-normal">
-                          ({formatPrice(item.unitPrice)} each)
-                        </span>
-                      )}
                     </p>
                   </div>
 
@@ -183,10 +180,10 @@ export function CartView() {
             Clear cart
           </Button>
         </div>
-      </div>
+      </section>
 
       {/* Summary */}
-      <aside className="bg-card h-fit rounded-2xl border p-6 shadow-soft lg:sticky lg:top-24">
+      <aside className="bg-card h-fit min-w-0 rounded-2xl border p-6 shadow-soft lg:sticky lg:top-24">
         <h2 className="text-sm font-semibold tracking-wide uppercase">Order summary</h2>
         <dl className="mt-4 space-y-2.5 text-sm">
           <div className="flex justify-between">
@@ -207,7 +204,12 @@ export function CartView() {
           </div>
         </dl>
 
-        <Button size="lg" className="mt-6 w-full" asChild={false} disabled={hasStockIssues}>
+        <Button
+          size="lg"
+          className="hidden w-full lg:flex"
+          asChild={false}
+          disabled={hasStockIssues}
+        >
           <Link href="/checkout" className="contents">
             Proceed to checkout
             <ArrowRight aria-hidden="true" className="size-4" />
@@ -218,10 +220,36 @@ export function CartView() {
             Resolve out-of-stock items to continue.
           </p>
         )}
-        <p className="text-muted-foreground mt-4 text-center text-xs">
+        <p className="text-muted-foreground mt-4 hidden text-center text-xs lg:block">
           Easy ordering by phone or WhatsApp · Easy returns
         </p>
       </aside>
+
+      {/* Sticky mobile checkout bar — subtotal + CTA always reachable while
+          scrolling the item list. The desktop CTA lives in the sticky aside. */}
+      <div className="bg-background/95 fixed inset-x-0 bottom-0 z-40 border-t px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur-md lg:hidden">
+        <div className="flex items-center gap-3">
+          <div className="min-w-0">
+            <p className="text-muted-foreground text-[11px] uppercase">Subtotal</p>
+            <p className="text-base font-semibold tabular-nums">{formatPrice(subtotal)}</p>
+          </div>
+          <Button
+            className="ml-auto h-11 flex-1 sm:flex-none sm:px-8"
+            asChild
+            disabled={hasStockIssues}
+          >
+            <Link href="/checkout">
+              Checkout
+              <ArrowRight aria-hidden="true" className="size-4" />
+            </Link>
+          </Button>
+        </div>
+        {hasStockIssues && (
+          <p role="status" className="text-muted-foreground mt-2 text-center text-xs">
+            Resolve out-of-stock items to continue.
+          </p>
+        )}
+      </div>
     </div>
   );
 }

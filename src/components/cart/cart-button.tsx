@@ -13,7 +13,7 @@ export function CartButton() {
     <Link
       href="/cart"
       aria-label={`Shopping cart${count > 0 ? `, ${count} item${count === 1 ? "" : "s"}` : ""}`}
-      className="relative inline-flex size-9 items-center justify-center rounded-md transition-colors hover:bg-accent"
+      className="focus-visible:ring-ring/50 relative inline-flex size-11 items-center justify-center rounded-md outline-none transition-colors focus-visible:ring-[3px] hover:bg-accent md:size-10"
     >
       <ShoppingBag className="size-4.5" aria-hidden="true" />
       {isReady && count > 0 && (

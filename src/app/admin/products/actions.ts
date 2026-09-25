@@ -57,6 +57,7 @@ export async function saveProductAction(
     name: formData.get("name"),
     slug: formData.get("slug"),
     categoryId: formData.get("categoryId"),
+    sku: formData.get("sku"),
     description: formData.get("description") ?? "",
     price: formData.get("price"),
     discountPrice: formData.get("discountPrice"),

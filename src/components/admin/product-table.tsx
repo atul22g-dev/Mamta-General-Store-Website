@@ -66,9 +66,6 @@ function ProductTable({ rows }: { rows: AdminProductRow[] }) {
             <th scope="col" className="px-5 py-3 text-right font-medium">
               Price
             </th>
-            <th scope="col" className="px-5 py-3 text-right font-medium">
-              Stock
-            </th>
             <th scope="col" className="px-5 py-3 font-medium">
               Status
             </th>
@@ -95,9 +92,6 @@ function ProductTable({ rows }: { rows: AdminProductRow[] }) {
               <td className="px-5 py-3 text-right">
                 <ProductPrice price={product.price} discountPrice={product.discountPrice} />
               </td>
-              <td className="text-muted-foreground px-5 py-3 text-right tabular-nums">
-                {product.stock ?? "—"}
-              </td>
               <td className="px-5 py-3">
                 <ProductBadges active={product.active} featured={product.featured} />
               </td>
@@ -123,28 +117,25 @@ function ProductCards({ rows }: { rows: AdminProductRow[] }) {
     <div className="mt-3 space-y-3 md:hidden">
       {rows.map((product) => (
         <article key={product.id} className="bg-card rounded-xl border p-4 shadow-soft">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex min-w-0 items-center gap-3">
-              <ProductThumb imageUrl={product.imageUrl} size="md" />
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium">{product.name}</p>
-                <p className="text-muted-foreground mt-0.5 truncate text-xs">
-                  {product.categoryName} · {formatPrice(product.price)}
-                </p>
-              </div>
+          {/* Title row: thumb + full-width name — actions live on their own
+              row below so the name is never squeezed to a single letter. */}
+          <div className="flex min-w-0 items-center gap-3">
+            <ProductThumb imageUrl={product.imageUrl} size="md" />
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium">{product.name}</p>
+              <p className="text-muted-foreground mt-0.5 truncate text-xs">
+                {product.categoryName} · {formatPrice(product.price)}
+              </p>
             </div>
+          </div>
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+            <ProductBadges active={product.active} featured={product.featured} />
             <ProductRowActions
               id={product.id}
               name={product.name}
               active={product.active}
               featured={product.featured}
             />
-          </div>
-          <div className="mt-3 flex flex-wrap items-center gap-1.5">
-            <ProductBadges active={product.active} featured={product.featured} />
-            <span className="text-muted-foreground ml-auto text-xs">
-              Stock: {product.stock ?? "—"}
-            </span>
           </div>
         </article>
       ))}

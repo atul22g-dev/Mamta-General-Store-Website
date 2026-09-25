@@ -125,8 +125,9 @@ export function ShopView({
       </aside>
 
       <div>
-        {/* Toolbar */}
-        <div className="flex items-center justify-between gap-3">
+        {/* Toolbar — wraps on the narrowest phones where the filter button
+            plus sort select exceed the viewport's min-content width. */}
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
           <p className="text-sm text-muted-foreground" aria-live="polite">
             {visible.length} {visible.length === 1 ? "product" : "products"}
           </p>
@@ -146,7 +147,7 @@ export function ShopView({
                   )}
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-80 overflow-y-auto">
+              <SheetContent side="left" className="w-[85vw] max-w-80 overflow-y-auto">
                 <SheetHeader>
                   <SheetTitle>Filters</SheetTitle>
                   <SheetDescription className="sr-only">Filter products</SheetDescription>
@@ -160,13 +161,13 @@ export function ShopView({
               </SheetContent>
             </Sheet>
 
-            <label className="flex items-center gap-2 text-sm">
-              <ListFilter aria-hidden="true" className="size-4 text-muted-foreground" />
+            <label className="flex min-w-0 items-center gap-2 text-sm">
+              <ListFilter aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
               <span className="sr-only sm:not-sr-only">Sort</span>
               <select
                 value={sort}
                 onChange={(event) => setSort(parseSort(event.target.value))}
-                className="h-9 rounded-lg border bg-background px-2.5 text-sm shadow-xs outline-none transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                className="h-9 min-w-0 max-w-full rounded-lg border bg-background px-2.5 text-sm shadow-xs outline-none transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
                 aria-label="Sort products"
               >
                 {(Object.keys(SORT_LABELS) as ProductSort[]).map((value) => (
@@ -181,7 +182,7 @@ export function ShopView({
 
         {/* Grid / empty state */}
         {visible.length > 0 ? (
-          <div className="mt-6 grid grid-cols-2 gap-4 sm:gap-6 xl:grid-cols-3">
+          <div className="mt-6 grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4">
             {visible.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}

@@ -28,7 +28,7 @@ export async function ProductCollection() {
         <SectionHeading
           eyebrow="The range"
           title="Product Collection"
-          description="Every dress material in the shop — cottons, prints and festive sets."
+          description="Every suit material in the shop — a variety of fabrics, colours and designs."
           action={
             products.length > 0 ? (
               <Link href="/shop" className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>
@@ -40,7 +40,7 @@ export async function ProductCollection() {
         />
 
         {products.length > 0 ? (
-          <div className="mt-10 grid grid-cols-2 gap-4 sm:gap-6 xl:grid-cols-4">
+          <div className="mt-10 grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4">
             {products.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
@@ -48,7 +48,7 @@ export async function ProductCollection() {
         ) : (
           <div className="border-border mt-10 rounded-xl border border-dashed py-14 text-center">
             <p className="font-display text-lg font-medium">
-              {failed ? "Collection temporarily unavailable" : "New dress materials arriving soon"}
+              {failed ? "Collection temporarily unavailable" : "New suit materials arriving soon"}
             </p>
             <p className="text-muted-foreground mx-auto mt-2 max-w-sm text-sm">
               {failed

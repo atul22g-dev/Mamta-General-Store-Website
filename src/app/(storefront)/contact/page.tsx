@@ -9,7 +9,7 @@ import { SITE_NAME } from "@/lib/constants";
 
 export const metadata: Metadata = {
   title: "Contact",
-  description: `Contact ${SITE_NAME}, Jatwar — call, WhatsApp or visit the shop for women's unstitched dress materials. Get directions on Google Maps.`,
+  description: `Contact ${SITE_NAME}, Jatwar — call, WhatsApp or visit the shop for women's unstitched suit materials with dupatta. Get directions on Google Maps.`,
 };
 
 /**

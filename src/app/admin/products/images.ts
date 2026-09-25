@@ -21,6 +21,8 @@ import {
 export interface ProductImagesActionState {
   error?: string;
   added?: number;
+  reordered?: boolean;
+  newCoverUrl?: string;
 }
 
 /** Every mutation requires a verified Auth session AND an active ADMIN profile. */
@@ -87,7 +89,7 @@ export async function addProductImagesAction(
         id: randomUUID(),
         productId,
         url: uploaded.url,
-        alt: `${product.slug} — dress material photo ${nextPosition + 1}`,
+        alt: `${product.slug} — suit material photo ${nextPosition + 1}`,
         position: nextPosition,
       } as never);
       if (error) {
@@ -111,6 +113,143 @@ export async function addProductImagesAction(
 
   revalidateProductSurfaces(product.slug);
   return { added };
+}
+
+/**
+ * Reorder gallery images: persists a full ordering (imageId → position 1..n)
+ * in one batched update. The primary/cover image stays position 0 and cannot
+ * be moved — the gallery only rearranges photos after it.
+ */
+export async function reorderProductImagesAction(
+  _prev: ProductImagesActionState,
+  formData: FormData,
+): Promise<ProductImagesActionState> {
+  await assertAdmin();
+
+  const productId = formData.get("productId")?.toString();
+  if (!productId) return { error: "Missing product." };
+
+  // Payload: "order" field repeated as `<position>:<imageId>` pairs.
+  const pairs = formData
+    .getAll("order")
+    .map((value) => value.toString())
+    .filter(Boolean);
+  if (pairs.length === 0) return { error: "Nothing to reorder." };
+
+  const client = await getSupabaseAdminClient();
+
+  // Verify ownership of every image in one read before writing anything.
+  const { data: owned } = await client
+    .from("product_images")
+    .select("id")
+    .eq("productId", productId);
+  const ownedIds = new Set(((owned ?? []) as { id: string }[]).map((row) => row.id));
+
+  const updates: { id: string; position: number }[] = [];
+  for (const pair of pairs) {
+    const [positionStr, imageId] = pair.split(":");
+    const position = Number(positionStr);
+    // Gallery rows only (position >= 1): the cover is owned by the product
+    // form / set-cover action and can never be reordered from here.
+    if (!imageId || !ownedIds.has(imageId) || !Number.isInteger(position) || position < 1) {
+      return { error: "Invalid image order — please refresh and try again." };
+    }
+    updates.push({ id: imageId, position });
+  }
+
+  // Each update targets a different row and there is no unique constraint on
+  // position (verified in the schema), so the writes are independent and run
+  // concurrently; failures are counted and reported, successful rows are
+  // simply kept.
+  const results = await Promise.all(
+    updates.map((update) =>
+      client
+        .from("product_images")
+        .update({ position: update.position } as never)
+        .eq("id", update.id)
+        .eq("productId", productId),
+    ),
+  );
+  const failed = results.filter(({ error }) => error).length;
+
+  if (failed > 0) {
+    return { error: `Could not save the new order for ${failed} photo(s). Please retry.` };
+  }
+
+  // Slug for storefront revalidation.
+  const { data: product } = await client
+    .from("products")
+    .select("slug")
+    .eq("id", productId)
+    .maybeSingle<{ slug: string }>();
+  revalidateProductSurfaces(product?.slug ?? null);
+
+  return { reordered: true };
+}
+
+/**
+ * Change the product's cover image: promotes one gallery photo to position 0
+ * and resequences the rest (1..n, relative order preserved). No storage
+ * objects move — only position columns change — and the resequence also
+ * heals duplicate or missing positions from any earlier state.
+ *
+ * The chosen photo's id arrives in the per-row form's hidden `imageId`
+ * input (each row owns its form, so the payload is scoped to that row).
+ */
+export async function setCoverImageAction(
+  _prev: ProductImagesActionState,
+  formData: FormData,
+): Promise<ProductImagesActionState> {
+  await assertAdmin();
+
+  const productId = formData.get("productId")?.toString();
+  const imageId = formData.get("imageId")?.toString();
+  if (!productId || !imageId) return { error: "Missing product or photo." };
+
+  const client = await getSupabaseAdminClient();
+
+  const { data: rows } = await client
+    .from("product_images")
+    .select("id, url, position")
+    .eq("productId", productId)
+    .order("position", { ascending: true });
+  const images = (rows ?? []) as { id: string; url: string; position: number }[];
+
+  const target = images.find((image) => image.id === imageId);
+  if (!target) return { error: "Photo not found — please refresh and try again." };
+
+  // Resequence: chosen photo → cover (0); every other photo keeps its
+  // relative order at 1..n. Only rows whose position actually changes are
+  // written, so a clean gallery costs a single UPDATE.
+  const others = images.filter((image) => image.id !== imageId);
+  const updates: { id: string; position: number }[] = [{ id: target.id, position: 0 }];
+  others.forEach((image, index) => {
+    if (image.position !== index + 1) {
+      updates.push({ id: image.id, position: index + 1 });
+    }
+  });
+
+  for (const update of updates) {
+    const { error } = await client
+      .from("product_images")
+      .update({ position: update.position } as never)
+      .eq("id", update.id)
+      .eq("productId", productId);
+    if (error) {
+      console.error("[admin-product-images] cover change failed:", error);
+      return { error: "Could not change the cover photo. Please try again." };
+    }
+  }
+
+  // Slug for storefront revalidation + the new cover URL for the UI.
+  const { data: product } = await client
+    .from("products")
+    .select("slug")
+    .eq("id", productId)
+    .maybeSingle<{ slug: string }>();
+  revalidateProductSurfaces(product?.slug ?? null);
+
+  return { newCoverUrl: target.url };
 }
 
 /** Remove one gallery image: the DB row first, then the storage object. */
