@@ -38,7 +38,11 @@ export interface Product {
   description: string | null;
   /** Current selling price in minor units (paise): 199900 = ₹1,999.00. */
   price: number;
-  /** Optional original price shown struck-through, also in minor units. */
+  /**
+   * Optional ORIGINAL/reference price (shown struck-through when higher),
+   * in minor units. Named `discountPrice` after the database column: the
+   * discount is the difference between it and the current `price`.
+   */
   discountPrice: number | null;
   images: ProductImage[];
   sizes: ProductSize[];

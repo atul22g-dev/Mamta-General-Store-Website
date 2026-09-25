@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight, Download, Loader2 } from "lucide-react";
 import type { ProductImage } from "@/types/product";
 import { cn } from "@/lib/utils";
 import { ImageArea } from "@/components/ui/image-area";
+import { SafeImage } from "@/components/product/safe-image";
 
 /** File name for a downloaded photo: "<product>-photo-<n>.<ext>". */
 function downloadFileName(productName: string, index: number, url: string): string {
@@ -144,11 +145,11 @@ export function ProductGallery({
             className="w-[85%] shrink-0 snap-center"
           >
             <ImageArea ratio="3/4" placeholder={false}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <SafeImage
+                key={image.id}
                 src={image.url}
                 alt={image.alt ?? `${productName} — photo ${index + 1}`}
-                loading={index === 0 ? "eager" : "lazy"}
+                eager={index === 0}
                 className="absolute inset-0 h-full w-full object-cover"
               />
             </ImageArea>
@@ -194,8 +195,7 @@ export function ProductGallery({
             aria-label="Zoom photo"
             className="absolute inset-0 h-full w-full cursor-zoom-in"
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <SafeImage
               key={active.id}
               src={active.url}
               alt={active.alt ?? productName}
@@ -225,11 +225,10 @@ export function ProductGallery({
                     : "hover:border-ring/50 opacity-85 hover:opacity-100",
                 )}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <SafeImage
+                  key={image.id}
                   src={image.url}
                   alt=""
-                  loading="lazy"
                   className="absolute inset-0 h-full w-full object-cover"
                 />
               </button>
@@ -264,8 +263,7 @@ export function ProductGallery({
           className="fixed inset-0 flex items-center justify-center"
         >
           <div className="relative" onClick={(event) => event.stopPropagation()}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <SafeImage
               key={active.id}
               src={active.url}
               alt={active.alt ?? productName}

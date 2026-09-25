@@ -5,6 +5,7 @@ import { ImageOff, PackageOpen } from "lucide-react";
 import type { listAdminProducts } from "@/lib/admin-products";
 import { formatPrice } from "@/lib/utils";
 import { ProductRowActions } from "@/components/admin/product-actions";
+import { SafeImage } from "@/components/product/safe-image";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
@@ -19,8 +20,7 @@ function ProductThumb({ imageUrl, size }: { imageUrl: string | null; size: "sm" 
       }`}
     >
       {imageUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element -- admin thumbs skip next/image config
-        <img src={imageUrl} alt="" loading="lazy" className="size-full object-cover" />
+        <SafeImage src={imageUrl} alt="" className="size-full object-cover" />
       ) : (
         <ImageOff aria-hidden="true" className="text-muted-foreground size-4" />
       )}

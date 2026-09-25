@@ -6,6 +6,7 @@ import { DEFAULT_CURRENCY } from "@/lib/constants";
 import { cn, formatPrice } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { ImageArea } from "@/components/ui/image-area";
+import { SafeImage } from "@/components/product/safe-image";
 
 /**
  * Product card — the visual backbone of every listing (home, shop, category,
@@ -34,13 +35,9 @@ export function ProductCard({ product, className }: { product: Product; classNam
           ratio="3/4"
         >
           {image && (
-            // Placeholder images are remote and dynamic; next/image optimization
-            // will be enabled with real image configuration later.
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <SafeImage
               src={image.url}
               alt={image.alt ?? name}
-              loading="lazy"
               className={cn(
                 "absolute inset-0 h-full w-full object-cover transition-transform duration-500 ease-gentle group-hover:scale-[1.04]",
                 !available && "grayscale-[35%] group-hover:scale-100",

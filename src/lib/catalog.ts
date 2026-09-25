@@ -120,7 +120,11 @@ export function isAvailable(product: Product): boolean {
 
 /**
  * Discount percentage off the original price, e.g. 17 for "17% off".
- * `discountPrice` holds the original (pre-discount) price.
+ *
+ * Terminology: `price` is the CURRENT selling price; the database column
+ * `discountPrice` (displayed struck-through) holds the ORIGINAL/reference
+ * price from before the discount. A discount exists only when that original
+ * is strictly higher than the current price.
  */
 export function discountPercent(product: Product): number | null {
   const { price, discountPrice } = product;

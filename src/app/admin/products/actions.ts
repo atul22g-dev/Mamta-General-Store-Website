@@ -99,11 +99,18 @@ export async function saveProductAction(
   // Auto-slug from the name when left blank.
   const slug = data.slug || slugifyName(data.name);
 
-  const { slugTaken } = await slugOrSkuTaken(slug, null, id);
+  const { slugTaken, skuTaken } = await slugOrSkuTaken(slug, data.sku, id);
   if (slugTaken) {
     return {
       errors: {
         slug: ["This slug is already in use"],
+      },
+    };
+  }
+  if (skuTaken) {
+    return {
+      errors: {
+        sku: ["This SKU is already in use by another product"],
       },
     };
   }
@@ -246,7 +253,9 @@ export async function saveProductAction(
     }
   } catch (error) {
     if (isUniqueViolation(error)) {
-      return { formError: "A product with this slug already exists." };
+      // The pre-check above normally catches this; keep a correct message
+      // for the race window (another save landed between check and insert).
+      return { formError: "A product with this slug or SKU already exists." };
     }
     console.error("[admin-products]", error);
     return { formError: "Could not save the product. Please try again." };
