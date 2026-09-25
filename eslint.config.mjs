@@ -13,6 +13,11 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  {
+    // The Rollup WASM shim must use CommonJS require hooks (it runs before
+    // any ESM loader) — CJS is the point, not an accident.
+    ignores: ["scripts/rollup-wasm-shim.js"],
+  },
 ]);
 
 export default eslintConfig;

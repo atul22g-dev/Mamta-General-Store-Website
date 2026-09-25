@@ -112,10 +112,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           line.id === id
             ? {
                 ...line,
-                // Clamp again: addItem can also be called with a product
-                // whose stored maxQuantity is stale (restocked down).
+                // Merge = SUM of the quantities (adding twice the same item
+                // doubles the line), then clamped: the incoming quantity can
+                // also come from a product whose stored maxQuantity is stale
+                // (restocked down).
                 quantity: sanitizeQuantity(
-                  Math.max(line.quantity, item.quantity),
+                  line.quantity + item.quantity,
                   line.maxQuantity,
                 ),
               }
@@ -135,9 +137,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     cartStore.update((current) =>
       current.flatMap((line) => {
         if (line.id !== id) return [line];
-        const next = sanitizeQuantity(quantity, line.maxQuantity);
-        // Dropping to 0 via the stepper removes the line.
-        return next < 1 ? [] : [{ ...line, quantity: next }];
+        // Zero or negative (non-finite too) removes the line — the stepper's
+        // decrease-at-one path; sanitizeQuantity alone would floor to 1.
+        const parsed = Number(quantity);
+        if (!Number.isFinite(parsed) || parsed < 1) return [];
+        const next = sanitizeQuantity(parsed, line.maxQuantity);
+        return [{ ...line, quantity: next }];
       }),
     );
   }, []);
