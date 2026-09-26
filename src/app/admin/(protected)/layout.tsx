@@ -11,7 +11,20 @@ import { DatabaseStatus } from "@/components/admin/database-status";
 export const metadata: Metadata = {
   title: { default: "Admin", template: "%s | Admin" },
   robots: { index: false, follow: false },
-};
+}; /**
+ * Supabase project host from the public env URL; null when unset or malformed.
+ * A malformed NEXT_PUBLIC_SUPABASE_URL must not crash the whole admin shell —
+ * the status dot already reports the connection as unhealthy in that case.
+ */
+function supabaseHost(): string | null {
+  const raw = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  if (!raw) return null;
+  try {
+    return new URL(raw).host;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Protected shell for every /admin route. `requireAdmin` verifies the Supabase
@@ -20,9 +33,7 @@ export const metadata: Metadata = {
  */
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const [session, dbStatus] = await Promise.all([requireAdmin(), dbHealthDetailed()]);
-  const dbHost = process.env.NEXT_PUBLIC_SUPABASE_URL
-    ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).host
-    : null;
+  const dbHost = supabaseHost();
 
   return (
     <div className="bg-background flex min-h-svh flex-col">
@@ -42,10 +53,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <AdminNav className="hidden md:flex" />
 
           <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">
-            <DatabaseStatus
-              initial={{ ...dbStatus, checkedAt: new Date().toISOString() }}
-              host={dbHost ?? "not configured"}
-            />
+            <DatabaseStatus initial={dbStatus} host={dbHost ?? "not configured"} />
             <span className="text-muted-foreground hidden text-sm whitespace-nowrap md:inline">
               {session.name}
             </span>

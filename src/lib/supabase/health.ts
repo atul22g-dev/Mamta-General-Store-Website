@@ -6,6 +6,8 @@ export interface DbHealthDetailed {
   connected: boolean;
   /** Round-trip time of the health query in ms; null when it failed. */
   latencyMs: number | null;
+  /** ISO timestamp of when the probe ran. */
+  checkedAt: string;
 }
 
 /**
@@ -17,9 +19,13 @@ export async function dbHealthDetailed(): Promise<DbHealthDetailed> {
   const startedAt = Date.now();
   try {
     const { error } = await getSupabasePublicClient().rpc("db_health");
-    return { connected: !error, latencyMs: error ? null : Date.now() - startedAt };
+    return {
+      connected: !error,
+      latencyMs: error ? null : Date.now() - startedAt,
+      checkedAt: new Date().toISOString(),
+    };
   } catch {
-    return { connected: false, latencyMs: null };
+    return { connected: false, latencyMs: null, checkedAt: new Date().toISOString() };
   }
 }
 

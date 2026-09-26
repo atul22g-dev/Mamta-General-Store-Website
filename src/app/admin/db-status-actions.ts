@@ -2,13 +2,7 @@
 
 import { dbHealthDetailed } from "@/lib/supabase/health";
 
-export interface DbStatusSnapshot {
-  connected: boolean;
-  /** Round-trip time of the health query in ms; null when it failed. */
-  latencyMs: number | null;
-  /** ISO timestamp of when the probe ran. */
-  checkedAt: string;
-}
+export type DbStatusSnapshot = Awaited<ReturnType<typeof dbHealthDetailed>>;
 
 /**
  * Re-run the database health probe on demand (the admin status popover's
@@ -16,6 +10,5 @@ export interface DbStatusSnapshot {
  * the public /health endpoint — and mutates nothing.
  */
 export async function recheckDatabaseAction(): Promise<DbStatusSnapshot> {
-  const { connected, latencyMs } = await dbHealthDetailed();
-  return { connected, latencyMs, checkedAt: new Date().toISOString() };
+  return dbHealthDetailed();
 }

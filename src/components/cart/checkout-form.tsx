@@ -6,6 +6,7 @@ import { useActionState } from "react";
 import { CheckCircle2, Loader2, Lock, Phone, ShieldCheck } from "lucide-react";
 
 import { useCart } from "@/components/cart/cart-provider";
+import { useCartDrift } from "@/components/cart/use-cart-drift";
 import { placeOrderAction, type PlaceOrderState } from "@/app/(storefront)/checkout/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,7 +35,22 @@ const invalid = (errors?: string[]) => (errors?.length ? { "aria-invalid": true 
  * everything (prices, stock) before creating the order.
  */
 export function CheckoutForm() {
-  const { items, subtotal, count, isReady, clear } = useCart();
+  const { items, count, isReady, clear } = useCart();
+  const { current } = useCartDrift(items);
+
+  // Server truth per line (add-time snapshot as fallback): the order charges
+  // CURRENT prices — place_order re-reads them server-side — so the summary
+  // must show what will actually be recorded, not stale cart snapshots.
+  const lines = items.map((item) => ({
+    item,
+    livePrice: current[item.productId]?.price ?? item.unitPrice,
+    priceChanged:
+      current[item.productId] != null && current[item.productId].price !== item.unitPrice,
+  }));
+  const effectiveSubtotal = lines.reduce(
+    (sum, line) => sum + line.livePrice * line.item.quantity,
+    0,
+  );
 
   // After a successful order the cart must be cleared. Clearing inside the
   // action wrapper (an event-handler-like path) is effect-free; the wrapper
@@ -54,7 +70,7 @@ export function CheckoutForm() {
   // Display-only mirror of the server's flat shipping (place_order RPC is
   // the authority — it re-prices everything before storing the order).
   const shipping = FLAT_SHIPPING_PAISE;
-  const total = subtotal + shipping;
+  const total = effectiveSubtotal + shipping;
 
   if (placedOrderNumber) {
     return (
@@ -245,7 +261,7 @@ export function CheckoutForm() {
           Order summary ({count} item{count === 1 ? "" : "s"})
         </h2>
         <ul className="mt-4 space-y-3">
-          {items.map((item) => (
+          {lines.map(({ item, livePrice, priceChanged }) => (
             <li key={item.id} className="flex justify-between gap-3 text-sm">
               <span className="min-w-0">
                 <span className="block truncate font-medium">{item.name}</span>
@@ -256,7 +272,12 @@ export function CheckoutForm() {
                 </span>
               </span>
               <span className="shrink-0 tabular-nums">
-                {formatPrice(item.unitPrice * item.quantity)}
+                {priceChanged && (
+                  <s className="text-muted-foreground mr-1 text-xs font-normal">
+                    {formatPrice(item.unitPrice * item.quantity)}
+                  </s>
+                )}
+                {formatPrice(livePrice * item.quantity)}
               </span>
             </li>
           ))}
@@ -264,7 +285,7 @@ export function CheckoutForm() {
         <dl className="mt-5 space-y-2.5 border-t pt-4 text-sm">
           <div className="flex justify-between">
             <dt className="text-muted-foreground">Subtotal</dt>
-            <dd className="tabular-nums">{formatPrice(subtotal)}</dd>
+            <dd className="tabular-nums">{formatPrice(effectiveSubtotal)}</dd>
           </div>
           <div className="flex justify-between">
             <dt className="text-muted-foreground">Shipping</dt>

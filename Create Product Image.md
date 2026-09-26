@@ -1,6 +1,8 @@
 # Create Product Image
 
-## [Mida Website](https://www.mida.so/amazon-listing-images?)
+
+### Websites
+####  [Mida](https://www.mida.so/amazon-listing-images?), [Fastimg AI](https://fastimg.ai/app), [Freemake](https://freemake.cc/)
 
 ### Suits Image Prompt
 🛍️ I would generate these 5 images for your listing

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowRight, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 
 import { useCart } from "@/components/cart/cart-provider";
+import { useCartDrift } from "@/components/cart/use-cart-drift";
 import { SafeImage } from "@/components/product/safe-image";
 import { Button } from "@/components/ui/button";
 import { ImageArea } from "@/components/ui/image-area";
@@ -13,11 +14,40 @@ import { formatPrice } from "@/lib/utils";
 
 /**
  * Full cart page: line items with quantity steppers and removal, live
- * subtotal/total, and per-line out-of-stock handling. Out-of-stock lines
- * (qty capped at 0 / flagged at add time) are blocked from checkout.
+ * subtotal/total, and per-line out-of-stock handling. Prices and stock are
+ * refreshed from the server on load (cart lines hold add-time snapshots),
+ * so the totals shown here match what an order would actually charge.
  */
 export function CartView() {
-  const { items, subtotal, count, isReady, setQuantity, removeItem, clear } = useCart();
+  const { items, count, isReady, setQuantity, removeItem, clear } = useCart();
+  const { current } = useCartDrift(items);
+
+  // Server truth per line, falling back to the add-time snapshot while the
+  // refresh is in flight (or if it fails — the server re-validates at order
+  // time regardless).
+  const lines = items.map((item) => {
+    const live = current[item.productId] ?? null;
+    const livePrice = live?.price ?? item.unitPrice;
+    const liveStock = live ? live.stock : item.maxQuantity;
+    /** Product deactivated (hidden from the store) since it was added. */
+    const inactive = live != null && !live.active;
+    const soldOut = inactive || (liveStock !== null && liveStock < 1);
+    const overStock = !soldOut && liveStock !== null && item.quantity > liveStock;
+    return {
+      item,
+      /** Price an order would actually charge. */
+      livePrice,
+      priceChanged: live != null && live.price !== item.unitPrice,
+      inactive,
+      soldOut,
+      overStock,
+    };
+  });
+  const effectiveSubtotal = lines.reduce(
+    (sum, line) => sum + line.livePrice * line.item.quantity,
+    0,
+  );
+  const hasStockIssues = lines.some((line) => line.soldOut || line.overStock);
 
   if (!isReady) {
     return (
@@ -56,21 +86,13 @@ export function CartView() {
     );
   }
 
-  const hasStockIssues = items.some(
-    (item) => item.maxQuantity !== null && item.quantity > item.maxQuantity,
-  );
-
   return (
     <div className="grid gap-10 lg:grid-cols-[1fr_360px]">
       {/* Lines — min-w-0 lets the grid track shrink below the truncated
           product-name width instead of overflowing the viewport. */}
       <section className="min-w-0" aria-label="Cart items">
         <ul className="divide-y border-y">
-          {items.map((item) => {
-            const soldOut = item.maxQuantity !== null && item.maxQuantity < 1;
-            const overStock =
-              !soldOut && item.maxQuantity !== null && item.quantity > item.maxQuantity;
-
+          {lines.map(({ item, livePrice, priceChanged, soldOut, overStock, inactive }) => {
             return (
               <li key={item.id} className="flex gap-3 py-5 sm:gap-4">
                 <Link href={`/products/${item.slug}`} className="shrink-0" aria-label={item.name}>
@@ -98,7 +120,7 @@ export function CartView() {
                       </Link>
                       <p className="text-muted-foreground mt-0.5 truncate text-xs">
                         {[item.sizeLabel, item.colorName].filter(Boolean).join(" · ") || "Standard"}
-                        {item.quantity > 1 && ` · ${formatPrice(item.unitPrice)} each`}
+                        {item.quantity > 1 && ` · ${formatPrice(livePrice)} each`}
                       </p>
                     </div>
                     <button
@@ -145,7 +167,9 @@ export function CartView() {
                         className="focus-visible:ring-ring/50 flex size-10 items-center justify-center rounded-r-lg transition-colors hover:bg-accent/60 focus-visible:ring-[3px] focus-visible:outline-none disabled:opacity-40 md:size-9"
                         disabled={
                           soldOut ||
-                          (item.maxQuantity !== null && item.quantity >= item.maxQuantity)
+                          (current[item.productId]?.stock !== null &&
+                            current[item.productId]?.stock !== undefined &&
+                            item.quantity >= (current[item.productId]?.stock ?? Infinity))
                         }
                       >
                         <Plus aria-hidden="true" className="size-4" />
@@ -153,18 +177,34 @@ export function CartView() {
                     </div>
 
                     <p className="text-sm font-semibold tabular-nums sm:text-base">
-                      {formatPrice(item.unitPrice * item.quantity)}
+                      {priceChanged && (
+                        <s className="text-muted-foreground mr-1.5 text-xs font-normal">
+                          {formatPrice(item.unitPrice * item.quantity)}
+                        </s>
+                      )}
+                      {formatPrice(livePrice * item.quantity)}
                     </p>
                   </div>
 
-                  {soldOut && (
+                  {inactive && (
+                    <p role="status" className="text-destructive mt-2 text-xs">
+                      No longer available — remove this item to continue.
+                    </p>
+                  )}
+                  {!inactive && soldOut && (
                     <p role="status" className="text-destructive mt-2 text-xs">
                       Out of stock — remove this item to continue.
                     </p>
                   )}
                   {overStock && (
                     <p role="status" className="mt-2 text-xs text-amber-600">
-                      Only {item.maxQuantity} left — quantity reduced at checkout.
+                      Only {current[item.productId]?.stock} left — quantity will be reduced at
+                      checkout.
+                    </p>
+                  )}
+                  {priceChanged && !soldOut && (
+                    <p role="status" className="text-muted-foreground mt-2 text-xs">
+                      Price updated since you added this — totals reflect the current price.
                     </p>
                   )}
                 </div>
@@ -191,7 +231,7 @@ export function CartView() {
             <dt className="text-muted-foreground">
               Subtotal ({count} item{count === 1 ? "" : "s"})
             </dt>
-            <dd className="font-medium tabular-nums">{formatPrice(subtotal)}</dd>
+            <dd className="font-medium tabular-nums">{formatPrice(effectiveSubtotal)}</dd>
           </div>
           <div className="flex justify-between">
             <dt className="text-muted-foreground">Shipping</dt>
@@ -200,7 +240,7 @@ export function CartView() {
           <div className="text-base font-semibold">
             <div className="flex justify-between border-t pt-3">
               <dt>Total</dt>
-              <dd className="tabular-nums">{formatPrice(subtotal)}</dd>
+              <dd className="tabular-nums">{formatPrice(effectiveSubtotal)}</dd>
             </div>
           </div>
         </dl>
@@ -232,7 +272,7 @@ export function CartView() {
         <div className="flex items-center gap-3">
           <div className="min-w-0">
             <p className="text-muted-foreground text-[11px] uppercase">Subtotal</p>
-            <p className="text-base font-semibold tabular-nums">{formatPrice(subtotal)}</p>
+            <p className="text-base font-semibold tabular-nums">{formatPrice(effectiveSubtotal)}</p>
           </div>
           <Button
             className="ml-auto h-11 flex-1 sm:flex-none sm:px-8"
