@@ -3,6 +3,7 @@ import { Inter, Playfair_Display } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { GOOGLE_MAPS_URL, siteContact, siteConfig, siteUrl } from "@/config/site";
+import { JsonLd } from "@/components/seo/json-ld";
 import "./globals.css";
 
 /** Clean, neutral body typeface — highly legible on mobile. */
@@ -81,6 +82,25 @@ const localBusinessJsonLd = {
 };
 
 /**
+ * Sitewide search action: adds a Google Sitelinks search box candidate and
+ * tells crawlers how search works on this site.
+ */
+const websiteJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: siteConfig.name,
+  url: siteUrl,
+  potentialAction: {
+    "@type": "SearchAction",
+    target: {
+      "@type": "EntryPoint",
+      urlTemplate: `${siteUrl}/search?q={search_term_string}`,
+    },
+    "query-input": "required name=search_term_string",
+  },
+};
+
+/**
  * Root layout: document shell (fonts, metadata, skip link) only.
  * Storefront chrome (header/footer) lives in the (storefront) route group so
  * the admin area keeps its own, separate layout.
@@ -112,14 +132,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           CLS) in production on Vercel; no-ops in local dev.
         */}
         <SpeedInsights />
-        <script
-          type="application/ld+json"
-          // Structured data for local SEO; `<` is escaped so no user-supplied
-          // string can close the script element early (XSS-safe JSON-LD).
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(localBusinessJsonLd).replace(/</g, "\\u003c"),
-          }}
-        />
+        {/* Structured data for local + sitewide SEO (XSS-safe JSON-LD). */}
+        <JsonLd data={localBusinessJsonLd} />
+        <JsonLd data={websiteJsonLd} />
       </body>
     </html>
   );

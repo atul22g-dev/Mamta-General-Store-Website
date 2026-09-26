@@ -5,6 +5,7 @@ import { ChevronRight } from "lucide-react";
 
 import { getProductBySlug, getRelatedProducts } from "@/lib/supabase/catalog";
 import { siteConfig, siteUrl } from "@/config/site";
+import { JsonLd } from "@/components/seo/json-ld";
 import { Container } from "@/components/ui/container";
 import { ProductCard } from "@/components/product/product-card";
 import { ProductGallery } from "@/components/product/product-gallery";
@@ -24,6 +25,28 @@ function ProductJsonLd({
   product: NonNullable<Awaited<ReturnType<typeof getProductBySlug>>>;
 }) {
   const hasDiscount = product.discountPrice !== null && product.discountPrice > product.price;
+  const offers: Record<string, unknown> = {
+    "@type": "Offer",
+    url: `${siteUrl}/products/${product.slug}`,
+    priceCurrency: "INR",
+    price: (product.price / 100).toFixed(2),
+    availability:
+      product.stock === null || product.stock > 0
+        ? "https://schema.org/InStock"
+        : "https://schema.org/OutOfStock",
+    itemCondition: "https://schema.org/NewCondition",
+    seller: {
+      "@type": "Organization",
+      name: siteConfig.name,
+    },
+  };
+  // When a struck-through original exists, expose it as the price RANGE
+  // (low = current selling price, high = original) — valid per schema.org.
+  if (hasDiscount) {
+    delete offers.price;
+    offers["lowPrice"] = (product.price / 100).toFixed(2);
+    offers["highPrice"] = (product.discountPrice! / 100).toFixed(2);
+  }
   const data = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -32,35 +55,10 @@ function ProductJsonLd({
     sku: product.sku ?? product.id,
     image: product.images.map((image) => image.url),
     category: product.category.name,
-    offers: {
-      "@type": "Offer",
-      url: `${siteUrl}/products/${product.slug}`,
-      priceCurrency: "INR",
-      price: (product.price / 100).toFixed(2),
-      // High price is the pre-discount reference price ("was ₹1,500").
-      ...(hasDiscount
-        ? { priceSpecification: undefined, highPrice: (product.discountPrice! / 100).toFixed(2) }
-        : {}),
-      availability:
-        product.stock === null || product.stock > 0
-          ? "https://schema.org/InStock"
-          : "https://schema.org/OutOfStock",
-      itemCondition: "https://schema.org/NewCondition",
-      seller: {
-        "@type": "Organization",
-        name: siteConfig.name,
-      },
-    },
+    offers,
   };
 
-  return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{
-        __html: JSON.stringify(data).replace(/</g, "\\u003c"),
-      }}
-    />
-  );
+  return <JsonLd data={data} />;
 }
 
 /** Breadcrumb structured data — matches the visible breadcrumb exactly. */
@@ -86,14 +84,7 @@ function BreadcrumbJsonLd({
     ],
   };
 
-  return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{
-        __html: JSON.stringify(data).replace(/</g, "\\u003c"),
-      }}
-    />
-  );
+  return <JsonLd data={data} />;
 }
 
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
@@ -116,7 +107,7 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
       url: `/products/${product.slug}`,
       images: product.images[0]
         ? [{ url: product.images[0].url, alt: product.images[0].alt ?? product.name }]
-        : undefined,
+        : [{ url: `/icon.png`, width: 512, height: 512, alt: siteConfig.name }],
     },
     twitter: {
       card: product.images[0] ? "summary_large_image" : "summary",

@@ -8,7 +8,8 @@ import {
   getShopProducts,
   getCategoriesWithCounts,
 } from "@/lib/supabase/catalog";
-import { siteConfig } from "@/config/site";
+import { siteConfig, siteUrl } from "@/config/site";
+import { JsonLd } from "@/components/seo/json-ld";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { Container } from "@/components/ui/container";
 import { SectionHeading } from "@/components/ui/section-heading";
@@ -18,6 +19,27 @@ import { cn } from "@/lib/utils";
 
 interface CategoryPageProps {
   params: Promise<{ slug: string }>;
+}
+
+/** Breadcrumb structured data (Home → Category) for rich results. */
+function BreadcrumbJsonLd({ category }: { category: { name: string; slug: string } }) {
+  return (
+    <JsonLd
+      data={{
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "Home", item: siteUrl },
+          {
+            "@type": "ListItem",
+            position: 2,
+            name: category.name,
+            item: `${siteUrl}/category/${category.slug}`,
+          },
+        ],
+      }}
+    />
+  );
 }
 
 export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
@@ -111,6 +133,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
 
   return (
     <div className="flex flex-1 animate-fade-up flex-col">
+      <BreadcrumbJsonLd category={category} />
       <Container className="flex flex-1 flex-col py-12 sm:py-16">
         <SectionHeading
           align="center"

@@ -29,7 +29,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const categories = await getCategories();
     const categoryPages: MetadataRoute.Sitemap = categories.map((category) => ({
       url: `${siteUrl}/category/${category.slug}`,
-      lastModified: new Date(),
+      // Real modification time — crawlers re-crawl changed pages sooner and
+      // skip unchanged ones instead of treating every URL as freshly changed.
+      lastModified: new Date(category.updatedAt),
       changeFrequency: "weekly",
       priority: 0.8,
     }));
@@ -38,7 +40,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const products = await getShopProducts({ limit: 1000 });
     const productPages: MetadataRoute.Sitemap = products.map((product) => ({
       url: `${siteUrl}/products/${product.slug}`,
-      lastModified: new Date(),
+      lastModified: new Date(product.updatedAt),
       changeFrequency: "weekly",
       priority: 0.7,
     }));
