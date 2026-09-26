@@ -2,10 +2,14 @@ import { dbHealth } from "@/lib/supabase/health";
 import { cn } from "@/lib/utils";
 
 /**
- * Live database connectivity pill for the admin header. Server-rendered —
+ * Live database connectivity indicator for the admin header. Server-rendered —
  * the probe runs on the server on each admin navigation, so the indicator
  * always reflects the real connection without any client-side polling.
  *
+ * Quiet by design when healthy: a pulsing green dot with the full status in
+ * a tooltip (and for screen readers). When the database is NOT ready, the
+ * indicator becomes loud — a steady red dot plus a visible "DB offline"
+ * label — because that is the state an admin must actually notice.
  * "Not ready" covers every unhealthy case honestly: env vars missing,
  * project unreachable, or migrations not fully applied.
  */
@@ -22,13 +26,7 @@ export async function DatabaseStatus({ className }: { className?: string }) {
           ? "Database connection is healthy"
           : "Database is unreachable or not configured — check .env and Supabase migrations"
       }
-      className={cn(
-        "inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-xs font-medium",
-        connected
-          ? "border-emerald-600/20 bg-emerald-500/10 text-emerald-700"
-          : "border-destructive/20 bg-destructive/10 text-destructive",
-        className,
-      )}
+      className={cn("inline-flex items-center gap-2 rounded-full p-2", className)}
     >
       {/* Pulsing dot when healthy, steady red when not */}
       <span className="relative flex size-2" aria-hidden="true">
@@ -42,8 +40,11 @@ export async function DatabaseStatus({ className }: { className?: string }) {
           )}
         />
       </span>
-      <span className="hidden sm:inline">{label}</span>
-      <span className="sr-only">{label}</span>
+      {connected ? (
+        <span className="sr-only">{label}</span>
+      ) : (
+        <span className="text-destructive text-xs font-semibold whitespace-nowrap">DB offline</span>
+      )}
     </span>
   );
 }

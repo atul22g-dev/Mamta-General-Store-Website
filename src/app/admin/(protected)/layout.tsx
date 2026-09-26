@@ -37,21 +37,24 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
           <AdminNav className="hidden md:flex" />
 
-          <div className="flex items-center gap-3">
+          <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">
             <DatabaseStatus />
-            <span className="text-muted-foreground hidden text-sm sm:inline">{session.name}</span>
+            <span className="text-muted-foreground hidden text-sm whitespace-nowrap md:inline">
+              {session.name}
+            </span>
             <Link
               href="/admin/change-password"
-              className="text-muted-foreground hover:text-foreground hover:bg-accent inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors"
+              aria-label="Change password"
+              title="Change password"
+              className="text-muted-foreground hover:text-foreground hover:bg-accent inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg transition-colors md:min-h-9 md:min-w-9"
             >
               <KeyRound aria-hidden="true" className="size-4" />
-              <span className="hidden sm:inline">Password</span>
-              <span className="sr-only sm:hidden">Change password</span>
             </Link>
             <form action={logoutAction}>
               <button
                 type="submit"
-                className="text-muted-foreground hover:text-foreground hover:bg-accent inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors"
+                aria-label="Log out"
+                className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive inline-flex min-h-11 items-center gap-2 rounded-lg px-2.5 whitespace-nowrap transition-colors md:min-h-9"
               >
                 <LogOut aria-hidden="true" className="size-4" />
                 <span className="hidden sm:inline">Log out</span>
