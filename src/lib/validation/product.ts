@@ -103,8 +103,8 @@ export const productFormSchema = z
     featured: z.boolean().default(false),
     isNewArrival: z.boolean().default(false),
   })
-  .refine((data) => data.discountPrice == null || data.discountPrice > data.price, {
-    error: "Original price must be higher than the selling price",
+  .refine((data) => data.discountPrice == null || data.discountPrice >= data.price, {
+    error: "Original price can't be lower than the selling price",
     path: ["discountPrice"],
   })
   .refine((data) => data.stockMode !== "quantity" || data.stock !== null, {

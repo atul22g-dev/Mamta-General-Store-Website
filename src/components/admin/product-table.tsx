@@ -53,11 +53,12 @@ function ProductBadges({
   );
 }
 
-/** Price with optional struck-through original. */
+/** Price with optional struck-through original (only when it's a real discount). */
 function ProductPrice({ price, discountPrice }: { price: number; discountPrice: number | null }) {
+  const hasDiscount = discountPrice !== null && discountPrice > price;
   return (
     <span className="tabular-nums">
-      {discountPrice ? (
+      {hasDiscount ? (
         <span className="text-muted-foreground line-through">{formatPrice(discountPrice)}</span>
       ) : null}{" "}
       <span className="font-medium">{formatPrice(price)}</span>

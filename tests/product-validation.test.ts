@@ -34,10 +34,13 @@ describe("discount constraint (2)", () => {
     if (ok.success) expect(ok.data.discountPrice).toBe(150_000);
   });
 
-  it("rejects a reference price equal or below the selling price", () => {
-    expect(
-      productFormSchema.safeParse({ ...base, price: "1200", discountPrice: "1200" }).success,
-    ).toBe(false);
+  it("accepts a reference price equal to the selling price (MRP with no discount)", () => {
+    const ok = productFormSchema.safeParse({ ...base, price: "1200", discountPrice: "1200" });
+    expect(ok.success).toBe(true);
+    if (ok.success) expect(ok.data.discountPrice).toBe(120_000);
+  });
+
+  it("rejects a reference price below the selling price", () => {
     expect(
       productFormSchema.safeParse({ ...base, price: "1200", discountPrice: "1000" }).success,
     ).toBe(false);

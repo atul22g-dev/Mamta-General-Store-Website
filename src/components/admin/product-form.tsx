@@ -317,6 +317,9 @@ function PricingSection({
             defaultValue={product?.discountPrice ? (product.discountPrice / 100).toString() : ""}
             {...inputInvalid(errors?.discountPrice)}
           />
+          <p id="discountPrice-hint" className="text-muted-foreground text-xs">
+            Optional MRP. May equal the selling price (no discount shown); must not be lower.
+          </p>
           <FieldError errors={errors?.discountPrice} />
         </div>
       </div>
