@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { GOOGLE_MAPS_URL, siteContact, siteConfig, siteUrl } from "@/config/site";
 import "./globals.css";
 
@@ -106,6 +107,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           collects page views in production once deployed on Vercel.
         */}
         <Analytics />
+        {/*
+          Vercel Speed Insights: samples real-user Core Web Vitals (LCP, INP,
+          CLS) in production on Vercel; no-ops in local dev.
+        */}
+        <SpeedInsights />
         <script
           type="application/ld+json"
           // Structured data for local SEO; `<` is escaped so no user-supplied
