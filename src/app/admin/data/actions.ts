@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { buildExportBundle, rowsToCsv, type ExportBundle, type ExportRow } from "@/lib/admin-data";
 
 /**
@@ -54,19 +55,28 @@ const TABLES = {
 
 type ImportTable = keyof typeof TABLES;
 
-/** Child-first order (replace-mode deletes). */
-const DELETE_ORDER: ImportTable[] = [
-  "order_items",
-  "product_images",
-  "product_sizes",
-  "product_colors",
-  "products",
-  "orders",
-  "categories",
+/**
+ * FK-dependency tiers. Tables within one tier have no foreign keys between
+ * them, so they can be read/written in parallel; tiers must run in order
+ * because they DO reference each other:
+ *
+ *   order_items                   → orders, products
+ *   product_images/sizes/colors   → products
+ *   products                      → categories
+ *   orders                        → profiles (outside the import)
+ *
+ * Deletes run tiers child-first; inserts run the same tiers reversed
+ * (parents first). Reversal is safe because each tier is a valid
+ * topological layer of the same dependency graph.
+ */
+const DELETE_TIERS: ImportTable[][] = [
+  ["order_items", "product_images", "product_sizes", "product_colors"],
+  ["orders", "products"],
+  ["categories"],
 ];
 
-/** Parent-first order (inserts — FKs must exist before children). */
-const INSERT_ORDER: ImportTable[] = [...DELETE_ORDER].reverse();
+/** Parent-first tiers (inserts — FK rows must exist before children). */
+const INSERT_TIERS: ImportTable[][] = [...DELETE_TIERS].reverse();
 
 /** Tables that carry an updatedAt column (child tables don't — see 0001/0014). */
 const HAS_UPDATED_AT = new Set<ImportTable>(["categories", "products", "orders"]);
@@ -197,6 +207,54 @@ function parseBundle(
   };
 }
 
+/** Rows per write request — PostgREST payload limits keep this bounded. */
+const CHUNK_SIZE = 250;
+
+/**
+ * Write one table's rows (chunked for PostgREST payload limits). Merge
+ * upserts on the primary key; replace plain-inserts (the table is empty).
+ * Throws with a helpful message on FK violations and anything else.
+ */
+async function writeTableRows(
+  client: SupabaseClient,
+  table: ImportTable,
+  rows: ExportRow[],
+  mode: "merge" | "replace",
+): Promise<void> {
+  for (let i = 0; i < rows.length; i += CHUNK_SIZE) {
+    const chunk = rows.slice(i, i + CHUNK_SIZE).map((row) => {
+      const clean: Record<string, unknown> = { ...row };
+      if (mode === "merge") {
+        // Updating rows must stamp updatedAt — but only on tables that have
+        // the column (child tables don't; writing it would 404).
+        if (HAS_UPDATED_AT.has(table)) {
+          clean.updatedAt = new Date().toISOString();
+        }
+      } else {
+        // Preserve the exported timestamps verbatim in replace mode.
+        delete clean.updatedAt;
+      }
+      return clean;
+    });
+
+    const request =
+      mode === "merge"
+        ? client.from(table).upsert(chunk, { onConflict: TABLES[table], ignoreDuplicates: false })
+        : client.from(table).insert(chunk);
+
+    const { error } = await request;
+    if (error) {
+      if (error.code === "23503" || /foreign key/i.test(error.message)) {
+        throw new Error(
+          `${table}: a row references a missing parent. When importing a ` +
+            `partial bundle, parents come first (categories → products → …).`,
+        );
+      }
+      throw new Error(`Writing ${table} failed: ${error.message}`);
+    }
+  }
+}
+
 /**
  * Import a previously exported JSON bundle.
  * mode=merge (default): upsert by id, never delete.
@@ -241,55 +299,40 @@ export async function importDataAction(
 
   try {
     if (mode === "replace") {
-      // Child-first clear. order_items cascade from orders; product children
-      // cascade from products. A product referenced by an order (RESTRICT)
-      // surfaces as a clear error, keeping orders intact.
-      for (const table of DELETE_ORDER) {
-        const { error } = await client.from(table).delete().neq(TABLES[table], "__none__");
-        if (error) throw new Error(`Clearing ${table} failed: ${error.message}`);
+      // Child-first clear, tier by tier. Tables within a tier share no FKs
+      // and clear in parallel; tiers run in order so a parent is never
+      // cleared while its children still reference it. order_items cascade
+      // from orders; product children cascade from products. A product
+      // referenced by an order (RESTRICT) surfaces as a clear error, keeping
+      // orders intact.
+      for (const tier of DELETE_TIERS) {
+        const cleared = await Promise.all(
+          tier.map(async (table) => {
+            const { error } = await client.from(table).delete().neq(TABLES[table], "__none__");
+            return { table, error };
+          }),
+        );
+        const failed = cleared.find(({ error }) => error !== null);
+        if (failed) {
+          throw new Error(
+            `Clearing ${failed.table} failed: ${failed.error?.message ?? "unknown error"}`,
+          );
+        }
       }
     }
 
-    // Parent-first writes. Merge upserts on the primary key; replace
-    // plain-inserts (tables are empty). Chunked for PostgREST payload limits.
-    for (const table of INSERT_ORDER) {
-      const rows = bundle.tables[table];
-      if (rows.length === 0) continue;
-      const CHUNK = 250;
-      for (let i = 0; i < rows.length; i += CHUNK) {
-        const chunk = rows.slice(i, i + CHUNK).map((row) => {
-          const clean: Record<string, unknown> = { ...row };
-          if (mode === "merge") {
-            // Updating rows must stamp updatedAt — but only on tables that
-            // have the column (child tables don't; writing it would 404).
-            if (HAS_UPDATED_AT.has(table)) {
-              clean.updatedAt = new Date().toISOString();
-            }
-          } else {
-            // Preserve the exported timestamps verbatim in replace mode.
-            delete clean.updatedAt;
-          }
-          return clean;
-        });
-
-        const request =
-          mode === "merge"
-            ? client
-                .from(table)
-                .upsert(chunk, { onConflict: TABLES[table], ignoreDuplicates: false })
-            : client.from(table).insert(chunk);
-
-        const { error } = await request;
-        if (error) {
-          if (error.code === "23503" || /foreign key/i.test(error.message)) {
-            throw new Error(
-              `${table}: a row references a missing parent. When importing a ` +
-                `partial bundle, parents come first (categories → products → …).`,
-            );
-          }
-          throw new Error(`Writing ${table} failed: ${error.message}`);
-        }
-      }
+    // Parent-first writes, tier by tier. Tables within a tier have no FKs
+    // between them and upload in parallel; tiers run in order because a
+    // child row can only be written once its parent rows exist. Merge
+    // upserts on the primary key; replace plain-inserts (tables are empty).
+    for (const tier of INSERT_TIERS) {
+      await Promise.all(
+        tier.map(async (table) => {
+          const rows = bundle.tables[table];
+          if (rows.length === 0) return;
+          await writeTableRows(client, table, rows, mode);
+        }),
+      );
     }
   } catch (importError) {
     console.error("[admin-data] import failed:", importError);
