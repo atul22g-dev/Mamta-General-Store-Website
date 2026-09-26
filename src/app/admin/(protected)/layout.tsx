@@ -3,6 +3,7 @@ import Link from "next/link";
 import { KeyRound, LogOut, Store } from "lucide-react";
 
 import { requireAdmin } from "@/lib/auth/session";
+import { dbHealthDetailed } from "@/lib/supabase/health";
 import { logoutAction } from "@/app/admin/login/actions";
 import { AdminNav } from "@/components/admin/admin-nav";
 import { DatabaseStatus } from "@/components/admin/database-status";
@@ -18,7 +19,10 @@ export const metadata: Metadata = {
  * active) — the authoritative gate (the proxy is only the fast first layer).
  */
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const session = await requireAdmin();
+  const [session, dbStatus] = await Promise.all([requireAdmin(), dbHealthDetailed()]);
+  const dbHost = process.env.NEXT_PUBLIC_SUPABASE_URL
+    ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).host
+    : null;
 
   return (
     <div className="bg-background flex min-h-svh flex-col">
@@ -38,7 +42,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <AdminNav className="hidden md:flex" />
 
           <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">
-            <DatabaseStatus />
+            <DatabaseStatus
+              initial={{ ...dbStatus, checkedAt: new Date().toISOString() }}
+              host={dbHost ?? "not configured"}
+            />
             <span className="text-muted-foreground hidden text-sm whitespace-nowrap md:inline">
               {session.name}
             </span>
