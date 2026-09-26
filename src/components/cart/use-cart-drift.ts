@@ -7,8 +7,6 @@ import { refreshCartLinesAction, type CartLineRefresh } from "@/app/(storefront)
 export interface CartDrift {
   /** Product id → current server truth for the fields that can drift. */
   current: Record<string, CartLineRefresh>;
-  /** True while the first refresh is in flight. */
-  refreshing: boolean;
 }
 
 /**
@@ -20,7 +18,6 @@ export interface CartDrift {
  */
 export function useCartDrift(items: Array<{ productId: string; unitPrice: number }>): CartDrift {
   const [current, setCurrent] = React.useState<Record<string, CartLineRefresh>>({});
-  const [refreshing, setRefreshing] = React.useState(false);
 
   // Stable key of the product set — refetch only when membership changes,
   // not on every quantity tweak (price/stock don't depend on quantity).
@@ -34,12 +31,8 @@ export function useCartDrift(items: Array<{ productId: string; unitPrice: number
   );
 
   React.useEffect(() => {
-    if (productKey === "") {
-      setCurrent({});
-      return;
-    }
+    if (productKey === "") return;
     let cancelled = false;
-    setRefreshing(true);
     refreshCartLinesAction(productKey.split(","))
       .then((data) => {
         if (!cancelled) setCurrent(data);
@@ -48,14 +41,11 @@ export function useCartDrift(items: Array<{ productId: string; unitPrice: number
         // Refresh is best-effort: on failure the cart keeps its snapshots —
         // the server still re-validates everything at order time.
         if (!cancelled) setCurrent({});
-      })
-      .finally(() => {
-        if (!cancelled) setRefreshing(false);
       });
     return () => {
       cancelled = true;
     };
   }, [productKey]);
 
-  return { current, refreshing };
+  return { current };
 }

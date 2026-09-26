@@ -15,16 +15,19 @@ interface DbStatusProps {
 }
 
 /** Module-level: building an Intl formatter is slow — never do it per call. */
+// UTC with an explicit suffix: deterministic on server and client, so the
+// label can be derived during render (no effect, no hydration mismatch).
 const timeFormatter = new Intl.DateTimeFormat("en-IN", {
   hour: "2-digit",
   minute: "2-digit",
   second: "2-digit",
   hour12: false,
+  timeZone: "UTC",
 });
 
 function formatTime(iso: string): string {
   try {
-    return timeFormatter.format(new Date(iso));
+    return `${timeFormatter.format(new Date(iso))} UTC`;
   } catch {
     return iso;
   }
@@ -46,15 +49,10 @@ export function DatabaseStatus({ initial, host, className }: DbStatusProps) {
   const dialogId = useId();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const rootRef = useRef<HTMLSpanElement>(null);
-  // Locale/timezone formatting happens in an effect, not during render: the
-  // server's timezone differs from the browser's, and rendering the formatted
-  // time on both sides would hydrate mismatched. The dialog is only visible
-  // after user interaction, by which point the effect has filled it in.
-  const [checkedAtLabel, setCheckedAtLabel] = useState("");
-
-  useEffect(() => {
-    setCheckedAtLabel(formatTime(status.checkedAt));
-  }, [status.checkedAt]);
+  // Locale/timezone formatting happens during render from server-provided
+  // data (UTC — deterministic across server and client, so no hydration
+  // mismatch and no setState-in-effect cascade).
+  const checkedAtLabel = formatTime(status.checkedAt);
 
   // Native <dialog> in the non-modal show() mode: open/close stays owned by
   // React state, while the element itself supplies the dialog semantics
