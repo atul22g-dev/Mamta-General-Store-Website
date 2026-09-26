@@ -8,7 +8,7 @@ import { z } from "zod";
 
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getAdminSession } from "@/lib/auth/session";
-import { slugOrSkuTaken } from "@/lib/admin-products";
+import { slugOrSkuTaken } from "@/lib/supabase/admin-products";
 import { productFormSchema, slugifyName, toDatabaseValues } from "@/lib/validation/product";
 import {
   productImagePathFromUrl,

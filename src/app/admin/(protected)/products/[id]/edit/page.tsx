@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 
-import { getAdminProduct, getAdminProductImages } from "@/lib/admin-products";
+import { getAdminProduct, getAdminProductImages } from "@/lib/supabase/admin-products";
 import { getCategoryOptions } from "@/lib/supabase/catalog";
 import { PageHeader } from "@/components/admin/page-header";
 import { ProductForm } from "@/components/admin/product-form";

@@ -14,7 +14,7 @@ import {
 } from "@/app/admin/products/images";
 import { SafeImage } from "@/components/product/safe-image";
 import { Button } from "@/components/ui/button";
-import { compressImageFile, PRODUCT_IMAGE_INPUT_MAX_BYTES } from "@/lib/images/compress-image";
+import { compressImageFile, PRODUCT_IMAGE_INPUT_MAX_BYTES } from "@/lib/compress-image";
 import { cn } from "@/lib/utils";
 
 export interface ManagedImage {

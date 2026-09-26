@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 
-import { listAdminProducts } from "@/lib/admin-products";
+import { listAdminProducts } from "@/lib/supabase/admin-products";
 import { getCategoryOptions } from "@/lib/supabase/catalog";
 import { PageHeader } from "@/components/admin/page-header";
 import { ProductFilters } from "@/components/admin/product-filters";

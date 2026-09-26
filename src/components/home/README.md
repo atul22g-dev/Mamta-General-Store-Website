@@ -1,13 +1,13 @@
 # `components/home/`
 
-Homepage sections, one component per band:
+Homepage sections, one component per band, composed top-to-bottom in
+`src/app/(storefront)/page.tsx`:
 
-- **`hero.tsx`** — editorial split hero with headline and CTAs
+- **`hero.tsx`** — editorial split hero with headline and CTAs (shows a real
+  shop product; a single Unsplash fallback renders while the catalog is empty)
 - **`featured-products.tsx`** — handpicked products on a contrasting band
 - **`new-arrivals.tsx`** — latest additions
-- **`why-shop-with-us.tsx`** — quiet trust badges
 - **`call-to-action.tsx`** — closing CTA banner
 
-Composed top-to-bottom in `src/app/page.tsx`. Product/category data comes from
-`src/lib/placeholder-data.ts` until the database is connected — the components
-themselves will keep working with real data since they accept plain props.
+All product/category data comes from Supabase (`lib/supabase/catalog.ts`) via
+server components in the storefront pages.

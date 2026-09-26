@@ -3,7 +3,17 @@ import Image from "next/image";
 import { ArrowRight, MapPin, Phone } from "lucide-react";
 
 import { GOOGLE_MAPS_URL, siteConfig, siteContact } from "@/config/site";
-import { heroImages } from "@/lib/placeholder-data";
+/**
+ * Hero fallback imagery (fashion editorial placeholder). The homepage hero
+ * otherwise shows a real shop product; this single Unsplash image renders
+ * while the catalog is empty or the database is unreachable.
+ */
+const heroImages = {
+  main: {
+    url: "https://images.unsplash.com/photo-1591369822096-ffd140ec948f?q=80&w=1200&auto=format&fit=crop",
+    alt: "Woman wearing an elegant traditional suit",
+  },
+};
 import { getNewArrivals } from "@/lib/supabase/catalog";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";

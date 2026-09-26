@@ -5,10 +5,10 @@ import Link from "next/link";
 import { useActionState } from "react";
 import { AlertCircle, Loader2 } from "lucide-react";
 
-import type { AdminProductDetail } from "@/lib/admin-products";
+import type { AdminProductDetail } from "@/lib/supabase/admin-products";
 import { saveProductAction, type ProductFormState } from "@/app/admin/products/actions";
 import { slugifyName, type ProductFormData } from "@/lib/validation/product";
-import { compressImageFile, PRODUCT_IMAGE_INPUT_MAX_BYTES } from "@/lib/images/compress-image";
+import { compressImageFile, PRODUCT_IMAGE_INPUT_MAX_BYTES } from "@/lib/compress-image";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

@@ -4,7 +4,12 @@ import { revalidatePath } from "next/cache";
 
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { buildExportBundle, rowsToCsv, type ExportBundle, type ExportRow } from "@/lib/admin-data";
+import {
+  buildExportBundle,
+  rowsToCsv,
+  type ExportBundle,
+  type ExportRow,
+} from "@/lib/supabase/admin-data";
 
 /**
  * Data import/export server actions (admin only).

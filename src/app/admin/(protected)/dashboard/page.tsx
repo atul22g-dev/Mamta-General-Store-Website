@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Layers, PackageCheck, Package, ReceiptText, Tag } from "lucide-react";
 
-import { getDashboardData } from "@/lib/admin-stats";
+import { getDashboardData } from "@/lib/supabase/admin-stats";
 import { formatPrice } from "@/lib/utils";
 import { StatCard } from "@/components/admin/stat-card";
 import { SectionCard } from "@/components/admin/section-card";

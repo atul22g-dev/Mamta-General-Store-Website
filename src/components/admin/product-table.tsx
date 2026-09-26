@@ -2,7 +2,7 @@ import type { LinkProps } from "next/link";
 import Link from "next/link";
 import { ImageOff, PackageOpen } from "lucide-react";
 
-import type { listAdminProducts } from "@/lib/admin-products";
+import type { listAdminProducts } from "@/lib/supabase/admin-products";
 import { formatPrice } from "@/lib/utils";
 import { ProductRowActions } from "@/components/admin/product-actions";
 import { SafeImage } from "@/components/product/safe-image";
