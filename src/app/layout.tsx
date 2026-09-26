@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import { GOOGLE_MAPS_URL, siteContact, siteConfig, siteUrl } from "@/config/site";
 import "./globals.css";
 
@@ -100,6 +101,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           Skip to content
         </a>
         {children}
+        {/*
+          Vercel Web Analytics: no-ops in local dev and on non-Vercel hosts;
+          collects page views in production once deployed on Vercel.
+        */}
+        <Analytics />
         <script
           type="application/ld+json"
           // Structured data for local SEO; `<` is escaped so no user-supplied
