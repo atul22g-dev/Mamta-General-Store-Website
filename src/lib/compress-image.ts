@@ -15,8 +15,16 @@
 /** Longest edge of the optimized image, in pixels. */
 const MAX_EDGE_PX = 1600;
 
-/** Re-encode quality for lossy formats (ignored for PNG). */
+/** Re-encode quality for lossy formats. */
 const OUTPUT_QUALITY = 0.82;
+
+/**
+ * PNG product photos (screenshots, saved images) are the main payload risk:
+ * photographic content re-encoded to WebP is routinely 5–20× smaller. JPEG
+ * inputs already arrive small, so the aggressive win comes from converting
+ * everything non-transparent to WebP; true transparency survives by keeping
+ * PNG (rare for product photos).
+ */
 
 /** Files at or below this size are passed through untouched. */
 const SKIP_BELOW_BYTES = 300 * 1024;
@@ -70,10 +78,11 @@ export async function compressImageFile(file: File): Promise<File> {
       if (!context) return file;
       context.drawImage(bitmap, 0, 0, width, height);
 
-      // PNG/WebP keep their type so transparency survives; other formats
-      // (JPEG, AVIF — which browsers cannot encode) become WebP.
-      const targetType =
-        file.type === "image/png" || file.type === "image/webp" ? file.type : "image/webp";
+      // Photographic content → WebP (5–20× smaller than PNG for the same
+      // pixels); AVIF inputs (browsers can't encode AVIF) also become WebP.
+      // PNG with real transparency keeps its type — flattening to WebP would
+      // fill the alpha channel black on some older encoders.
+      const targetType = file.type === "image/png" ? "image/png" : "image/webp";
 
       const blob = await new Promise<Blob | null>((resolve) =>
         canvas.toBlob(resolve, targetType, OUTPUT_QUALITY),

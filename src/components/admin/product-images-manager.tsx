@@ -29,6 +29,13 @@ const initialState: ProductImagesActionState = {};
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/avif"];
 /** Per-file cap for the optimized file (mirrors the server-side rule). */
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+/**
+ * Vercel caps Server Action request bodies at 4.5 MB regardless of
+ * next.config's bodySizeLimit — a larger batch fails at the network layer
+ * with an opaque error. Guard the total here (and 8 files × 600 KB typical
+ * WebP output stays well under it).
+ */
+const MAX_BATCH_BYTES = 4 * 1024 * 1024;
 
 const reorderButton =
   "text-muted-foreground hover:text-foreground hover:bg-accent focus-visible:ring-ring/50 inline-flex size-10 items-center justify-center rounded-md outline-none transition-colors focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-40 md:size-8";
@@ -272,6 +279,7 @@ function AddPhotosForm({
       const optimized = await Promise.all(accepted.map((file) => compressImageFile(file)));
 
       const transfer = new DataTransfer();
+      let batchBytes = 0;
       for (const file of optimized) {
         if (file.size > MAX_IMAGE_BYTES) {
           setSelectError(
@@ -279,7 +287,18 @@ function AddPhotosForm({
           );
           continue;
         }
+        if (batchBytes + file.size > MAX_BATCH_BYTES) {
+          setSelectError(
+            "This batch is too large to upload at once (host limit 4.5 MB). Upload the remaining photos in a second batch.",
+          );
+          break;
+        }
+        batchBytes += file.size;
         transfer.items.add(file);
+      }
+      if (transfer.files.length === 0) {
+        input.value = "";
+        return;
       }
       input.files = transfer.files;
     } finally {

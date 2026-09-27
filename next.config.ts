@@ -2,11 +2,19 @@ import type { NextConfig } from "next";
 
 /**
  * Supabase Storage serves product images from the project host
- * (…/object/public/product-images/…). The hostname comes from the
- * NEXT_PRIVATE_SUPABASE_URL env var — no hardcoded project URLs.
+ * (…/object/public/product-images/…). The hostname comes from the Supabase
+ * URL env var — no hardcoded project URLs.
+ *
+ * PRODUCTION NOTE (Vercel): this runs at BUILD time, so the variable must be
+ * set in the project's Environment Variables BEFORE the build that ships to
+ * production. All three accepted names are checked because the app accepts
+ * either naming convention everywhere else (see src/lib/supabase/env.ts).
  */
 const supabaseHostname = (() => {
-  const url = process.env.NEXT_PRIVATE_SUPABASE_URL;
+  const url =
+    process.env.NEXT_PRIVATE_SUPABASE_URL ??
+    process.env.NEXT_PUBLIC_SUPABASE_URL ??
+    process.env.EXPO_PUBLIC_SUPABASE_URL;
   if (!url) return undefined;
   try {
     return new URL(url).hostname;
@@ -40,6 +48,11 @@ const nextConfig: NextConfig = {
         ? [{ protocol: "https", hostname: supabaseHostname } as const]
         : []),
     ],
+    // Product-image objects are immutable (path embeds a timestamp), so the
+    // optimized renditions can be cached far longer than the upstream's
+    // default Cache-Control suggests — fewer optimizer invocations on
+    // Vercel, faster repeat visits.
+    minimumCacheTTL: 86_400,
   },
   async headers() {
     return [
