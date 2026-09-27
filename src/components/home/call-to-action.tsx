@@ -46,7 +46,7 @@ export async function CallToAction() {
               size="lg"
               variant="secondary"
               asChild
-              className="mt-8 rounded-full bg-white text-slate-900 shadow-soft-lg hover:bg-white/90"
+              className="mt-8 rounded-full bg-background text-foreground shadow-soft-lg hover:bg-background/90"
             >
               <Link href="/shop">
                 Explore Products

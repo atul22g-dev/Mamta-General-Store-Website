@@ -115,7 +115,7 @@ export async function Hero() {
           </div>
           {siteContact.timings && (
             <p className="text-muted-foreground mt-4 inline-flex items-center gap-2 text-xs">
-              <span aria-hidden="true" className="bg-emerald-500 size-1.5 rounded-full" />
+              <span aria-hidden="true" className="bg-foreground/70 size-1.5 rounded-full" />
               {siteContact.timings}
             </p>
           )}

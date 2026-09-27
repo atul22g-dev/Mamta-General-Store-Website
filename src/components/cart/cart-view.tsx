@@ -197,7 +197,7 @@ export function CartView() {
                     </p>
                   )}
                   {overStock && (
-                    <p role="status" className="mt-2 text-xs text-amber-600">
+                    <p role="status" className="text-foreground mt-2 text-xs">
                       Only {current[item.productId]?.stock} left — quantity will be reduced at
                       checkout.
                     </p>

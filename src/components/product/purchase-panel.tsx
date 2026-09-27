@@ -79,13 +79,13 @@ function PriceBlock({
           </span>
         )}
         {hasDiscount && (
-          <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+          <span className="rounded-full bg-secondary px-2.5 py-1 text-xs font-semibold text-secondary-foreground">
             {discount}% off
           </span>
         )}
       </p>
       {hasDiscount && (
-        <p className="text-sm font-medium text-emerald-700">
+        <p className="text-sm font-medium">
           You save {formatPrice(product.discountPrice! - product.price, DEFAULT_CURRENCY)}
         </p>
       )}

@@ -29,50 +29,49 @@
 /*
  * Mamta General Store — design system tokens
  *
- * Style: modern general-store retail (ui-ux-pro-max design system). Clean
- * geometric type (Outfit display / Work Sans body), a trust-blue primary
- * with a warm orange CTA accent on a crisp neutral base. Components
- * reference these tokens via Tailwind utilities (bg-background,
- * text-foreground, ...), so the palette is adjustable here without touching
- * component code.
+ * Style: modern monochrome retail. Pure black-and-white (grayscale) palette:
+ * near-black primary on crisp neutral surfaces, gray accents — no hue.
+ * Geometric type (Outfit display / Work Sans body). Components reference
+ * these tokens via Tailwind utilities (bg-background, text-foreground, ...),
+ * so the palette is adjustable here without touching component code.
  */
 :root {
   --radius: 0.875rem;
 
-  /* Crisp cool-neutral base */
-  --background: oklch(0.984 0.003 247.858);
-  --foreground: oklch(0.208 0.042 265.755);
+  /* Crisp neutral base */
+  --background: oklch(0.985 0 0);
+  --foreground: oklch(0.145 0 0);
 
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.208 0.042 265.755);
+  --card-foreground: oklch(0.145 0 0);
 
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.208 0.042 265.755);
+  --popover-foreground: oklch(0.145 0 0);
 
-  /* Trust blue primary — modern retail CTA */
-  --primary: oklch(0.546 0.245 262.881);
-  --primary-foreground: oklch(0.984 0.003 247.858);
+  /* Ink primary: near-black — the monochrome CTA color */
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
 
-  --secondary: oklch(0.928 0.006 264.531);
-  --secondary-foreground: oklch(0.372 0.044 257.287);
+  --secondary: oklch(0.955 0 0);
+  --secondary-foreground: oklch(0.3 0 0);
 
-  --muted: oklch(0.928 0.006 264.531);
-  --muted-foreground: oklch(0.551 0.027 264.364);
+  --muted: oklch(0.955 0 0);
+  --muted-foreground: oklch(0.5 0 0);
 
-  /* Warm orange accent — highlights, badges, hover tints */
-  --accent: oklch(0.966 0.025 60);
-  --accent-foreground: oklch(0.47 0.157 37.304);
+  /* Neutral gray accent — highlights, badges, hover tints */
+  --accent: oklch(0.95 0 0);
+  --accent-foreground: oklch(0.25 0 0);
 
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.985 0 0);
 
-  --border: oklch(0.918 0.01 264.531);
-  --input: oklch(0.918 0.01 264.531);
-  --ring: oklch(0.546 0.245 262.881);
+  --border: oklch(0.91 0 0);
+  --input: oklch(0.91 0 0);
+  --ring: oklch(0.4 0 0);
 
-  /* Soft, modern two-layer shadows */
-  --shadow-soft: 0 1px 2px oklch(0.208 0.042 265.755 / 0.06), 0 8px 24px oklch(0.208 0.042 265.755 / 0.06);
-  --shadow-soft-lg: 0 2px 4px oklch(0.208 0.042 265.755 / 0.07), 0 16px 40px oklch(0.208 0.042 265.755 / 0.1);
+  /* Soft, modern two-layer shadows (neutral) */
+  --shadow-soft: 0 1px 2px oklch(0 0 0 / 0.06), 0 8px 24px oklch(0 0 0 / 0.06);
+  --shadow-soft-lg: 0 2px 4px oklch(0 0 0 / 0.07), 0 16px 40px oklch(0 0 0 / 0.1);
 
   --font-sans: var(--font-work-sans), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
@@ -83,34 +82,34 @@
 }
 
 .dark {
-  /* Deep cool slate with the same blue/orange identities, tuned for dark */
-  --background: oklch(0.13 0.028 261.692);
-  --foreground: oklch(0.967 0.003 264.542);
+  /* Deep neutral charcoal, inverted monochrome identity */
+  --background: oklch(0.13 0 0);
+  --foreground: oklch(0.97 0 0);
 
-  --card: oklch(0.173 0.032 261.692);
-  --card-foreground: oklch(0.967 0.003 264.542);
+  --card: oklch(0.18 0 0);
+  --card-foreground: oklch(0.97 0 0);
 
-  --popover: oklch(0.173 0.032 261.692);
-  --popover-foreground: oklch(0.967 0.003 264.542);
+  --popover: oklch(0.18 0 0);
+  --popover-foreground: oklch(0.97 0 0);
 
-  --primary: oklch(0.707 0.165 254.624);
-  --primary-foreground: oklch(0.13 0.028 261.692);
+  --primary: oklch(0.97 0 0);
+  --primary-foreground: oklch(0.15 0 0);
 
-  --secondary: oklch(0.279 0.041 260.031);
-  --secondary-foreground: oklch(0.967 0.003 264.542);
+  --secondary: oklch(0.25 0 0);
+  --secondary-foreground: oklch(0.97 0 0);
 
-  --muted: oklch(0.279 0.041 260.031);
-  --muted-foreground: oklch(0.704 0.04 256.788);
+  --muted: oklch(0.25 0 0);
+  --muted-foreground: oklch(0.68 0 0);
 
-  --accent: oklch(0.33 0.055 45);
-  --accent-foreground: oklch(0.937 0.13 75);
+  --accent: oklch(0.26 0 0);
+  --accent-foreground: oklch(0.95 0 0);
 
   --destructive: oklch(0.704 0.191 22.216);
   --destructive-foreground: oklch(0.985 0 0);
 
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.707 0.165 254.624);
+  --ring: oklch(0.75 0 0);
 
   --shadow-soft: 0 1px 2px oklch(0 0 0 / 0.2), 0 8px 24px oklch(0 0 0 / 0.25);
   --shadow-soft-lg: 0 2px 4px oklch(0 0 0 / 0.25), 0 16px 40px oklch(0 0 0 / 0.35);
