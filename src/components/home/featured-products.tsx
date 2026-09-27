@@ -31,7 +31,7 @@ export async function FeaturedProducts() {
         <SectionHeading
           eyebrow="Handpicked"
           title="Featured Products"
-          description="Favourites our customers love — chosen for fabric, fit and finish."
+          description="A few favourites our customers ask for — availability varies with stock."
           action={
             <Link href="/shop" className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>
               View all

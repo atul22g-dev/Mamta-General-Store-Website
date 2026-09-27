@@ -1,20 +1,20 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Playfair_Display } from "next/font/google";
+import { Outfit, Work_Sans } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { GOOGLE_MAPS_URL, siteContact, siteConfig, siteUrl } from "@/config/site";
 import { JsonLd } from "@/components/seo/json-ld";
 import "./globals.css";
 
-/** Clean, neutral body typeface — highly legible on mobile. */
-const inter = Inter({
-  variable: "--font-inter",
+/** Geometric display typeface — modern, friendly headlines. */
+const outfit = Outfit({
+  variable: "--font-outfit",
   subsets: ["latin"],
 });
 
-/** Elegant serif for display headings — the fashion-store voice. */
-const playfair = Playfair_Display({
-  variable: "--font-playfair",
+/** Clean body typeface — highly legible on mobile. */
+const workSans = Work_Sans({
+  variable: "--font-work-sans",
   subsets: ["latin"],
 });
 
@@ -23,8 +23,8 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#faf9f7" },
-    { media: "(prefers-color-scheme: dark)", color: "#1c1917" },
+    { media: "(prefers-color-scheme: light)", color: "#f8fafc" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f172a" },
   ],
 };
 
@@ -59,15 +59,24 @@ export const metadata: Metadata = {
   },
 };
 
-/** Local-business structured data: helps local search surface the shop. */
+/**
+ * Local-business structured data — the single most valuable SEO asset for a
+ * physical shop. Feeds Google's local pack / knowledge panel: geo coordinates
+ * for "near me" ranking, fully specified opening hours (better than the
+ * display string), sameAs links to tie the site to its Maps place, and
+ * areaServed so nearby-town queries can surface the store.
+ */
 const localBusinessJsonLd = {
   "@context": "https://schema.org",
-  "@type": "ClothingStore",
+  "@type": "GeneralStore",
+  "@id": `${siteUrl}/#store`,
   name: siteConfig.name,
   description: siteConfig.description,
   url: siteUrl,
   telephone: siteContact.phone ? `+91${siteContact.phone}` : undefined,
   email: siteContact.email ?? undefined,
+  image: `${siteUrl}/icon.png`,
+  logo: `${siteUrl}/icon.png`,
   address: {
     "@type": "PostalAddress",
     streetAddress: "Near Post Office, Jatwar",
@@ -76,8 +85,50 @@ const localBusinessJsonLd = {
     postalCode: "134201",
     addressCountry: "IN",
   },
+  geo: {
+    "@type": "GeoCoordinates",
+    // Jatwar, Haryana 134201 — locality-level coordinates; refine to the
+    // exact shop pin when the owner confirms them.
+    latitude: 30.2887,
+    longitude: 77.0142,
+  },
   hasMap: GOOGLE_MAPS_URL,
-  openingHours: siteContact.timings ?? undefined,
+  sameAs: [GOOGLE_MAPS_URL],
+  areaServed: [
+    { "@type": "City", name: "Jatwar" },
+    { "@type": "City", name: "Naraingarh" },
+    { "@type": "City", name: "Ambala" },
+  ],
+  openingHoursSpecification: [
+    {
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek: [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday",
+      ],
+      opens: "09:00",
+      closes: "13:00",
+    },
+    {
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek: [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday",
+      ],
+      opens: "15:00",
+      closes: "20:00",
+    },
+  ],
   priceRange: "₹₹",
 };
 
@@ -107,7 +158,7 @@ const websiteJsonLd = {
  */
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${inter.variable} ${playfair.variable} h-full antialiased`}>
+    <html lang="en" className={`${outfit.variable} ${workSans.variable} h-full antialiased`}>
       {/*
         suppressHydrationWarning: browser extensions (e.g. Grammarly) inject
         attributes like data-gr-ext-installed into <body> before React

@@ -15,10 +15,10 @@ import { supabaseUrl } from "./env";
  * Callers receive a plain public URL to store in `product_images.url`.
  */
 
-export const PRODUCT_IMAGES_BUCKET = "product-images";
+const PRODUCT_IMAGES_BUCKET = "product-images";
 
 /** 5 MB upload cap (mirrors the bucket-level limit in migration 0004). */
-export const PRODUCT_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
+const PRODUCT_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
 
 /** Content-type allow-list for product images. */
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/avif"]);
@@ -28,13 +28,13 @@ const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/a
  * product photography (a 1×1 pixel passes MIME/size checks) and would
  * render as a blurry smear in the 3:4 catalog frame.
  */
-export const MIN_IMAGE_EDGE_PX = 200;
+const MIN_IMAGE_EDGE_PX = 200;
 
 /**
  * Public URL for an object in the product-images bucket — pure URL math on
  * the project host, no client needed (and therefore no request scope).
  */
-export function productImageUrl(path: string): string {
+function productImageUrl(path: string): string {
   const base = supabaseUrl().replace(/\/$/, "");
   return `${base}/storage/v1/object/public/${PRODUCT_IMAGES_BUCKET}/${path}`;
 }

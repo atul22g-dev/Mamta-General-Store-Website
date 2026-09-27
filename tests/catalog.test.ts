@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  buildRelatedList,
   discountPercent,
   filterAndSort,
   filterProducts,
   isAvailable,
   parseSort,
+  rankSimilarProducts,
   sortProducts,
 } from "@/lib/catalog";
 import { formatPrice } from "@/lib/utils";
@@ -105,6 +107,62 @@ describe("slug handling (12)", () => {
     expect(slugify("Women's Rosewood Pink Suit")).toBe("womens-rosewood-pink-suit");
     expect(slugify("  Festive & Premium Collection ")).toBe("festive-premium-collection");
     expect(slugify("---trimmed---")).toBe("trimmed");
+  });
+});
+
+describe("similar products ranking", () => {
+  const reference = products[0]!; // suit-material, ₹1,200, in stock, brand null
+
+  it("prefers same-category products over others", () => {
+    const ranked = rankSimilarProducts(reference, [products[3]!, products[2]!]);
+    // p3 is suit-material, p4 is festive-wear
+    expect(ranked[0]!.id).toBe("p3");
+  });
+
+  it("prefers in-stock over sold-out within a category", () => {
+    const ranked = rankSimilarProducts(reference, [products[1]!, products[2]!]);
+    // both suit-material; p2 is sold out (stock 0), p3 is available
+    expect(ranked.map((p) => p.id)).toEqual(["p3", "p2"]);
+  });
+
+  it("prefers closer prices (log distance)", () => {
+    const near = makeProduct({ id: "near", price: 130_000 });
+    const far = makeProduct({ id: "far", price: 900_000 });
+    const ranked = rankSimilarProducts(reference, [far, near]);
+    expect(ranked[0]!.id).toBe("near");
+  });
+
+  it("prefers a shared brand over a different brand", () => {
+    const ref = makeProduct({ id: "ref", brand: "Aarika" });
+    const sameBrand = makeProduct({ id: "same", brand: "Aarika", price: 500_000 });
+    const otherBrand = makeProduct({ id: "other", brand: "Meera", price: 110_000 });
+    const ranked = rankSimilarProducts(ref, [otherBrand, sameBrand]);
+    expect(ranked[0]!.id).toBe("same");
+  });
+
+  it("excludes the reference product and caps at the limit", () => {
+    const list = buildRelatedList(reference, products, 2);
+    expect(list).toHaveLength(2);
+    expect(list.some((p) => p.id === reference.id)).toBe(false);
+  });
+
+  it("backfills from other categories so the grid still fills", () => {
+    // Only two other suit-material products exist (p2 sold out, p3) — a limit
+    // of 4 must reach into festive-wear for the remaining slots.
+    const list = buildRelatedList(reference, products, 4);
+    expect(list).toHaveLength(4);
+    expect(list.slice(0, 2).map((p) => p.category.slug)).toEqual([
+      "suit-material",
+      "suit-material",
+    ]);
+    expect(list.slice(2).every((p) => p.category.slug === "festive-wear")).toBe(true);
+  });
+
+  it("does not mutate the candidates array", () => {
+    const input = [products[3]!, products[2]!, products[1]!];
+    const snapshot = input.map((p) => p.id);
+    rankSimilarProducts(reference, input);
+    expect(input.map((p) => p.id)).toEqual(snapshot);
   });
 });
 

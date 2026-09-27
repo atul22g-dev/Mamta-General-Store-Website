@@ -8,10 +8,8 @@ import { getAdminSession } from "@/lib/auth/session";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import {
   deleteProductImage,
-  productImageUrl,
   productImagePathFromUrl,
   uploadProductImage,
-  PRODUCT_IMAGES_BUCKET,
 } from "@/lib/supabase/storage";
 
 /**
@@ -77,46 +75,6 @@ export async function updateImageAltAction(
   return { altSavedFor: imageId };
 }
 
-/**
- * Remove storage objects that are no longer referenced by any product_images
- * row (orphans from interrupted uploads or replaced covers). Admin hygiene;
- * reports how many objects were removed.
- */
-export async function cleanupOrphanImagesAction(formData: FormData): Promise<void> {
-  await assertAdmin();
-
-  const productId = formData.get("productId")?.toString();
-  if (!productId) return;
-
-  const client = await getSupabaseAdminClient();
-
-  // URLs currently attached to ANY product (a moved/reused photo must not be
-  // deleted), and the objects under this product's prefix.
-  const [{ data: attached }, { data: objects }] = await Promise.all([
-    client.from("product_images").select("url"),
-    client.storage.from(PRODUCT_IMAGES_BUCKET).list(`products/${productId}`, {
-      limit: 200,
-      sortBy: { column: "name", order: "asc" },
-    }),
-  ]);
-  if (!objects || objects.length === 0) return;
-
-  const attachedUrls = new Set(((attached ?? []) as { url: string }[]).map((row) => row.url));
-  const orphanPaths = objects
-    .map((object) => `products/${productId}/${object.name}`)
-    .filter((path) => !attachedUrls.has(productImageUrl(path)));
-
-  if (orphanPaths.length === 0) return;
-  await client.storage.from(PRODUCT_IMAGES_BUCKET).remove(orphanPaths);
-
-  const { data: product } = await client
-    .from("products")
-    .select("slug")
-    .eq("id", productId)
-    .maybeSingle<{ slug: string }>();
-  revalidateProductSurfaces(product?.slug ?? null);
-}
-
 /** Every mutation requires a verified Auth session AND an active ADMIN profile. */
 async function assertAdmin(): Promise<void> {
   const session = await getAdminSession();
@@ -155,12 +113,12 @@ export async function addProductImagesAction(
 
   const client = await getSupabaseAdminClient();
 
-  // Product must exist; slug is needed to revalidate its page.
+  // Product must exist; slug revalidates its page, name builds alt text.
   const { data: product } = await client
     .from("products")
-    .select("id, slug")
+    .select("id, slug, name")
     .eq("id", productId)
-    .maybeSingle<{ id: string; slug: string }>();
+    .maybeSingle<{ id: string; slug: string; name: string }>();
   if (!product) return { error: "Product not found." };
 
   // Current highest position → gallery images append after it.
@@ -196,7 +154,7 @@ export async function addProductImagesAction(
         id: randomUUID(),
         productId,
         url: uploaded.url,
-        alt: `${product.slug} — suit material photo ${nextPosition + 1}`,
+        alt: `${product.name} — product photo ${nextPosition + 1}`,
         position: nextPosition,
       } as never);
       if (error) {

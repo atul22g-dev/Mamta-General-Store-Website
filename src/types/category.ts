@@ -10,9 +10,9 @@
  */
 export interface Category {
   id: string;
-  /** Display name, e.g. "Ladies' Suits". */
+  /** Display name, e.g. "School & Education". */
   name: string;
-  /** URL slug used in /category/[slug] routes, e.g. "ladies-suits". */
+  /** URL slug used in /category/[slug] routes, e.g. "school-education". */
   slug: string;
   description: string | null;
   /** Tile image for category listings (null = ImageArea placeholder). */

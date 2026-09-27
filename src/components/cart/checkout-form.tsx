@@ -75,7 +75,7 @@ export function CheckoutForm() {
   if (placedOrderNumber) {
     return (
       <div className="mx-auto max-w-md py-10 text-center sm:py-16">
-        <span className="mx-auto flex size-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+        <span className="bg-primary text-primary-foreground mx-auto flex size-16 items-center justify-center rounded-full">
           <CheckCircle2 aria-hidden="true" className="size-8" />
         </span>
         <h2 className="font-display mt-6 text-3xl font-semibold tracking-tight">Order placed!</h2>

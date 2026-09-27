@@ -18,36 +18,43 @@ export async function CallToAction() {
   }
 
   return (
-    <section
-      className="bg-primary py-16 text-primary-foreground sm:py-20"
-      aria-labelledby="cta-heading"
-    >
-      <Container className="flex flex-col items-center text-center">
-        {categoryNames.length > 0 && (
-          <p className="text-xs font-medium tracking-widest uppercase opacity-70">
-            {categoryNames.join(" · ")}
-          </p>
-        )}
-        <h2
-          id="cta-heading"
-          className="font-display mt-3 max-w-xl text-3xl font-medium tracking-tight text-balance sm:text-4xl"
-        >
-          Find the suit material that feels made for you
-        </h2>
-        <p className="mt-4 max-w-md text-pretty leading-relaxed opacity-80">
-          Explore the collection — delivered across India by India Post.
-        </p>
-        <Button
-          size="lg"
-          variant="secondary"
-          asChild
-          className="mt-8 bg-primary-foreground text-primary hover:bg-primary-foreground/90"
-        >
-          <Link href="/shop">
-            Shop Now
-            <ArrowRight />
-          </Link>
-        </Button>
+    <section className="py-16 sm:py-20" aria-labelledby="cta-heading">
+      <Container>
+        <div className="bg-primary text-primary-foreground relative overflow-hidden rounded-3xl px-6 py-14 text-center sm:px-12 sm:py-16">
+          {/* Decorative glow — brand-tinted depth without imagery */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_120%_at_50%_-20%,white_0%,transparent_55%)] opacity-10"
+          />
+          <div className="relative flex flex-col items-center">
+            {categoryNames.length > 0 && (
+              <p className="text-xs font-semibold tracking-widest uppercase opacity-80">
+                {categoryNames.join(" · ")}
+              </p>
+            )}
+            <h2
+              id="cta-heading"
+              className="font-display mt-3 max-w-xl text-3xl font-semibold tracking-tight text-balance sm:text-4xl"
+            >
+              Explore What We Have
+            </h2>
+            <p className="mt-4 max-w-md leading-relaxed text-pretty opacity-90">
+              Discover useful products for school, home, personal care and everyday life —
+              delivered across India by India Post.
+            </p>
+            <Button
+              size="lg"
+              variant="secondary"
+              asChild
+              className="mt-8 rounded-full bg-background text-foreground shadow-soft-lg hover:bg-background/90"
+            >
+              <Link href="/shop">
+                Explore Products
+                <ArrowRight />
+              </Link>
+            </Button>
+          </div>
+        </div>
       </Container>
     </section>
   );

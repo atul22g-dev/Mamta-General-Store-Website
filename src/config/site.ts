@@ -1,14 +1,14 @@
 import {
   SITE_DESCRIPTION,
   SITE_NAME,
-  SITE_POSITIONING_WITH_DUPATTA,
+  SITE_POSITIONING,
   SITE_TAGLINE,
 } from "@/lib/constants";
 
 /**
  * Central business + site configuration. This is the single source of truth
  * for the shop's identity: metadata, location, contact channels and the
- * India Post delivery story shown across the storefront.
+ * general-store story shown across the storefront.
  *
  * `siteUrl` comes from NEXT_PUBLIC_SITE_URL and is used for canonical URLs,
  * metadataBase, sitemap.xml and robots.txt.
@@ -17,20 +17,20 @@ export const siteConfig = {
   name: SITE_NAME,
   tagline: SITE_TAGLINE,
   /** Store-level positioning line (accuracy rules in lib/constants.ts). */
-  positioning: SITE_POSITIONING_WITH_DUPATTA,
+  positioning: SITE_POSITIONING,
   description: SITE_DESCRIPTION,
   locale: "en_IN",
   keywords: [
     "Mamta General Store",
-    "unstitched suit material",
-    "women's suit material Jatwar",
-    "suit material shop Jatwar",
-    "suit material near Jatwar",
-    "women's ethnic wear",
-    "salwar suit material",
-    "suit material with dupatta",
-    "Ambala suit material shop",
-    "India Post delivery",
+    "general store Jatwar",
+    "general store near Jatwar",
+    "school supplies Jatwar",
+    "stationery shop Jatwar",
+    "school bags Jatwar",
+    "household items Jatwar",
+    "toys and games Jatwar",
+    "personal care products Jatwar",
+    "Ambala district general store",
   ],
 } as const;
 
@@ -48,14 +48,21 @@ export const DELIVERY_NOTE = "Delivered across India by India Post";
 export const SHOP_ADDRESS = "Mamta General Store, Near Post Office, Jatwar, Haryana 134201, India";
 
 /**
+ * The shop's real production origin — last-resort fallback so a production
+ * build can never fail (or silently emit localhost canonicals) over a
+ * missing env var. Update here if the site moves to a custom domain.
+ */
+const FALLBACK_PRODUCTION_URL = "https://mamta-general-store.vercel.app";
+
+/**
  * Public site URL without a trailing slash — the base for every canonical
  * URL, Open Graph absolute URL, sitemap entry and robots.txt sitemap link.
  *
- * PRODUCTION GUARD: the localhost fallback exists for `next dev` only. When
- * the app runs in production mode without NEXT_PUBLIC_SITE_URL set, startup
- * fails rather than silently emitting localhost:// canonicals, sitemap URLs
- * and JSON-LD — canonical URLs pointing at localhost would tell search
- * engines to drop the real site from their indexes.
+ * Resolution order:
+ *   1. NEXT_PUBLIC_SITE_URL — the explicit, recommended setting.
+ *   2. Vercel's auto-injected project/domain vars.
+ *   3. The known production origin (warn loudly — set NEXT_PUBLIC_SITE_URL).
+ *   4. localhost — `next dev` only.
  */
 function resolveSiteUrl(): string {
   const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim();
@@ -63,13 +70,23 @@ function resolveSiteUrl(): string {
     return configured.replace(/\/+$/, "");
   }
 
+  const vercelDomain = (
+    process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL ??
+    process.env.VERCEL_PROJECT_PRODUCTION_URL ??
+    process.env.NEXT_PUBLIC_VERCEL_URL ??
+    process.env.VERCEL_URL
+  )?.trim();
+  if (vercelDomain) {
+    return `https://${vercelDomain.replace(/\/+$/, "")}`;
+  }
+
   if (process.env.NODE_ENV === "production") {
-    throw new Error(
-      "NEXT_PUBLIC_SITE_URL is required in production. Set it to the site's public " +
-        "origin (e.g. https://www.example.in) in the hosting provider's environment " +
-        "settings — canonical URLs, sitemap.xml, robots.txt and Open Graph tags are " +
-        "built from it.",
+    console.warn(
+      "[site] NEXT_PUBLIC_SITE_URL is not set — falling back to " +
+        `${FALLBACK_PRODUCTION_URL} for canonical URLs, sitemap.xml, robots.txt ` +
+        "and Open Graph tags. Set it explicitly in the hosting environment.",
     );
+    return FALLBACK_PRODUCTION_URL;
   }
 
   return "http://localhost:3000";

@@ -50,8 +50,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
     <Container className="flex flex-1 flex-col py-12 sm:py-16">
       <SectionHeading
         eyebrow="Search"
-        title="Find products"
-        description="Search the full catalog by name, fabric or collection."
+        title="Find products"          description="Search the full catalog by name or product type."
       />
       <div className="mt-10">
         <Suspense fallback={<ProductGridSkeleton count={8} />}>

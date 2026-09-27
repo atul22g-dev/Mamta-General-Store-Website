@@ -30,7 +30,7 @@ export function SiteHeader({ className }: { className?: string }) {
   return (
     <header
       className={cn(
-        "sticky top-0 z-40 border-b border-border/70 bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60",
+        "bg-background/80 sticky top-0 z-40 border-b border-border/70 backdrop-blur-md supports-[backdrop-filter]:bg-background/65",
         className,
       )}
     >
@@ -64,18 +64,18 @@ export function SiteHeader({ className }: { className?: string }) {
           </Link>
 
           {/* Desktop nav */}
-          <nav aria-label="Main navigation" className="hidden flex-1 items-center gap-6 lg:flex">
+          <nav aria-label="Main navigation" className="hidden flex-1 items-center gap-1 lg:flex">
             {mainNav.map((item) => (
-              <NavLink key={item.href} item={item} className="text-sm" />
+              <NavLink key={item.href} item={item} className="rounded-full px-3 py-1.5 text-sm" />
             ))}
           </nav>
 
-          {/* Actions: clear Shop Now CTA + cart */}
+          {/* Actions: clear Explore CTA + cart */}
           <div className="flex items-center gap-2">
-            <Button size="sm" asChild className="hidden md:inline-flex">
+            <Button size="sm" asChild className="hidden rounded-full md:inline-flex">
               <Link href="/shop">
                 <ShoppingBag aria-hidden="true" />
-                Shop Now
+                Explore Products
               </Link>
             </Button>
             <CartButton />

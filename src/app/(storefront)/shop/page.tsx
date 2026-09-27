@@ -5,16 +5,26 @@ import { SectionHeading } from "@/components/ui/section-heading";
 import { ShopView } from "@/components/shop/shop-view";
 import { getCategories, getShopProducts } from "@/lib/supabase/catalog";
 import { ProductGridSkeleton } from "@/components/product/product-grid-skeleton";
+import { JsonLd } from "@/components/seo/json-ld";
+import { siteUrl } from "@/config/site";
 
 export const metadata: Metadata = {
-  title: "Shop",
-  description: "Browse all products at Mamta General Store.",
+  title: "Shop All Products",
+  description:
+    "Browse every product at Mamta General Store, Jatwar — school supplies, stationery, bags, footwear, personal care, toys and household items. Check what's in stock.",
   alternates: { canonical: "/shop" },
   openGraph: {
-    title: "Shop — Mamta General Store",
-    description: "Browse all products at Mamta General Store.",
+    title: "Shop All Products — Mamta General Store, Jatwar",
+    description:
+      "Browse every product at Mamta General Store — school supplies, stationery, bags, footwear, personal care, toys and household items.",
     type: "website",
     url: "/shop",
+  },
+  twitter: {
+    card: "summary",
+    title: "Shop All Products — Mamta General Store, Jatwar",
+    description:
+      "School supplies, stationery, bags, footwear, personal care, toys and household items at Mamta General Store, Jatwar.",
   },
 };
 
@@ -49,6 +59,21 @@ async function ShopProducts({
   const categories = await getCategories().catch(() => []);
   return (
     <Suspense fallback={<ProductGridSkeleton count={8} />}>
+      {/* ItemList of the full catalog — helps Google associate every product
+          page with the shop listing without crawling each URL first. */}
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "ItemList",
+          name: "All products — Mamta General Store",
+          itemListElement: products.slice(0, 50).map((product, index) => ({
+            "@type": "ListItem",
+            position: index + 1,
+            url: `${siteUrl}/products/${product.slug}`,
+            name: product.name,
+          })),
+        }}
+      />
       <ShopView
         products={products}
         categories={categories.map(({ id, name, slug }) => ({ id, name, slug }))}

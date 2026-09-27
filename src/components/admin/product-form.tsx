@@ -33,6 +33,13 @@ const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/avi
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 /** Mirrors the server-side cap in the save action. */
 const MAX_PRODUCT_IMAGES = 5;
+/**
+ * Vercel caps Server Action request bodies at 4.5 MB regardless of
+ * next.config's bodySizeLimit — a larger batch fails at the network layer
+ * with an opaque error. Guard the total here so the admin sees a clear,
+ * actionable message instead.
+ */
+const MAX_BATCH_BYTES = 4 * 1024 * 1024;
 
 function FieldError({ errors }: { errors?: string[] }) {
   if (!errors?.length) return null;
@@ -105,6 +112,7 @@ function useProductImages() {
       );
 
       const next = [...files];
+      let batchBytes = next.reduce((sum, item) => sum + item.file.size, 0);
       for (const item of optimized) {
         if (item.file.size > MAX_IMAGE_BYTES) {
           setFilesError(
@@ -112,6 +120,13 @@ function useProductImages() {
           );
           continue;
         }
+        if (batchBytes + item.file.size > MAX_BATCH_BYTES) {
+          setFilesError(
+            "This batch is too large to upload at once (host limit 4.5 MB). Save this product first, then add remaining photos from the edit page — they upload in smaller batches there.",
+          );
+          break;
+        }
+        batchBytes += item.file.size;
         next.push(item);
       }
       setFiles(next);
@@ -231,7 +246,7 @@ function BasicsSection({
           name="sku"
           defaultValue={product?.sku ?? ""}
           maxLength={60}
-          placeholder="e.g. MGS-SUIT-001"
+          placeholder="e.g. MGS-001"
           aria-describedby="sku-hint"
           {...inputInvalid(errors?.sku)}
         />

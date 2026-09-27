@@ -11,6 +11,7 @@
     "format:check": "prettier --check .",
     "db:login": "tsx scripts/db-url.ts",
     "db:deploy": "tsx scripts/db-deploy.ts",
+    "db:backup": "tsx scripts/db-backup.ts",
     "create-admin": "tsx scripts/create-admin.ts",
     "doctor": "npx react-doctor@latest",
     "test": "node -r ./scripts/rollup-wasm-shim.js node_modules/vitest/vitest.mjs run",

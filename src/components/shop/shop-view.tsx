@@ -86,7 +86,11 @@ export function ShopView({
     if (filters.inStockOnly) params.set("stock", "in");
     if (sort !== "newest") params.set("sort", sort);
     const qs = params.toString();
-    window.history.replaceState(null, "", qs ? `/shop?${qs}` : "/shop");
+    // Mirror on the CURRENT path: /shop keeps /shop?…, a category page keeps
+    // its own /category/<slug>?… (previously this rewrote category pages to
+    // /shop, dropping the user's context from the address bar).
+    const path = window.location.pathname;
+    window.history.replaceState(null, "", qs ? `${path}?${qs}` : path);
   }, [filters, sort]);
 
   const counts = useMemo(() => countByCategory(products, filters), [products, filters]);

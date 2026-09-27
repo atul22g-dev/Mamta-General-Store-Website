@@ -20,6 +20,31 @@ import { cn } from "@/lib/utils";
  * default. `priority` maps to the LCP image; `fill` matches the common
  * absolutely-positioned catalog frame (parent must be relative/aspect).
  */
+/**
+ * Hard boundary around next/image. If the Image component throws during
+ * render (e.g. a hostname missing from images.remotePatterns because the
+ * deployment's env vars were set after its build), degrade to the quiet
+ * "image unavailable" box instead of crashing the whole page.
+ */
+class ImageErrorBoundary extends React.Component<
+  { children: React.ReactNode; fallback: React.ReactNode },
+  { errored: boolean }
+> {
+  state = { errored: false };
+
+  static getDerivedStateFromError() {
+    return { errored: true };
+  }
+
+  componentDidCatch(error: unknown) {
+    console.error("[SafeImage] render error:", error);
+  }
+
+  render() {
+    return this.state.errored ? this.props.fallback : this.props.children;
+  }
+}
+
 export function SafeImage({
   src,
   alt,
@@ -50,20 +75,22 @@ export function SafeImage({
 }) {
   const [failed, setFailed] = React.useState(false);
 
+  const unavailableBox = (
+    <div
+      role="img"
+      aria-label={`${alt} — image unavailable`}
+      className={cn(
+        "bg-muted text-muted-foreground/60 flex h-full w-full flex-col items-center justify-center gap-1",
+        className,
+      )}
+    >
+      <ImageOff aria-hidden="true" strokeWidth={1.5} className="size-6" />
+      <span className="text-[10px] tracking-wide uppercase">Image unavailable</span>
+    </div>
+  );
+
   if (failed) {
-    return (
-      <div
-        role="img"
-        aria-label={`${alt} — image unavailable`}
-        className={cn(
-          "bg-muted text-muted-foreground/60 flex h-full w-full flex-col items-center justify-center gap-1",
-          className,
-        )}
-      >
-        <ImageOff aria-hidden="true" strokeWidth={1.5} className="size-6" />
-        <span className="text-[10px] tracking-wide uppercase">Image unavailable</span>
-      </div>
-    );
+    return unavailableBox;
   }
 
   const eagerProps = eager
@@ -71,15 +98,17 @@ export function SafeImage({
     : { priority: false, loading: loading as "lazy" | "eager" };
 
   return (
-    <Image
-      src={src}
-      alt={alt}
-      // A cached failure should not permanently hide the photo: retry on
-      // re-mount. Keyed by src at the call site for URL changes.
-      onError={() => setFailed(true)}
-      className={className}
-      {...(fill ? { fill: true, sizes } : { width, height })}
-      {...eagerProps}
-    />
+    <ImageErrorBoundary fallback={unavailableBox}>
+      <Image
+        src={src}
+        alt={alt}
+        // A cached failure should not permanently hide the photo: retry on
+        // re-mount. Keyed by src at the call site for URL changes.
+        onError={() => setFailed(true)}
+        className={className}
+        {...(fill ? { fill: true, sizes } : { width, height })}
+        {...eagerProps}
+      />
+    </ImageErrorBoundary>
   );
 }

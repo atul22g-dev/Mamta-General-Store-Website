@@ -5,17 +5,22 @@ import { GOOGLE_MAPS_URL, siteContact } from "@/config/site";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { SectionHeading } from "@/components/ui/section-heading";
-import { SITE_POSITIONING_WITH_DUPATTA, SITE_NAME } from "@/lib/constants";
+import { SITE_NAME } from "@/lib/constants";
 
 export const metadata: Metadata = {
-  title: "Contact",
-  description: `Contact ${SITE_NAME}, Jatwar — call, WhatsApp or visit the shop for ${SITE_POSITIONING_WITH_DUPATTA.toLowerCase()}. Get directions on Google Maps.`,
+  title: "Contact & Directions",
+  description: `Contact ${SITE_NAME}, Jatwar — call ${"9729292342"}, WhatsApp, or visit near the Post Office. Product, price and availability questions welcome. Get directions on Google Maps.`,
   alternates: { canonical: "/contact" },
   openGraph: {
-    title: `Contact — ${SITE_NAME}`,
-    description: `Contact ${SITE_NAME}, Jatwar — call, WhatsApp or visit the shop for ${SITE_POSITIONING_WITH_DUPATTA.toLowerCase()}.`,
+    title: `Contact & Directions — ${SITE_NAME}, Jatwar`,
+    description: `Call, WhatsApp or visit ${SITE_NAME} near the Post Office, Jatwar. Get directions on Google Maps.`,
     type: "website",
     url: "/contact",
+  },
+  twitter: {
+    card: "summary",
+    title: `Contact & Directions — ${SITE_NAME}, Jatwar`,
+    description: `Call, WhatsApp or visit ${SITE_NAME} near the Post Office, Jatwar.`,
   },
 };
 
@@ -29,8 +34,8 @@ export default function ContactPage() {
       <SectionHeading
         align="center"
         eyebrow="Contact"
-        title="Get in touch"
-        description="Ask about availability, prices or delivery — we're happy to help."
+        title="Get in Touch"
+        description="Have a question about a product, price or availability? Contact us or visit us in Jatwar — we're happy to help."
       />
 
       <div className="mt-10 flex w-full max-w-md flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-center">

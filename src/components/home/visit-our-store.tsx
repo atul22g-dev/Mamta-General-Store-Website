@@ -51,7 +51,7 @@ export function VisitOurStore() {
           <SectionHeading
             eyebrow="Local shop"
             title="Visit Our Local Shop"
-            description="Come see and feel the fabrics in person — choose your suit material with your own eyes."
+            description="Find everyday essentials, school supplies, bags, footwear, accessories, personal-care products, toys and many other useful items at our local store in Jatwar."
             align="left"
           />
           <ul className="mt-6 space-y-3">

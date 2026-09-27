@@ -7,11 +7,12 @@ import { recheckDatabaseAction, type DbStatusSnapshot } from "@/app/admin/db-sta
 import { cn } from "@/lib/utils";
 
 interface DbStatusProps {
-  /** Server-probed state at page render — the popover's starting data. */
-  initial: DbStatusSnapshot;
-  /** Supabase project host (public URL origin), e.g. "abc123.supabase.co". */
+  /**
+   * Supabase project host (public URL origin), e.g. "abc123.supabase.co".
+   * Display-only — the probe itself runs client-side on demand.
+   */
   host: string;
-  className?: string;
+  className?: boolean;
 }
 
 /** Module-level: building an Intl formatter is slow — never do it per call. */
@@ -36,23 +37,32 @@ function formatTime(iso: string): string {
 /**
  * Admin database connectivity indicator with an on-click detail dialog.
  *
- * Quiet by default: a pulsing green dot when healthy, loud red dot + "DB
- * offline" label when not. Clicking (or keyboard-activating) the dot opens a
- * native <dialog> popover with the real connection details — measured
- * round-trip latency, project host, when the probe last ran — and a "Check
- * again" button that re-runs the same server-side probe live.
+ * PERFORMANCE: the probe no longer runs server-side on every admin render
+ * (that was a blocking Supabase round-trip in the layout before any page
+ * could paint). The dot renders optimistically as connected and the first
+ * real probe runs lazily in the background after mount; the popover shows
+ * the freshest result with a "Check again" re-probe.
  */
-export function DatabaseStatus({ initial, host, className }: DbStatusProps) {
+export function DatabaseStatus({ host, className }: DbStatusProps) {
   const [open, setOpen] = useState(false);
-  const [status, setStatus] = useState<DbStatusSnapshot>(initial);
+  const [status, setStatus] = useState<DbStatusSnapshot | null>(null);
   const [pending, startTransition] = useTransition();
   const dialogId = useId();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const rootRef = useRef<HTMLSpanElement>(null);
-  // Locale/timezone formatting happens during render from server-provided
-  // data (UTC — deterministic across server and client, so no hydration
-  // mismatch and no setState-in-effect cascade).
-  const checkedAtLabel = formatTime(status.checkedAt);
+  const probedRef = useRef(false);
+
+  const connected = status ? status.connected : true;
+
+  // Lazily run the first probe once after mount — off the critical render
+  // path. Repeated renders never re-trigger it.
+  useEffect(() => {
+    if (probedRef.current) return;
+    probedRef.current = true;
+    startTransition(async () => {
+      setStatus(await recheckDatabaseAction());
+    });
+  }, []);
 
   // Native <dialog> in the non-modal show() mode: open/close stays owned by
   // React state, while the element itself supplies the dialog semantics
@@ -101,8 +111,6 @@ export function DatabaseStatus({ initial, host, className }: DbStatusProps) {
     });
   };
 
-  const connected = status.connected;
-
   return (
     <span ref={rootRef} className={cn("relative inline-flex items-center", className)}>
       <button
@@ -120,7 +128,8 @@ export function DatabaseStatus({ initial, host, className }: DbStatusProps) {
           connected ? "hover:bg-accent" : "hover:bg-destructive/10",
         )}
       >
-        {/* Pulsing dot when healthy, steady red when not */}
+        {/* Pulsing dot when healthy (assumed until the first probe lands),
+            steady red when not */}
         <span className="relative flex size-2" aria-hidden="true">
           {connected && (
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-60" />
@@ -140,23 +149,29 @@ export function DatabaseStatus({ initial, host, className }: DbStatusProps) {
           the effect below, so React state and the native dialog state can
           never race (a conditionally-mounted dialog re-enters the DOM without
           its previous open state, and remount/effect ordering gets murky).
-          A closed dialog is display:none by default — no layout cost. */}
+          A closed dialog is display:none by default — no layout cost.
+
+          Anchored as an absolute dropdown below the status dot (NOT a fixed
+          viewport-centered dialog): the sticky header carries backdrop-blur,
+          and an element with backdrop-filter is the containing block for
+          fixed-position descendants — a fixed dialog in here would be
+          positioned relative to the 64px header and end up clipped off the
+          top of the screen. Absolute inside this span.relative sidesteps the
+          containing block entirely and keeps the popover attached to its dot. */}
       <dialog
         ref={dialogRef}
         id={dialogId}
         tabIndex={-1}
         aria-label="Database connection details"
         onClose={() => setOpen(false)}
-        className="bg-card shadow-soft-lg fixed top-[calc(50%+28px)] left-1/2 w-72 max-w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2 rounded-xl border p-4 text-sm backdrop:bg-transparent open:animate-in open:fade-in-0 open:zoom-in-95"
+        className="bg-card shadow-soft-lg absolute top-[calc(100%+8px)] right-0 z-50 w-72 max-w-[min(18rem,calc(100vw-1rem))] rounded-xl border p-4 text-sm backdrop:bg-transparent open:animate-in open:fade-in-0 open:zoom-in-95"
       >
         <div className="flex items-center justify-between gap-2">
           <span className="font-medium">Database status</span>
           <span
             className={cn(
               "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-semibold",
-              connected
-                ? "bg-emerald-500/10 text-emerald-700"
-                : "bg-destructive/10 text-destructive",
+              connected ? "bg-emerald-500/10 text-emerald-700" : "bg-destructive/10 text-destructive",
             )}
           >
             <span
@@ -178,12 +193,14 @@ export function DatabaseStatus({ initial, host, className }: DbStatusProps) {
           <div className="flex items-center justify-between gap-2">
             <dt>Response time</dt>
             <dd className="text-foreground tabular-nums">
-              {status.latencyMs === null ? "—" : `${status.latencyMs} ms`}
+              {status?.latencyMs == null ? "—" : `${status.latencyMs} ms`}
             </dd>
           </div>
           <div className="flex items-center justify-between gap-2">
             <dt>Last checked</dt>
-            <dd className="text-foreground tabular-nums">{checkedAtLabel || "—"}</dd>
+            <dd className="text-foreground tabular-nums">
+              {status ? formatTime(status.checkedAt) : "—"}
+            </dd>
           </div>
         </dl>
 

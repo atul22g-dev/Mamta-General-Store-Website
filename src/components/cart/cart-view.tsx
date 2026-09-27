@@ -74,7 +74,7 @@ export function CartView() {
         </span>
         <h2 className="font-display mt-5 text-2xl font-semibold">Your cart is empty</h2>
         <p className="text-muted-foreground mt-2 max-w-xs text-sm">
-          Beautiful suit materials are waiting. Browse the collection and find your next favorite.
+          Useful everyday products are waiting — browse the shop and find something you need.
         </p>
         <Button asChild className="mt-6">
           <Link href="/shop">
@@ -197,7 +197,7 @@ export function CartView() {
                     </p>
                   )}
                   {overStock && (
-                    <p role="status" className="mt-2 text-xs text-amber-600">
+                    <p role="status" className="text-foreground mt-2 text-xs">
                       Only {current[item.productId]?.stock} left — quantity will be reduced at
                       checkout.
                     </p>
