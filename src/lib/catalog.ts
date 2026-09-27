@@ -113,6 +113,71 @@ export function isAvailable(product: Product): boolean {
 }
 
 /**
+ * Order two products for a "You may also like" section.
+ *
+ * Similarity, in priority order (a strict weak ordering — no ties survive):
+ *   1. Same category beats different category — a suit shopper sees suits.
+ *   2. Shared brand next — same maker suggests a matching collection.
+ *   3. In stock beats sold out — purchasable items are more useful.
+ *   4. Closer price band wins (log ratio, so ₹100 vs ₹150 outranks
+ *      ₹100 vs ₹10,000 regardless of absolute level).
+ *   5. Newest first as the final tiebreaker.
+ */
+export function rankSimilarProducts(
+  reference: Product,
+  candidates: Product[],
+): Product[] {
+  const sameCategory = (p: Product) => Number(p.category.id === reference.category.id);
+  const sharedBrand = (p: Product) =>
+    Number(
+      Boolean(reference.brand) && Boolean(p.brand) && reference.brand === p.brand,
+    );
+  const inStock = (p: Product) => Number(isAvailable(p));
+
+  // Log price distance in paise (min ₹1 to stay finite); 0 → perfect match.
+  const priceDistance = (p: Product) => {
+    const a = Math.max(reference.price, 100);
+    const b = Math.max(p.price, 100);
+    return Math.abs(Math.log(a) - Math.log(b));
+  };
+
+  return candidates
+    .map((product) => ({
+      product,
+      keys: [
+        -sameCategory(product), // ascending sort → same category first
+        -sharedBrand(product),
+        -inStock(product),
+        priceDistance(product),
+        -new Date(product.createdAt).getTime(),
+      ] as const,
+    }))
+    .sort((a, b) => {
+      for (let i = 0; i < a.keys.length; i += 1) {
+        if (a.keys[i] !== b.keys[i]) return a.keys[i]! - b.keys[i]!;
+      }
+      return 0;
+    })
+    .map((entry) => entry.product);
+}
+
+/**
+ * Build the "You may also like" list: the most similar products first, and
+ * — when the reference's own category runs out — the grid still fills with
+ * the best-scoring picks from other categories rather than leaving gaps.
+ */
+export function buildRelatedList(
+  reference: Product,
+  candidates: Product[],
+  limit = 4,
+): Product[] {
+  return rankSimilarProducts(reference, candidates.filter((p) => p.id !== reference.id)).slice(
+    0,
+    limit,
+  );
+}
+
+/**
  * Discount percentage off the original price, e.g. 17 for "17% off".
  *
  * Terminology: `price` is the CURRENT selling price; the database column

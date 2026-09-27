@@ -3,6 +3,7 @@ import "server-only";
 import { getSupabasePublicClient } from "@/lib/supabase/public";
 import type { Category, CategoryRef } from "@/types/category";
 import type { Product, ProductImage, ProductSize, ProductColor } from "@/types/product";
+import { buildRelatedList } from "@/lib/catalog";
 
 /**
  * Storefront catalog data layer — Supabase (PostgreSQL via supabase-js).
@@ -325,28 +326,36 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
   return mapProduct(row);
 }
 
-/** Related active products from the same category, newest first. */
+/**
+ * Related products for the "You may also like" section — most similar
+ * first (same category, then brand, stock, price proximity), with the grid
+ * always filled by backfilling from other categories when needed.
+ */
 export async function getRelatedProducts(
-  product: Pick<Product, "id" | "category">,
+  product: Product,
   limit = 4,
 ): Promise<Product[]> {
   const visibleIds = await activeCategoryIds();
   if (visibleIds !== null && visibleIds.length === 0) return [];
 
-  // Filter the plain "categoryId" column, not the embedded relation —
-  // embed filters null non-matching embeds without excluding their rows
-  // (see getShopProducts), which would pull other categories in here too.
-  let builder = productsQuery()
-    .eq("active", true)
-    .eq("categoryId", product.category.id)
-    .neq("id", product.id);
+  // One bounded candidate pool: active products, active categories only.
+  // Filter the plain "categoryId" column — embed filters null non-matching
+  // embeds without excluding rows (see getShopProducts).
+  let builder = productsQuery().eq("active", true).neq("id", product.id);
   if (visibleIds !== null) builder = builder.in("categoryId", visibleIds);
 
-  const { data, error } = await builder.order("createdAt", { ascending: false }).limit(limit);
+  const { data, error } = await builder
+    .order("createdAt", { ascending: false })
+    .limit(RELATED_CANDIDATE_POOL);
 
   if (error) throw new Error(`Failed to load related products: ${error.message}`);
-  return (data as ProductRow[]).map(mapProduct);
+
+  const candidates = (data as ProductRow[]).map(mapProduct);
+  return buildRelatedList(product, candidates, limit);
 }
+
+/** Candidate pool size for related products — covers small catalogs fully. */
+const RELATED_CANDIDATE_POOL = 200;
 
 /**
  * Storefront categories, ordered by name: only ACTIVE categories that have

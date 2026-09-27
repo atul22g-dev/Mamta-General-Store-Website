@@ -205,7 +205,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
         <section aria-labelledby="related-heading" className="mt-20 border-t pt-14">
           <div className="flex items-end justify-between gap-4">
             <h2 id="related-heading" className="font-display text-2xl font-medium tracking-tight">
-              You may also like
+              Similar products
             </h2>
             <Link
               href={`/category/${product.category.slug}`}
