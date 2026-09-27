@@ -55,8 +55,6 @@ export async function notifyOrderWebhook(order: OrderNotification): Promise<void
   const webhookUrl = process.env.N8N_WEBHOOK_URL?.trim();
   if (!webhookUrl) return; // not configured — silent no-op
 
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
     const response = await fetch(webhookUrl, {
       method: "POST",
@@ -68,7 +66,8 @@ export async function notifyOrderWebhook(order: OrderNotification): Promise<void
         "x-store-origin": siteOrigin(),
       },
       body: JSON.stringify({ event: "order.placed", order, placedAt: new Date().toISOString() }),
-      signal: controller.signal,
+      // Hard cap so a hanging n8n can never pin the post-response task.
+      signal: AbortSignal.timeout(TIMEOUT_MS),
     });
     if (!response.ok) {
       console.error(`[n8n] webhook responded ${response.status} for order ${order.orderNumber}`);
@@ -76,7 +75,5 @@ export async function notifyOrderWebhook(order: OrderNotification): Promise<void
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
     console.error(`[n8n] webhook failed for order ${order.orderNumber}: ${reason}`);
-  } finally {
-    clearTimeout(timer);
   }
 }
