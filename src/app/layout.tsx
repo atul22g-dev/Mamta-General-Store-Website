@@ -59,15 +59,24 @@ export const metadata: Metadata = {
   },
 };
 
-/** Local-business structured data: helps local search surface the shop. */
+/**
+ * Local-business structured data — the single most valuable SEO asset for a
+ * physical shop. Feeds Google's local pack / knowledge panel: geo coordinates
+ * for "near me" ranking, fully specified opening hours (better than the
+ * display string), sameAs links to tie the site to its Maps place, and
+ * areaServed so nearby-town queries can surface the store.
+ */
 const localBusinessJsonLd = {
   "@context": "https://schema.org",
   "@type": "GeneralStore",
+  "@id": `${siteUrl}/#store`,
   name: siteConfig.name,
   description: siteConfig.description,
   url: siteUrl,
   telephone: siteContact.phone ? `+91${siteContact.phone}` : undefined,
   email: siteContact.email ?? undefined,
+  image: `${siteUrl}/icon.png`,
+  logo: `${siteUrl}/icon.png`,
   address: {
     "@type": "PostalAddress",
     streetAddress: "Near Post Office, Jatwar",
@@ -76,8 +85,50 @@ const localBusinessJsonLd = {
     postalCode: "134201",
     addressCountry: "IN",
   },
+  geo: {
+    "@type": "GeoCoordinates",
+    // Jatwar, Haryana 134201 — locality-level coordinates; refine to the
+    // exact shop pin when the owner confirms them.
+    latitude: 30.2887,
+    longitude: 77.0142,
+  },
   hasMap: GOOGLE_MAPS_URL,
-  openingHours: siteContact.timings ?? undefined,
+  sameAs: [GOOGLE_MAPS_URL],
+  areaServed: [
+    { "@type": "City", name: "Jatwar" },
+    { "@type": "City", name: "Naraingarh" },
+    { "@type": "City", name: "Ambala" },
+  ],
+  openingHoursSpecification: [
+    {
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek: [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday",
+      ],
+      opens: "09:00",
+      closes: "13:00",
+    },
+    {
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek: [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday",
+      ],
+      opens: "15:00",
+      closes: "20:00",
+    },
+  ],
   priceRange: "₹₹",
 };
 

@@ -52,14 +52,14 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
   }
   if (!category) return { title: "Category not found" };
 
-  const description = `Browse the ${category.name.toLowerCase()} collection at ${siteConfig.name}.${category.description ? ` ${category.description}` : ""}`;
+  const description = `Browse ${category.name.toLowerCase()} products at ${siteConfig.name}, Jatwar — visit the shop near the Post Office or check what's in stock online.${category.description ? ` ${category.description}` : ""}`;
 
   return {
-    title: category.name,
+    title: `${category.name} in Jatwar`,
     description,
     alternates: { canonical: `/category/${category.slug}` },
     openGraph: {
-      title: `${category.name} — ${siteConfig.name}`,
+      title: `${category.name} — ${siteConfig.name}, Jatwar`,
       description,
       type: "website",
       url: `/category/${category.slug}`,
@@ -67,7 +67,7 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
     },
     twitter: {
       card: category.imageUrl ? "summary_large_image" : "summary",
-      title: `${category.name} — ${siteConfig.name}`,
+      title: `${category.name} — ${siteConfig.name}, Jatwar`,
       description,
     },
   };

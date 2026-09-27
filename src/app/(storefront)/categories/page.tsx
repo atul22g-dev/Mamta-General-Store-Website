@@ -10,14 +10,22 @@ import { ImageArea } from "@/components/ui/image-area";
 import { SafeImage } from "@/components/product/safe-image";
 
 export const metadata: Metadata = {
-  title: "Categories",
-  description: "Explore product categories at Mamta General Store.",
+  title: "Product Categories",
+  description:
+    "Explore product categories at Mamta General Store, Jatwar — school essentials, stationery, footwear, personal care, toys, household items and more, depending on stock.",
   alternates: { canonical: "/categories" },
   openGraph: {
-    title: "Categories — Mamta General Store",
-    description: "Explore product categories at Mamta General Store.",
+    title: "Product Categories — Mamta General Store, Jatwar",
+    description:
+      "Explore product categories at Mamta General Store — school essentials, stationery, footwear, personal care, toys, household items and more.",
     type: "website",
     url: "/categories",
+  },
+  twitter: {
+    card: "summary",
+    title: "Product Categories — Mamta General Store, Jatwar",
+    description:
+      "Explore product categories at Mamta General Store — school essentials, stationery, footwear, personal care, toys and more.",
   },
 };
 

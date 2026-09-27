@@ -10,14 +10,19 @@ import { SectionHeading } from "@/components/ui/section-heading";
 const aboutDescription = `${SITE_NAME} is ${SITE_POSITIONING.toLowerCase()} — including school essentials, stationery, bags, footwear, personal-care items, toys and household products, depending on stock.`;
 
 export const metadata: Metadata = {
-  title: "About Us",
+  title: "About Us — Local General Store in Jatwar",
   description: aboutDescription,
   alternates: { canonical: "/about" },
   openGraph: {
-    title: `About Us — ${SITE_NAME}`,
+    title: `About Us — ${SITE_NAME}, Jatwar`,
     description: aboutDescription,
     type: "website",
     url: "/about",
+  },
+  twitter: {
+    card: "summary",
+    title: `About Us — ${SITE_NAME}, Jatwar`,
+    description: aboutDescription,
   },
 };
 

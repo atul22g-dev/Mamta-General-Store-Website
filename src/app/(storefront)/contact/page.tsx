@@ -8,14 +8,19 @@ import { SectionHeading } from "@/components/ui/section-heading";
 import { SITE_NAME } from "@/lib/constants";
 
 export const metadata: Metadata = {
-  title: "Contact",
-  description: `Contact ${SITE_NAME}, Jatwar — call, WhatsApp or visit the shop with any question about a product, price or availability. Get directions on Google Maps.`,
+  title: "Contact & Directions",
+  description: `Contact ${SITE_NAME}, Jatwar — call ${"9729292342"}, WhatsApp, or visit near the Post Office. Product, price and availability questions welcome. Get directions on Google Maps.`,
   alternates: { canonical: "/contact" },
   openGraph: {
-    title: `Contact — ${SITE_NAME}`,
-    description: `Contact ${SITE_NAME}, Jatwar — call, WhatsApp or visit the shop with any question about a product, price or availability.`,
+    title: `Contact & Directions — ${SITE_NAME}, Jatwar`,
+    description: `Call, WhatsApp or visit ${SITE_NAME} near the Post Office, Jatwar. Get directions on Google Maps.`,
     type: "website",
     url: "/contact",
+  },
+  twitter: {
+    card: "summary",
+    title: `Contact & Directions — ${SITE_NAME}, Jatwar`,
+    description: `Call, WhatsApp or visit ${SITE_NAME} near the Post Office, Jatwar.`,
   },
 };
 
