@@ -5,7 +5,7 @@
  *   npm run db:login
  *
  * What it does:
- *   1. Reads the project ref from NEXT_PUBLIC_SUPABASE_URL in .env —
+ *   1. Reads the project ref from NEXT_PRIVATE_SUPABASE_URL in .env —
  *      no copy-pasting hosts or project refs.
  *   2. Asks for the database password (typed characters stay hidden).
  *   3. Verifies the connection, then writes scripts/db.env with the
@@ -23,11 +23,11 @@ import "dotenv/config";
 import { Client } from "pg";
 
 const PROJECT_REF = (() => {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.EXPO_PUBLIC_SUPABASE_URL ?? "";
+  const url = process.env.NEXT_PRIVATE_SUPABASE_URL ?? process.env.EXPO_PUBLIC_SUPABASE_URL ?? "";
   const match = url.match(/^https:\/\/([a-z0-9]+)\.supabase\.co/i);
   if (!match?.[1]) {
     console.error(
-      "Could not read the project ref from NEXT_PUBLIC_SUPABASE_URL in .env. " +
+      "Could not read the project ref from NEXT_PRIVATE_SUPABASE_URL in .env. " +
         "Fix that variable first (Supabase dashboard → Project Settings → General).",
     );
     process.exit(1);

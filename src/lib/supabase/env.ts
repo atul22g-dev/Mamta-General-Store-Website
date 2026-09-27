@@ -24,7 +24,7 @@ function requirePublicEnv(...names: string[]): string {
 
 /** Project URL (public, safe on the client). */
 export function supabaseUrl(): string {
-  return requirePublicEnv("NEXT_PUBLIC_SUPABASE_URL", "EXPO_PUBLIC_SUPABASE_URL");
+  return requirePublicEnv("NEXT_PRIVATE_SUPABASE_URL", "EXPO_PUBLIC_SUPABASE_URL");
 }
 
 /**
@@ -38,13 +38,13 @@ export function supabaseUrl(): string {
  */
 export function supabaseAnonKey(): string {
   const key = requirePublicEnv(
-    "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+    "NEXT_PRIVATE_SUPABASE_ANON_KEY",
     "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
     "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
   );
   if (key.startsWith("sb_secret_") || key.startsWith("sb_secret ")) {
     throw new Error(
-      "FATAL: NEXT_PUBLIC_SUPABASE_ANON_KEY holds a SECRET key (sb_secret_…). " +
+      "FATAL: NEXT_PRIVATE_SUPABASE_ANON_KEY holds a SECRET key (sb_secret_…). " +
         "Secret keys bypass Row Level Security and would be shipped to every browser. " +
         "Use the publishable key (sb_publishable_…) instead — Supabase dashboard → " +
         "Project Settings → API.",

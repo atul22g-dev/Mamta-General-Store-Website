@@ -37,7 +37,7 @@ export function DatabaseErrorState({ className }: { className?: string }) {
       </span>
       <p className="text-sm font-medium">Database not connected</p>
       <p className="text-muted-foreground max-w-sm text-xs">
-        Configure <code className="font-mono">NEXT_PUBLIC_SUPABASE_URL</code> or{" "}
+        Configure <code className="font-mono">NEXT_PRIVATE_SUPABASE_URL</code> or{" "}
         <code className="font-mono">EXPO_PUBLIC_SUPABASE_URL</code> and the matching anon key in{" "}
         <code className="font-mono">.env</code> — see .env.example.
       </p>

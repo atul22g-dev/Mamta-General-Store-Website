@@ -24,8 +24,8 @@ collection and built to grow with more product categories over time.
    cp .env.example .env
    ```
 
-   - `NEXT_PUBLIC_SUPABASE_URL` (or `EXPO_PUBLIC_SUPABASE_URL`) — Supabase project URL (Dashboard → Project Settings → API)
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY` (or `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`) — public anon/publishable key
+   - `NEXT_PRIVATE_SUPABASE_URL` (or `EXPO_PUBLIC_SUPABASE_URL`) — Supabase project URL (Dashboard → Project Settings → API)
+   - `NEXT_PRIVATE_SUPABASE_ANON_KEY` (or `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`) — public anon/publishable key
    - `NEXT_PUBLIC_SITE_URL` — public base URL (used for SEO metadata, sitemap, robots)
 
    Only public variables are used — there is no service-role key or database

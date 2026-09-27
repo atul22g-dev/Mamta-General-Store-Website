@@ -13,11 +13,11 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 }; /**
  * Supabase project host from the public env URL; null when unset or malformed.
- * A malformed NEXT_PUBLIC_SUPABASE_URL must not crash the whole admin shell —
+ * A malformed NEXT_PRIVATE_SUPABASE_URL must not crash the whole admin shell —
  * the status dot already reports the connection as unhealthy in that case.
  */
 function supabaseHost(): string | null {
-  const raw = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  const raw = process.env.NEXT_PRIVATE_SUPABASE_URL?.trim();
   if (!raw) return null;
   try {
     return new URL(raw).host;

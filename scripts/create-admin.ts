@@ -71,7 +71,7 @@ async function main() {
   const email = emailArg.toLowerCase();
   const name = nameArg;
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.EXPO_PUBLIC_SUPABASE_URL;
+  const supabaseUrl = process.env.NEXT_PRIVATE_SUPABASE_URL ?? process.env.EXPO_PUBLIC_SUPABASE_URL;
   // The key may come from the environment (any shell) or scripts/admin.env —
   // a gitignored one-line file, so Windows/PowerShell users need no special
   // env-var syntax.

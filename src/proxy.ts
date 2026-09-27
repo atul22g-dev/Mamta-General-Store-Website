@@ -17,7 +17,7 @@ export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Project not configured yet — fail closed (redirect to login), never open.
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+  if (!process.env.NEXT_PRIVATE_SUPABASE_URL || !process.env.NEXT_PRIVATE_SUPABASE_ANON_KEY) {
     const loginUrl = new URL("/admin/login", request.url);
     loginUrl.searchParams.set("redirectTo", pathname);
     return NextResponse.redirect(loginUrl);
@@ -26,8 +26,8 @@ export function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    process.env.NEXT_PRIVATE_SUPABASE_URL!,
+    process.env.NEXT_PRIVATE_SUPABASE_ANON_KEY!,
     {
       cookies: {
         getAll() {

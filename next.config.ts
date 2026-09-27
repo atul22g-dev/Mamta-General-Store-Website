@@ -3,10 +3,10 @@ import type { NextConfig } from "next";
 /**
  * Supabase Storage serves product images from the project host
  * (…/object/public/product-images/…). The hostname comes from the
- * NEXT_PUBLIC_SUPABASE_URL env var — no hardcoded project URLs.
+ * NEXT_PRIVATE_SUPABASE_URL env var — no hardcoded project URLs.
  */
 const supabaseHostname = (() => {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const url = process.env.NEXT_PRIVATE_SUPABASE_URL;
   if (!url) return undefined;
   try {
     return new URL(url).hostname;
@@ -33,7 +33,12 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com" },
-      ...(supabaseHostname ? [{ protocol: "https", hostname: supabaseHostname } as const] : []),
+      // Any Supabase project host — resilient to env-var load order.
+      { protocol: "https", hostname: "**.supabase.co" },
+      // Exact project host too (covers custom domains/alternate TLDs).
+      ...(supabaseHostname && !supabaseHostname.endsWith(".supabase.co")
+        ? [{ protocol: "https", hostname: supabaseHostname } as const]
+        : []),
     ],
   },
   async headers() {
