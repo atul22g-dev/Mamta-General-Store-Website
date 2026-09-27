@@ -60,20 +60,25 @@ export function HeroImageManager({ initialUrl }: { initialUrl: string | null }) 
       input.value = "";
       return;
     }
+    // Compress first, THEN swap the file in and submit. The input is never
+    // disabled while its file is needed — disabled inputs are excluded from
+    // FormData, which made the server reply "Choose an image first."
     setIsUploading(true);
     try {
       const optimized = await compressImageFile(selected);
       const transfer = new DataTransfer();
       transfer.items.add(optimized);
       input.files = transfer.files;
-      // Submit the enclosing form programmatically with the optimized file.
       input.form?.requestSubmit();
+    } catch {
+      setFileError("Could not read that photo — try a different one.");
+      input.value = "";
     } finally {
       setIsUploading(false);
     }
   }
 
-  const pending = uploadPending || removePending || isUploading;
+  const pending = uploadPending || removePending;
   const error = uploadState.error ?? removeState.error ?? fileError;
 
   return (
@@ -118,19 +123,20 @@ export function HeroImageManager({ initialUrl }: { initialUrl: string | null }) 
             className={cnUploadLabel(pending)}
             aria-disabled={pending}
           >
-            {pending ? (
+            {isUploading || uploadPending ? (
               <Loader2 aria-hidden="true" className="size-4 animate-spin" />
             ) : (
               <Upload aria-hidden="true" className="size-4" />
             )}
-            {url ? "Replace image" : "Upload image"}
+            {isUploading ? "Optimizing…" : url ? "Replace image" : "Upload image"}
+            {/* Never disabled while a file must travel with the form — a
+                disabled input is excluded from FormData entirely. */}
             <input
               ref={fileInputRef}
               type="file"
               name="image"
               accept="image/jpeg,image/png,image/webp,image/avif"
               className="sr-only"
-              disabled={pending}
               onChange={handleFileChange}
             />
           </label>
