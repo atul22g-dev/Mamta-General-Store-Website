@@ -72,7 +72,7 @@ export async function Hero() {
             id="hero-heading"
             className="font-display mt-3 text-4xl leading-tight font-medium tracking-tight text-balance sm:text-5xl lg:text-6xl"
           >
-            Your Local Store for Everyday Essentials
+            Everything You Need, Every Day
           </h1>
           <p className="text-muted-foreground mx-auto mt-4 max-w-md text-sm text-pretty leading-relaxed sm:mt-5 sm:text-base lg:mx-0">
             From school supplies and bags to footwear, personal-care products, toys, accessories

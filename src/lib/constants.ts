@@ -5,7 +5,7 @@
 
 export const SITE_NAME = "Mamta General Store";
 
-export const SITE_TAGLINE = "Your Local General Store in Jatwar";
+export const SITE_TAGLINE = "Your Everyday Store";
 
 /**
  * Store positioning — the ONE description of what this business is.
@@ -21,10 +21,10 @@ export const SITE_TAGLINE = "Your Local General Store in Jatwar";
  * - Individual product pages speak only from the database (name/description),
  *   never from these constants.
  */
-export const SITE_POSITIONING_SHORT = "Your local general store in Jatwar, Haryana";
+export const SITE_POSITIONING_SHORT = "Jatwar's everyday general store";
 
 export const SITE_POSITIONING =
-  "A local general store serving Jatwar and nearby customers with a wide variety of everyday products";
+  "A local general store in Jatwar with a wide variety of everyday products";
 
 export const SITE_DESCRIPTION =
   "Mamta General Store in Jatwar, Haryana offers a variety of everyday products including school essentials, stationery, bags, footwear, personal-care items, toys, accessories, household products and more.";

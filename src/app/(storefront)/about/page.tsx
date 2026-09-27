@@ -31,7 +31,7 @@ export default function AboutPage() {
           <SectionHeading
             align="left"
             eyebrow="About Us"
-            title="Your local general store in Jatwar"
+            title="Jatwar's own general store"
             description={`${SITE_NAME} serves Jatwar and nearby customers with a wide variety of everyday products — all under one roof.`}
           />
           <div className="text-muted-foreground mt-5 space-y-4 text-sm leading-relaxed sm:text-base">
