@@ -21,7 +21,7 @@ export const SITE_TAGLINE = "Your Everyday Store";
  * - Individual product pages speak only from the database (name/description),
  *   never from these constants.
  */
-export const SITE_POSITIONING_SHORT = "Jatwar's everyday general store";
+export const SITE_POSITIONING_SHORT = "Your neighbourhood general store in Jatwar";
 
 export const SITE_POSITIONING =
   "A local general store in Jatwar with a wide variety of everyday products";
