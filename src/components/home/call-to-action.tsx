@@ -32,10 +32,11 @@ export async function CallToAction() {
           id="cta-heading"
           className="font-display mt-3 max-w-xl text-3xl font-medium tracking-tight text-balance sm:text-4xl"
         >
-          Find the suit material that feels made for you
+          Explore What We Have
         </h2>
         <p className="mt-4 max-w-md text-pretty leading-relaxed opacity-80">
-          Explore the collection — delivered across India by India Post.
+          Discover useful products for school, home, personal care and everyday life — delivered
+          across India by India Post.
         </p>
         <Button
           size="lg"
@@ -44,7 +45,7 @@ export async function CallToAction() {
           className="mt-8 bg-primary-foreground text-primary hover:bg-primary-foreground/90"
         >
           <Link href="/shop">
-            Shop Now
+            Explore Products
             <ArrowRight />
           </Link>
         </Button>

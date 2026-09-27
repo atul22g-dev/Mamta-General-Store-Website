@@ -113,12 +113,12 @@ export async function addProductImagesAction(
 
   const client = await getSupabaseAdminClient();
 
-  // Product must exist; slug is needed to revalidate its page.
+  // Product must exist; slug revalidates its page, name builds alt text.
   const { data: product } = await client
     .from("products")
-    .select("id, slug")
+    .select("id, slug, name")
     .eq("id", productId)
-    .maybeSingle<{ id: string; slug: string }>();
+    .maybeSingle<{ id: string; slug: string; name: string }>();
   if (!product) return { error: "Product not found." };
 
   // Current highest position → gallery images append after it.
@@ -154,7 +154,7 @@ export async function addProductImagesAction(
         id: randomUUID(),
         productId,
         url: uploaded.url,
-        alt: `${product.slug} — suit material photo ${nextPosition + 1}`,
+        alt: `${product.name} — product photo ${nextPosition + 1}`,
         position: nextPosition,
       } as never);
       if (error) {

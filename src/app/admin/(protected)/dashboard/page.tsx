@@ -98,7 +98,7 @@ export default async function AdminDashboardPage() {
                 <ul className="divide-y">
                   {data.recentProducts.map((product) => (
                     <li key={product.id} className="py-3 first:pt-0 last:pb-0">
-                      {/* Stack name above badges on phones (long suit-material
+                      {/* Stack name above badges on phones (long category
                           names would truncate to nothing beside them); row
                           layout from sm: up. */}
                       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">

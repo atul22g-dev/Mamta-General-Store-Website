@@ -2,16 +2,16 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, MapPin, Phone } from "lucide-react";
 
-import { GOOGLE_MAPS_URL, siteConfig, siteContact } from "@/config/site";
+import { GOOGLE_MAPS_URL, siteContact } from "@/config/site";
 /**
- * Hero fallback imagery (fashion editorial placeholder). The homepage hero
- * otherwise shows a real shop product; this single Unsplash image renders
- * while the catalog is empty or the database is unreachable.
+ * Hero fallback imagery (generic retail-aisle placeholder). The homepage
+ * hero otherwise shows a real shop product; this single Unsplash image
+ * renders while the catalog is empty or the database is unreachable.
  */
 const heroImages = {
   main: {
-    url: "https://images.unsplash.com/photo-1591369822096-ffd140ec948f?q=80&w=1200&auto=format&fit=crop",
-    alt: "Woman wearing an elegant traditional suit",
+    url: "https://images.unsplash.com/photo-1534723452862-4c874018d66d?q=80&w=1200&auto=format&fit=crop",
+    alt: "Aisles of everyday products in a retail store",
   },
 };
 import { getNewArrivals } from "@/lib/supabase/catalog";
@@ -66,22 +66,23 @@ export async function Hero() {
         {/* Copy */}
         <div className="animate-fade-up order-2 text-center lg:order-1 lg:text-left">
           <p className="text-muted-foreground text-xs font-medium tracking-widest uppercase">
-            {siteConfig.positioning} · Jatwar
+            Mamta General Store · Jatwar
           </p>
           <h1
             id="hero-heading"
             className="font-display mt-3 text-4xl leading-tight font-medium tracking-tight text-balance sm:text-5xl lg:text-6xl"
           >
-            Beautiful Unstitched Suit Materials for Every Occasion
+            Your Local Store for Everyday Essentials
           </h1>
           <p className="text-muted-foreground mx-auto mt-4 max-w-md text-sm text-pretty leading-relaxed sm:mt-5 sm:text-base lg:mx-0">
-            Discover elegant, comfortable and affordable unstitched suit materials from Mamta
-            General Store, Jatwar.
+            From school supplies and bags to footwear, personal-care products, toys, accessories
+            and everyday household items, Mamta General Store brings a wide variety of useful
+            products together under one roof.
           </p>
           <div className="mt-6 flex flex-col gap-3 sm:mt-8 sm:flex-row sm:items-center">
             <Button size="lg" asChild className="w-full sm:w-auto">
               <Link href="/shop">
-                Shop Collection
+                Explore Products
                 <ArrowRight />
               </Link>
             </Button>
@@ -95,7 +96,7 @@ export async function Hero() {
               <Button size="lg" variant="ghost" asChild className="w-full sm:w-auto">
                 <a href={GOOGLE_MAPS_URL} target="_blank" rel="noopener noreferrer">
                   <MapPin />
-                  Directions
+                  Visit Our Store
                 </a>
               </Button>
             </div>

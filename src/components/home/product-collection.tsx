@@ -10,8 +10,8 @@ import { ProductCard } from "@/components/product/product-card";
 import { cn } from "@/lib/utils";
 
 /**
- * "Product Collection" — the full dress-material range, straight from the
- * database (newest first). Degrades gracefully while the catalog is empty.
+ * "Our Products" — a rotating selection from the database (newest first).
+ * Degrades gracefully while the catalog is empty.
  */
 export async function ProductCollection() {
   let products: Product[] = [];
@@ -26,9 +26,9 @@ export async function ProductCollection() {
     <section className="py-16 sm:py-20" aria-labelledby="collection-heading">
       <Container>
         <SectionHeading
-          eyebrow="The range"
-          title="Product Collection"
-          description="Every suit material in the shop — a variety of fabrics, colours and designs."
+          eyebrow="Our Products"
+          title="Something Useful for Everyone"
+          description="A selection of products available at Mamta General Store — from school essentials and stationery to footwear, accessories, personal-care items, toys and everyday household products, depending on stock."
           action={
             products.length > 0 ? (
               <Link href="/shop" className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>
@@ -48,12 +48,12 @@ export async function ProductCollection() {
         ) : (
           <div className="border-border mt-10 rounded-xl border border-dashed py-14 text-center">
             <p className="font-display text-lg font-medium">
-              {failed ? "Collection temporarily unavailable" : "New suit materials arriving soon"}
+              {failed ? "Products temporarily unavailable" : "New products arriving soon"}
             </p>
             <p className="text-muted-foreground mx-auto mt-2 max-w-sm text-sm">
               {failed
                 ? "Please check back shortly — the shelves are being restocked."
-                : "Visit the shop or check back shortly — fresh stock is added regularly."}
+                : "Visit the shop or check back shortly — new stock is added regularly."}
             </p>
           </div>
         )}

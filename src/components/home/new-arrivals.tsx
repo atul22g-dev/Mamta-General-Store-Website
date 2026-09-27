@@ -11,8 +11,8 @@ import { ProductGridSkeleton } from "@/components/product/product-grid-skeleton"
 import { cn } from "@/lib/utils";
 
 /**
- * "New Arrivals" — the latest additions to the collection, streamed from the
- * database behind a skeleton.
+ * "New Arrivals" — recently added products, streamed from the database
+ * behind a skeleton.
  */
 async function NewArrivalsGrid() {
   let products: Awaited<ReturnType<typeof getNewArrivals>>;
@@ -35,7 +35,7 @@ export function NewArrivals() {
         <SectionHeading
           eyebrow="Just in"
           title="New Arrivals"
-          description="Fresh designs added to the collection this season."
+          description="Discover recently added products and seasonal essentials at Mamta General Store."
           action={
             <Link href="/shop" className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>
               View all

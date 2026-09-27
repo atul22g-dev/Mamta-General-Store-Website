@@ -94,7 +94,7 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
 
   const description =
     product.description ??
-    `Shop ${product.name} at ${siteConfig.name} — delivered across India by India Post.`;
+    `${product.name} — available at ${siteConfig.name}, Jatwar. Call or WhatsApp the shop to check availability.`;
 
   return {
     title: product.name,

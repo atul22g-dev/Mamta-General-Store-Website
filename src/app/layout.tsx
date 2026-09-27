@@ -12,7 +12,7 @@ const inter = Inter({
   subsets: ["latin"],
 });
 
-/** Elegant serif for display headings — the fashion-store voice. */
+/** Elegant serif for display headings — the general-store voice. */
 const playfair = Playfair_Display({
   variable: "--font-playfair",
   subsets: ["latin"],
@@ -62,7 +62,7 @@ export const metadata: Metadata = {
 /** Local-business structured data: helps local search surface the shop. */
 const localBusinessJsonLd = {
   "@context": "https://schema.org",
-  "@type": "ClothingStore",
+  "@type": "GeneralStore",
   name: siteConfig.name,
   description: siteConfig.description,
   url: siteUrl,

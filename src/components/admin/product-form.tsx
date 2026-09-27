@@ -231,7 +231,7 @@ function BasicsSection({
           name="sku"
           defaultValue={product?.sku ?? ""}
           maxLength={60}
-          placeholder="e.g. MGS-SUIT-001"
+          placeholder="e.g. MGS-001"
           aria-describedby="sku-hint"
           {...inputInvalid(errors?.sku)}
         />

@@ -14,7 +14,7 @@ export function formatPrice(minorUnits: number, currency = "INR") {
   }).format(minorUnits / 100);
 }
 
-/** Convert a display name to a URL-friendly slug, e.g. "Ladies' Suits" -> "ladies-suits". */
+/** Convert a display name to a URL-friendly slug, e.g. "School Bags" -> "school-bags". */
 export function slugify(name: string) {
   return name
     .toLowerCase()

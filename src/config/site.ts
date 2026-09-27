@@ -1,14 +1,14 @@
 import {
   SITE_DESCRIPTION,
   SITE_NAME,
-  SITE_POSITIONING_WITH_DUPATTA,
+  SITE_POSITIONING,
   SITE_TAGLINE,
 } from "@/lib/constants";
 
 /**
  * Central business + site configuration. This is the single source of truth
  * for the shop's identity: metadata, location, contact channels and the
- * India Post delivery story shown across the storefront.
+ * general-store story shown across the storefront.
  *
  * `siteUrl` comes from NEXT_PUBLIC_SITE_URL and is used for canonical URLs,
  * metadataBase, sitemap.xml and robots.txt.
@@ -17,20 +17,20 @@ export const siteConfig = {
   name: SITE_NAME,
   tagline: SITE_TAGLINE,
   /** Store-level positioning line (accuracy rules in lib/constants.ts). */
-  positioning: SITE_POSITIONING_WITH_DUPATTA,
+  positioning: SITE_POSITIONING,
   description: SITE_DESCRIPTION,
   locale: "en_IN",
   keywords: [
     "Mamta General Store",
-    "unstitched suit material",
-    "women's suit material Jatwar",
-    "suit material shop Jatwar",
-    "suit material near Jatwar",
-    "women's ethnic wear",
-    "salwar suit material",
-    "suit material with dupatta",
-    "Ambala suit material shop",
-    "India Post delivery",
+    "general store Jatwar",
+    "general store near Jatwar",
+    "school supplies Jatwar",
+    "stationery shop Jatwar",
+    "school bags Jatwar",
+    "household items Jatwar",
+    "toys and games Jatwar",
+    "personal care products Jatwar",
+    "Ambala district general store",
   ],
 } as const;
 

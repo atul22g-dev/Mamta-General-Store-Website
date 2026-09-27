@@ -116,7 +116,7 @@ export function isAvailable(product: Product): boolean {
  * Order two products for a "You may also like" section.
  *
  * Similarity, in priority order (a strict weak ordering — no ties survive):
- *   1. Same category beats different category — a suit shopper sees suits.
+ *   1. Same category beats different category — a shopper stays in range.
  *   2. Shared brand next — same maker suggests a matching collection.
  *   3. In stock beats sold out — purchasable items are more useful.
  *   4. Closer price band wins (log ratio, so ₹100 vs ₹150 outranks

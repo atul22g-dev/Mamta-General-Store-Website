@@ -2,12 +2,12 @@ import type { Metadata } from "next";
 import { MapPin, Navigation, Phone, Store } from "lucide-react";
 
 import { GOOGLE_MAPS_URL, siteContact } from "@/config/site";
-import { SITE_POSITIONING_WITH_DUPATTA, SITE_NAME } from "@/lib/constants";
+import { SITE_NAME, SITE_POSITIONING } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { SectionHeading } from "@/components/ui/section-heading";
 
-const aboutDescription = `${SITE_NAME} is a local shop near the Post Office in Jatwar, Haryana, offering ${SITE_POSITIONING_WITH_DUPATTA.toLowerCase()} — daily wear, festive and premium collections, delivered across India by India Post.`;
+const aboutDescription = `${SITE_NAME} is ${SITE_POSITIONING.toLowerCase()} — including school essentials, stationery, bags, footwear, personal-care items, toys and household products, depending on stock.`;
 
 export const metadata: Metadata = {
   title: "About Us",
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/about" },
   openGraph: {
     title: `About Us — ${SITE_NAME}`,
-    description: `${SITE_NAME} is a local shop near the Post Office in Jatwar, Haryana, offering ${SITE_POSITIONING_WITH_DUPATTA.toLowerCase()} — delivered across India by India Post.`,
+    description: aboutDescription,
     type: "website",
     url: "/about",
   },
@@ -31,17 +31,18 @@ export default function AboutPage() {
           <SectionHeading
             align="left"
             eyebrow="About Us"
-            title="A small Jatwar shop for beautiful unstitched suit materials"
-            description="Unstitched suit materials in a variety of fabrics, colours and designs — so you can have it tailored exactly the way you like it."
+            title="Your local general store in Jatwar"
+            description={`${SITE_NAME} serves Jatwar and nearby customers with a wide variety of everyday products — all under one roof.`}
           />
           <div className="text-muted-foreground mt-5 space-y-4 text-sm leading-relaxed sm:text-base">
             <p>
-              From breathable cottons for daily wear to printed, embroidered and premium fabrics for
-              festive occasions, every material is checked by hand before it reaches the shelf.
+              From school bags, uniforms and stationery to footwear, personal-care items, toys,
+              accessories and household goods, the shop stocks a broad mix of useful, everyday
+              products — what&apos;s on the shelf varies with the season and stock.
             </p>
             <p>
-              Visit the shop to see and feel the fabrics yourself, or browse the collection here —
-              we&apos;ll pack your order carefully and send it by India Post.
+              Can&apos;t find something on the website? Call or WhatsApp us — if it&apos;s part of
+              our range, we&apos;ll check availability for you.
             </p>
           </div>
         </div>
@@ -80,16 +81,16 @@ export default function AboutPage() {
       <div className="mt-12 grid gap-4 sm:grid-cols-3 sm:gap-6">
         {[
           {
-            title: "Unstitched Suit Materials",
-            text: "Suit fabric available in a variety of fabrics and designs — ready for tailoring.",
+            title: "A wide variety",
+            text: "School essentials, stationery, bags, footwear, personal care, toys, household items and more — depending on stock.",
           },
           {
-            title: "Checked by hand",
-            text: "Fabric, work and finish inspected before anything reaches the shelf.",
+            title: "Everyday value",
+            text: "Useful products for school, home and daily life, at prices locals have relied on for years.",
           },
           {
-            title: "Across India",
-            text: "Order from anywhere — packed carefully and sent by India Post.",
+            title: "Local & reachable",
+            text: "Visit us near the Post Office in Jatwar, or call and WhatsApp with any question.",
           },
         ].map(({ title, text }) => (
           <div key={title} className="bg-card rounded-2xl border p-6">
@@ -102,7 +103,7 @@ export default function AboutPage() {
       {/* Closing CTA strip */}
       <div className="bg-primary mt-12 flex flex-col items-center gap-4 rounded-2xl px-6 py-10 text-center text-primary-foreground sm:flex-row sm:justify-between sm:text-left">
         <p className="font-display text-xl font-medium tracking-tight sm:text-2xl">
-          Browse the current collection
+          Browse what&apos;s in stock
         </p>
         <Button
           variant="secondary"

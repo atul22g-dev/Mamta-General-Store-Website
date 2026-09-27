@@ -13,7 +13,7 @@ import { createStore } from "./cart-store";
  * - Stores the data needed to display a line AND to place an order:
  *   price/stock snapshots come from the product data at add-time and are
  *   re-validated server-side at checkout.
- * - A line is keyed by product + size + color so the same suit in two sizes
+ * - A line is keyed by product + size + color so the same item in two sizes
  *   is two lines.
  * - Implemented as an external store read via useSyncExternalStore, so
  *   SSR renders the empty cart and hydration causes no mismatch.

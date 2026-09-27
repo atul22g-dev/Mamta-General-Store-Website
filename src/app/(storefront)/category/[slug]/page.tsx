@@ -78,7 +78,7 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
  *
  * The whole catalog loads (not just this category's rows) so the sidebar
  * counts stay store-wide and every category checkbox works — checking
- * "HouseHold" from the Suit Material page must show those products, not a
+ * "HouseHold" while viewing "Suit Material" must show those products, not a
  * dead 0. ShopView pre-selects the current category (initialCategory) and
  * filters client-side exactly like /shop.
  */
