@@ -8,21 +8,11 @@ export interface NavItem {
   href: string;
 }
 
-/** Primary storefront navigation: desktop header + mobile menu. */
+/** Primary storefront navigation: desktop header, mobile menu and footer. */
 export const mainNav: NavItem[] = [
   { label: "Home", href: "/" },
   { label: "Shop", href: "/shop" },
   { label: "Categories", href: "/categories" },
   { label: "About Us", href: "/about" },
   { label: "Contact", href: "/contact" },
-];
-
-/** Footer "Shop" link column. */
-export const shopNav: NavItem[] = [
-  { label: "Home", href: "/" },
-  { label: "Shop", href: "/shop" },
-  { label: "Categories", href: "/categories" },
-  { label: "About", href: "/about" },
-  { label: "Contact", href: "/contact" },
-  { label: "Cart", href: "/cart" },
 ];
