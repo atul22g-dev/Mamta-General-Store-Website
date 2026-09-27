@@ -73,14 +73,22 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
   };
 }
 
-/** Category products + all categories with counts, from the database. */
+/**
+ * Full active catalog + all categories with counts, from the database.
+ *
+ * The whole catalog loads (not just this category's rows) so the sidebar
+ * counts stay store-wide and every category checkbox works — checking
+ * "HouseHold" from the Suit Material page must show those products, not a
+ * dead 0. ShopView pre-selects the current category (initialCategory) and
+ * filters client-side exactly like /shop.
+ */
 async function CategoryProducts({ slug }: { slug: string }) {
   let products: Awaited<ReturnType<typeof getShopProducts>>;
   let categories: Awaited<ReturnType<typeof getCategoriesWithCounts>>;
 
   try {
     [products, categories] = await Promise.all([
-      getShopProducts({ categories: [slug], limit: 200 }),
+      getShopProducts({ limit: 200 }),
       getCategoriesWithCounts(),
     ]);
   } catch {
@@ -92,7 +100,7 @@ async function CategoryProducts({ slug }: { slug: string }) {
     );
   }
 
-  if (products.length === 0) {
+  if (!products.some((product) => product.category.slug === slug)) {
     return (
       <div className="py-16 text-center">
         <p className="text-sm font-medium">No products in this collection yet</p>
