@@ -17,7 +17,7 @@ export async function ProductCollection() {
   let products: Product[] = [];
   let failed = false;
   try {
-    products = await getShopProducts({ sort: "newest", limit: 12 });
+    products = await getShopProducts({ sort: "newest", limit: 8 });
   } catch {
     failed = true;
   }
