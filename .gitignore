@@ -47,5 +47,11 @@ next-env.d.ts
 # Maintenance-script database credentials (never committed)
 /scripts/db.env
 
+# Backup admin credentials (never committed)
+/scripts/backup.env
+
+# Database backups (data dumps — never committed)
+/backups/
+
 # Maintenance-script service key (never committed; rotate after use)
 /scripts/admin.env
