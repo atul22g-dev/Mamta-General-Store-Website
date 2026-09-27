@@ -3,7 +3,6 @@ import Link from "next/link";
 import { KeyRound, LogOut, Store } from "lucide-react";
 
 import { requireAdmin } from "@/lib/auth/session";
-import { dbHealthDetailed } from "@/lib/supabase/health";
 import { logoutAction } from "@/app/admin/login/actions";
 import { AdminNav } from "@/components/admin/admin-nav";
 import { DatabaseStatus } from "@/components/admin/database-status";
@@ -32,7 +31,10 @@ function supabaseHost(): string | null {
  * active) — the authoritative gate (the proxy is only the fast first layer).
  */
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const [session, dbStatus] = await Promise.all([requireAdmin(), dbHealthDetailed()]);
+  // Only the session is awaited here — the DB health probe moved into the
+  // DatabaseStatus component (lazy, client-side). Probing on every render
+  // added a blocking Supabase round-trip to EVERY admin page's TTFB.
+  const session = await requireAdmin();
   const dbHost = supabaseHost();
 
   return (
@@ -53,7 +55,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <AdminNav className="hidden md:flex" />
 
           <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">
-            <DatabaseStatus initial={dbStatus} host={dbHost ?? "not configured"} />
+            <DatabaseStatus host={dbHost ?? "not configured"} />
             <span className="text-muted-foreground hidden text-sm whitespace-nowrap md:inline">
               {session.name}
             </span>
