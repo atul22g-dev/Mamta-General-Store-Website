@@ -140,14 +140,22 @@ export function DatabaseStatus({ initial, host, className }: DbStatusProps) {
           the effect below, so React state and the native dialog state can
           never race (a conditionally-mounted dialog re-enters the DOM without
           its previous open state, and remount/effect ordering gets murky).
-          A closed dialog is display:none by default — no layout cost. */}
+          A closed dialog is display:none by default — no layout cost.
+
+          Anchored as an absolute dropdown below the status dot (NOT a fixed
+          viewport-centered dialog): the sticky header carries backdrop-blur,
+          and an element with backdrop-filter is the containing block for
+          fixed-position descendants — a fixed dialog in here would be
+          positioned relative to the 64px header and end up clipped off the
+          top of the screen. Absolute inside this span.relative sidesteps the
+          containing block entirely and keeps the popover attached to its dot. */}
       <dialog
         ref={dialogRef}
         id={dialogId}
         tabIndex={-1}
         aria-label="Database connection details"
         onClose={() => setOpen(false)}
-        className="bg-card shadow-soft-lg fixed top-[calc(50%+28px)] left-1/2 w-72 max-w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2 rounded-xl border p-4 text-sm backdrop:bg-transparent open:animate-in open:fade-in-0 open:zoom-in-95"
+        className="bg-card shadow-soft-lg absolute top-[calc(100%+8px)] right-0 z-50 w-72 max-w-[min(18rem,calc(100vw-1rem))] rounded-xl border p-4 text-sm backdrop:bg-transparent open:animate-in open:fade-in-0 open:zoom-in-95"
       >
         <div className="flex items-center justify-between gap-2">
           <span className="font-medium">Database status</span>
