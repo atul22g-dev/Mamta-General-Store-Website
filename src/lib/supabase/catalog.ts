@@ -265,7 +265,22 @@ export async function getShopProducts(options: ShopQuery = {}): Promise<Product[
   }
 
   if (categories.length > 0) {
-    builder = builder.in("categories.slug", categories);
+    // Resolve slugs to ids first, then filter the plain "categoryId" column.
+    // Filtering on the embedded relation (`.in("categories.slug", …)`) does
+    // NOT restrict the result set the way a column filter does: PostgREST
+    // returns every parent row and merely nulls the non-matching embeds, so
+    // other categories' products leaked into category pages labelled
+    // "Uncategorized" (mapProduct's fallback for a null relation).
+    const { data: matched, error: matchedError } = await getSupabasePublicClient()
+      .from("categories")
+      .select("id")
+      .in("slug", categories);
+    if (matchedError) throw new Error(`Failed to load categories: ${matchedError.message}`);
+    const categoryIds = ((matched ?? []) as { id: string }[]).map((row) => row.id);
+    // Unknown slug(s): an empty id list would mean "no filter" downstream, so
+    // short-circuit to no results instead.
+    if (categoryIds.length === 0) return [];
+    builder = builder.in("categoryId", categoryIds);
   }
   if (priceMin !== undefined) {
     builder = builder.gte("price", priceMin);
@@ -318,9 +333,12 @@ export async function getRelatedProducts(
   const visibleIds = await activeCategoryIds();
   if (visibleIds !== null && visibleIds.length === 0) return [];
 
+  // Filter the plain "categoryId" column, not the embedded relation —
+  // embed filters null non-matching embeds without excluding their rows
+  // (see getShopProducts), which would pull other categories in here too.
   let builder = productsQuery()
     .eq("active", true)
-    .eq("categories.slug", product.category.slug)
+    .eq("categoryId", product.category.id)
     .neq("id", product.id);
   if (visibleIds !== null) builder = builder.in("categoryId", visibleIds);
 
