@@ -1,20 +1,20 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Playfair_Display } from "next/font/google";
+import { Outfit, Work_Sans } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { GOOGLE_MAPS_URL, siteContact, siteConfig, siteUrl } from "@/config/site";
 import { JsonLd } from "@/components/seo/json-ld";
 import "./globals.css";
 
-/** Clean, neutral body typeface — highly legible on mobile. */
-const inter = Inter({
-  variable: "--font-inter",
+/** Geometric display typeface — modern, friendly headlines. */
+const outfit = Outfit({
+  variable: "--font-outfit",
   subsets: ["latin"],
 });
 
-/** Elegant serif for display headings — the general-store voice. */
-const playfair = Playfair_Display({
-  variable: "--font-playfair",
+/** Clean body typeface — highly legible on mobile. */
+const workSans = Work_Sans({
+  variable: "--font-work-sans",
   subsets: ["latin"],
 });
 
@@ -23,8 +23,8 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#faf9f7" },
-    { media: "(prefers-color-scheme: dark)", color: "#1c1917" },
+    { media: "(prefers-color-scheme: light)", color: "#f8fafc" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f172a" },
   ],
 };
 
@@ -107,7 +107,7 @@ const websiteJsonLd = {
  */
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${inter.variable} ${playfair.variable} h-full antialiased`}>
+    <html lang="en" className={`${outfit.variable} ${workSans.variable} h-full antialiased`}>
       {/*
         suppressHydrationWarning: browser extensions (e.g. Grammarly) inject
         attributes like data-gr-ext-installed into <body> before React

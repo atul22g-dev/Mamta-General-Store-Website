@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, MapPin, Phone } from "lucide-react";
+import { ArrowRight, MapPin, Phone, Sparkles } from "lucide-react";
 
 import { GOOGLE_MAPS_URL, siteContact } from "@/config/site";
 /**
@@ -20,15 +20,16 @@ import { Container } from "@/components/ui/container";
 import { ImageArea } from "@/components/ui/image-area";
 
 /**
- * Homepage hero: editorial split layout — serif headline and CTAs on the
- * left, a single dress-material image on the right. Mobile-first: the image
- * uses a shorter 4/3 frame on phones (less scrolling before the CTAs) and
- * grows to 4/5 from `sm:` up. Three actions cover every visitor: browse,
- * ask, or navigate — primary CTA full-width, the other two share a row.
+ * Homepage hero: modern split layout — bold geometric headline, pill eyebrow
+ * badge and CTAs on the left, product image in a rounded frame with a soft
+ * brand-tinted glow behind it on the right. Mobile-first: the image uses a
+ * shorter 4/3 frame on phones (less scrolling before the CTAs) and grows to
+ * 4/5 from `sm:` up. Three actions cover every visitor: browse, ask, or
+ * navigate — primary CTA full-width, the other two share a row.
  *
  * The photo is a real shop product (latest active item's cover, refreshed
- * with the page's ISR) — the editorial placeholder is only a fallback while
- * the catalog is empty or the database is unreachable.
+ * with the page's ISR) — the placeholder is only a fallback while the
+ * catalog is empty or the database is unreachable.
  */
 export async function Hero() {
   let heroSrc = heroImages.main.url;
@@ -44,13 +45,23 @@ export async function Hero() {
     // Keep the placeholder — the hero must never break the homepage.
   }
   return (
-    <section className="bg-background relative overflow-hidden" aria-labelledby="hero-heading">
-      <Container className="grid items-center gap-8 py-10 sm:py-16 lg:grid-cols-2 lg:gap-14 lg:py-24">
+    <section className="relative overflow-hidden" aria-labelledby="hero-heading">
+      {/* Soft brand-tinted glow behind the copy (decorative only) */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 -top-32 h-64 bg-[radial-gradient(60%_100%_at_50%_100%,var(--color-primary)_0%,transparent_70%)] opacity-[0.07]"
+      />
+      <Container className="relative grid items-center gap-8 py-10 sm:py-16 lg:grid-cols-2 lg:gap-14 lg:py-24">
         {/* Imagery — first in DOM on mobile, optimized LCP image */}
         <div className="relative order-1 lg:order-2">
+          {/* Glow plate behind the image frame */}
+          <div
+            aria-hidden="true"
+            className="bg-primary/10 absolute -inset-4 -z-10 rounded-[2rem] blur-2xl sm:-inset-6"
+          />
           <ImageArea
             ratio="4/5"
-            className="mx-auto aspect-[4/3] max-w-sm sm:aspect-[4/5] lg:max-w-none"
+            className="mx-auto aspect-[4/3] max-w-sm shadow-soft-lg sm:aspect-[4/5] lg:max-w-none"
           >
             <Image
               src={heroSrc}
@@ -65,22 +76,23 @@ export async function Hero() {
 
         {/* Copy */}
         <div className="animate-fade-up order-2 text-center lg:order-1 lg:text-left">
-          <p className="text-muted-foreground text-xs font-medium tracking-widest uppercase">
+          <p className="bg-accent text-accent-foreground inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold">
+            <Sparkles aria-hidden="true" className="size-3.5" />
             Mamta General Store · Jatwar
           </p>
           <h1
             id="hero-heading"
-            className="font-display mt-3 text-4xl leading-tight font-medium tracking-tight text-balance sm:text-5xl lg:text-6xl"
+            className="font-display mt-4 text-4xl leading-[1.05] font-semibold tracking-tight text-balance sm:text-5xl lg:text-6xl"
           >
-            Everything You Need, Every Day
+            Everything You Need,{" "}
+            <span className="text-primary">Every Day</span>
           </h1>
-          <p className="text-muted-foreground mx-auto mt-4 max-w-md text-sm text-pretty leading-relaxed sm:mt-5 sm:text-base lg:mx-0">
+          <p className="text-muted-foreground mx-auto mt-4 max-w-md text-sm leading-relaxed text-pretty sm:mt-5 sm:text-base lg:mx-0">
             From school supplies and bags to footwear, personal-care products, toys, accessories
-            and everyday household items, Mamta General Store brings a wide variety of useful
-            products together under one roof.
+            and everyday household items — a wide variety of useful products under one roof.
           </p>
           <div className="mt-6 flex flex-col gap-3 sm:mt-8 sm:flex-row sm:items-center">
-            <Button size="lg" asChild className="w-full sm:w-auto">
+            <Button size="lg" asChild className="w-full shadow-soft sm:w-auto">
               <Link href="/shop">
                 Explore Products
                 <ArrowRight />
@@ -102,7 +114,10 @@ export async function Hero() {
             </div>
           </div>
           {siteContact.timings && (
-            <p className="text-muted-foreground mt-4 text-xs">{siteContact.timings}</p>
+            <p className="text-muted-foreground mt-4 inline-flex items-center gap-2 text-xs">
+              <span aria-hidden="true" className="bg-emerald-500 size-1.5 rounded-full" />
+              {siteContact.timings}
+            </p>
           )}
         </div>
       </Container>

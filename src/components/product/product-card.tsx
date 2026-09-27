@@ -10,9 +10,10 @@ import { SafeImage } from "@/components/product/safe-image";
 
 /**
  * Product card — the visual backbone of every listing (home, shop, category,
- * related). Clean editorial style: image area with a discount badge, category
- * eyebrow, serif name with an underline-on-hover, tabular price row and a
- * quiet full-width view action. Server component — no client JS.
+ * related). Modern retail style: rounded image frame with lift-on-hover,
+ * discount badge, category eyebrow, semibold name, tabular price row and a
+ * full-width view action that fills with the brand tint. Server component —
+ * no client JS.
  */
 export function ProductCard({ product, className }: { product: Product; className?: string }) {
   const { name, price, discountPrice, category, images } = product;
@@ -25,11 +26,11 @@ export function ProductCard({ product, className }: { product: Product; classNam
       <Link
         href={`/products/${product.slug}`}
         aria-label={`View ${name}`}
-        className="relative block rounded-xl focus-visible:ring-ring/50 outline-none focus-visible:ring-[3px]"
+        className="relative block rounded-xl outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
       >
         <ImageArea
           className={cn(
-            "transition-all duration-300 ease-gentle group-hover:shadow-soft-lg",
+            "border-transparent transition-all duration-300 ease-gentle group-hover:-translate-y-1 group-hover:shadow-soft-lg",
             !available && "opacity-80",
           )}
           ratio="3/4"
@@ -62,10 +63,10 @@ export function ProductCard({ product, className }: { product: Product; classNam
       </Link>
 
       <div className="flex flex-1 flex-col pt-3">
-        <p className="text-[10px] font-medium tracking-[0.14em] text-muted-foreground uppercase">
+        <p className="text-accent-foreground text-[10px] font-semibold tracking-[0.14em] uppercase">
           {category.name}
         </p>
-        <h3 className="mt-1 text-[15px] leading-snug font-medium">
+        <h3 className="mt-1 text-[15px] leading-snug font-semibold">
           <Link
             href={`/products/${product.slug}`}
             className="underline-offset-2 transition-colors group-hover:underline group-hover:decoration-1"
@@ -87,7 +88,7 @@ export function ProductCard({ product, className }: { product: Product; classNam
 
       <Link
         href={`/products/${product.slug}`}
-        className="border-input hover:border-ring/60 hover:bg-accent/50 mt-3 inline-flex h-10 w-full items-center justify-center rounded-lg border text-xs font-medium tracking-wide shadow-xs transition-colors duration-200 ease-gentle hover:text-accent-foreground md:h-9"
+        className="border-input hover:border-primary hover:bg-primary hover:text-primary-foreground mt-3 inline-flex h-10 w-full items-center justify-center rounded-lg border text-xs font-medium tracking-wide shadow-xs transition-colors duration-200 ease-gentle md:h-9"
       >
         View product
       </Link>

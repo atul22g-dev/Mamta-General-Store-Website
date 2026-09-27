@@ -3,8 +3,8 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * Consistent section heading: small uppercase eyebrow, serif display title,
- * optional description and trailing action (e.g. "View all →").
+ * Consistent section heading: small uppercase eyebrow, geometric display
+ * title, optional description and trailing action (e.g. "View all →").
  */
 interface SectionHeadingProps extends React.ComponentProps<"div"> {
   eyebrow?: string;
@@ -35,11 +35,11 @@ function SectionHeading({
     >
       <div className={cn("max-w-2xl space-y-2", align === "center" && "text-center")}>
         {eyebrow && (
-          <p className="text-xs font-medium tracking-widest text-muted-foreground uppercase">
+          <p className="text-primary text-xs font-semibold tracking-widest uppercase">
             {eyebrow}
           </p>
         )}
-        <h2 className="font-display text-2xl font-medium tracking-tight text-balance sm:text-3xl">
+        <h2 className="font-display text-2xl font-semibold tracking-tight text-balance sm:text-3xl">
           {title}
         </h2>
         {description && (
