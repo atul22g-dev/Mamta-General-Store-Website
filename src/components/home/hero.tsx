@@ -15,6 +15,7 @@ const heroImages = {
   },
 };
 import { getNewArrivals } from "@/lib/supabase/catalog";
+import { getHeroImageUrl } from "@/lib/supabase/site-settings";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { ImageArea } from "@/components/ui/image-area";
@@ -27,19 +28,25 @@ import { ImageArea } from "@/components/ui/image-area";
  * 4/5 from `sm:` up. Three actions cover every visitor: browse, ask, or
  * navigate — primary CTA full-width, the other two share a row.
  *
- * The photo is a real shop product (latest active item's cover, refreshed
- * with the page's ISR) — the placeholder is only a fallback while the
- * catalog is empty or the database is unreachable.
+ * Image priority: the admin-set hero photo (Admin → Homepage) wins; when no
+ * photo is set, the newest product's cover is shown; the placeholder is the
+ * last resort while the catalog is empty or the database is unreachable.
  */
 export async function Hero() {
   let heroSrc = heroImages.main.url;
   let heroAlt = heroImages.main.alt;
   try {
-    const [latest] = await getNewArrivals(1);
-    const cover = latest?.images[0];
-    if (latest && cover) {
-      heroSrc = cover.url;
-      heroAlt = cover.alt ?? latest.name;
+    const adminHero = await getHeroImageUrl();
+    if (adminHero) {
+      heroSrc = adminHero;
+      heroAlt = "Inside Mamta General Store";
+    } else {
+      const [latest] = await getNewArrivals(1);
+      const cover = latest?.images[0];
+      if (latest && cover) {
+        heroSrc = cover.url;
+        heroAlt = cover.alt ?? latest.name;
+      }
     }
   } catch {
     // Keep the placeholder — the hero must never break the homepage.
