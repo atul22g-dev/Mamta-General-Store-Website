@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { getShopProducts } from "@/lib/supabase/catalog";
+import {
+  getCategories,
+  getCategoriesWithCounts,
+  getShopProducts,
+} from "@/lib/supabase/catalog";
 
 /**
  * PostgREST-faithful fake client.
@@ -165,5 +169,21 @@ describe("getShopProducts category filtering (embed-null regression)", () => {
 
     expect(products).toHaveLength(4); // draft-item (inactive) and retired-item (inactive category) stay out
     expect(products.every((p) => p.category.name !== "Uncategorized")).toBe(true);
+  });
+});
+
+describe("hidden (inactive) categories are invisible on the storefront", () => {
+  it("getCategories drops inactive and empty categories", async () => {
+    const slugs = (await getCategories()).map((category) => category.slug);
+
+    // 'retired' is inactive; no other category is empty in the fixture.
+    expect(slugs).toEqual(["household", "suit-material"]);
+  });
+
+  it("getCategoriesWithCounts drops inactive categories from the filter panel", async () => {
+    const tiles = await getCategoriesWithCounts();
+
+    expect(tiles.map((tile) => tile.slug)).toEqual(["household", "suit-material"]);
+    expect(tiles.every((tile) => tile.productCount > 0)).toBe(true);
   });
 });

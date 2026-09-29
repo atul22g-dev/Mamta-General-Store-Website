@@ -99,29 +99,45 @@ export async function updateCategoryAction(
 /**
  * Toggle a category's storefront visibility (admin-gated). Inactive
  * categories disappear from the storefront together with their products.
+ * Failures are surfaced — a silent no-op here reads as "the toggle is
+ * broken" in the panel.
  */
-export async function toggleCategoryActiveAction(formData: FormData): Promise<void> {
+export async function toggleCategoryActiveAction(
+  _prev: CategoryActionState,
+  formData: FormData,
+): Promise<CategoryActionState> {
   if (!(await getAdminSession())) throw new Error("Unauthorized");
 
   const id = formData.get("id")?.toString();
   const next = formData.get("next") === "true";
-  if (!id) return;
+  if (!id) return { error: "Missing category." };
 
   try {
     await toggleCategoryActive(id, next);
-  } catch {
-    // Non-fatal for the list render; the row keeps its previous state.
+  } catch (cause) {
+    return {
+      error: cause instanceof Error ? cause.message : "Could not update the category.",
+    };
   }
   revalidateCategorySurfaces();
+  return { success: next ? "Category is now visible on the storefront." : "Category hidden from the storefront." };
 }
 
-/** Delete a category (admin-gated; blocked while products reference it). */
-export async function deleteCategoryAction(formData: FormData): Promise<void> {
+/**
+ * Delete a category (admin-gated; blocked while products reference it).
+ * The refusal message is surfaced so the user knows to move products first.
+ */
+export async function deleteCategoryAction(
+  _prev: CategoryActionState,
+  formData: FormData,
+): Promise<CategoryActionState> {
   if (!(await getAdminSession())) throw new Error("Unauthorized");
 
   const id = formData.get("id")?.toString();
-  if (!id) return;
+  if (!id) return { error: "Missing category." };
 
-  await deleteCategory(id);
+  const result = await deleteCategory(id);
+  if (result.error) return { error: result.error };
   revalidateCategorySurfaces();
+  return { success: "Category deleted." };
 }

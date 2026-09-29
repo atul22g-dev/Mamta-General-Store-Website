@@ -367,7 +367,7 @@ export async function getCategories(): Promise<Category[]> {
   const [categoriesResult, counts] = await Promise.all([
     getSupabasePublicClient()
       .from("categories")
-      .select("id, name, slug, description, imageUrl, createdAt, updatedAt")
+      .select("id, name, slug, description, imageUrl, createdAt, updatedAt, active")
       .order("name", { ascending: true }),
     activeProductCountByCategory().catch(() => new Map<string, number>()),
   ]);
@@ -395,8 +395,10 @@ export async function getCategories(): Promise<Category[]> {
     }));
   }
 
-  return ((categoriesResult.data ?? []) as CategoryRow[])
-    .filter((row) => (counts.get(row.id) ?? 0) > 0)
+  // Admin-hidden categories (active=false) never reach the storefront; the
+  // zero-products rule stacks on top so empty categories stay hidden too.
+  return ((categoriesResult.data ?? []) as (CategoryRow & { active: boolean })[])
+    .filter((row) => row.active && (counts.get(row.id) ?? 0) > 0)
     .map((row) => ({
       id: row.id,
       name: row.name,
@@ -459,20 +461,50 @@ export async function getCategoryOptions(): Promise<{ id: string; name: string }
   return data ?? [];
 }
 
-/** Categories with a count of active products each (for storefront tiles). */
+/**
+ * Categories with a count of active products each (category-page filter
+ * panel). Mirrors getCategories: only ACTIVE categories with stock — a
+ * hidden category must not appear in the filter list either. Falls back to
+ * the pre-feature view while the active column is missing.
+ */
 export async function getCategoriesWithCounts(): Promise<
   (CategoryRef & { productCount: number })[]
 > {
   const [categoriesResult, productsResult] = await Promise.all([
     getSupabasePublicClient()
       .from("categories")
-      .select("id, name, slug")
+      .select("id, name, slug, active")
       .order("name", { ascending: true }),
     getSupabasePublicClient().from("products").select("categoryId").eq("active", true),
   ]);
 
   if (categoriesResult.error) {
-    throw new Error(`Failed to load categories: ${categoriesResult.error.message}`);
+    if (!SCHEMA_LAG.test(categoriesResult.error.message)) {
+      throw new Error(`Failed to load categories: ${categoriesResult.error.message}`);
+    }
+    // Column missing: read without the visibility filter (pre-feature view).
+    const [fallbackResult, fallbackProducts] = await Promise.all([
+      getSupabasePublicClient()
+        .from("categories")
+        .select("id, name, slug")
+        .order("name", { ascending: true }),
+      getSupabasePublicClient().from("products").select("categoryId").eq("active", true),
+    ]);
+    if (fallbackResult.error) {
+      throw new Error(`Failed to load categories: ${fallbackResult.error.message}`);
+    }
+    const fallbackCounts = new Map<string, number>();
+    for (const row of (fallbackProducts.data ?? []) as CountProductRow[]) {
+      fallbackCounts.set(row.categoryId, (fallbackCounts.get(row.categoryId) ?? 0) + 1);
+    }
+    return ((fallbackResult.data ?? []) as { id: string; name: string; slug: string }[])
+      .filter((row) => (fallbackCounts.get(row.id) ?? 0) > 0)
+      .map((row) => ({
+        id: row.id,
+        name: row.name,
+        slug: row.slug,
+        productCount: fallbackCounts.get(row.id) ?? 0,
+      }));
   }
 
   const counts = new Map<string, number>();
@@ -480,9 +512,10 @@ export async function getCategoriesWithCounts(): Promise<
     counts.set(row.categoryId, (counts.get(row.categoryId) ?? 0) + 1);
   }
 
-  // Same zero-products rule as getCategories: empty categories stay hidden.
-  return ((categoriesResult.data ?? []) as { id: string; name: string; slug: string }[])
-    .filter((row) => (counts.get(row.id) ?? 0) > 0)
+  // Same rules as getCategories: hidden categories stay hidden, and empty
+  // categories stay hidden.
+  return ((categoriesResult.data ?? []) as { id: string; name: string; slug: string; active: boolean }[])
+    .filter((row) => row.active && (counts.get(row.id) ?? 0) > 0)
     .map((row) => ({
       id: row.id,
       name: row.name,
