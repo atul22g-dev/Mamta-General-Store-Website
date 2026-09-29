@@ -46,7 +46,7 @@ export function AdminNav({ className }: { className?: string }) {
               // in the strip; desktop returns to the compact row height.
               "inline-flex min-h-11 shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm whitespace-nowrap transition-colors focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-none md:min-h-0",
               active
-                ? "bg-accent text-accent-foreground font-medium"
+                ? "bg-primary text-primary-foreground shadow-soft font-medium"
                 : "text-muted-foreground hover:text-foreground hover:bg-accent/60",
             )}
           >

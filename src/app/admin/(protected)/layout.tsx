@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { KeyRound, LogOut, Store } from "lucide-react";
+import { ExternalLink, KeyRound, LogOut, Store } from "lucide-react";
 
 import { requireAdmin } from "@/lib/auth/session";
 import { logoutAction } from "@/app/admin/login/actions";
@@ -49,13 +49,29 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <span className="bg-primary text-primary-foreground flex size-8 items-center justify-center rounded-lg">
               <Store aria-hidden="true" className="size-4" />
             </span>
-            <span className="font-display text-lg">Admin</span>
+            <span className="leading-tight">
+              <span className="font-display block text-lg">Admin</span>
+              <span className="text-muted-foreground hidden text-[11px] font-normal tracking-normal sm:block">
+                Mamta General Store
+              </span>
+            </span>
           </Link>
 
           <AdminNav className="hidden md:flex" />
 
           <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">
             <DatabaseStatus host={dbHost ?? "not configured"} />
+            <span aria-hidden="true" className="bg-border mx-0.5 hidden h-5 w-px sm:block" />
+            <Link
+              href="/"
+              target="_blank"
+              rel="noopener"
+              aria-label="Open the storefront in a new tab"
+              title="View the storefront"
+              className="text-muted-foreground hover:text-foreground hover:bg-accent inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg transition-colors md:min-h-9 md:min-w-9"
+            >
+              <ExternalLink aria-hidden="true" className="size-4" />
+            </Link>
             <span className="text-muted-foreground hidden text-sm whitespace-nowrap md:inline">
               {session.name}
             </span>
