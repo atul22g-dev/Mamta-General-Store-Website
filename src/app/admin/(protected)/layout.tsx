@@ -34,34 +34,29 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   // Only the session is awaited here — the DB health probe moved into the
   // DatabaseStatus component (lazy, client-side). Probing on every render
   // added a blocking Supabase round-trip to EVERY admin page's TTFB.
-  const session = await requireAdmin();
+  await requireAdmin();
   const dbHost = supabaseHost();
 
   return (
     <div className="bg-background flex min-h-svh flex-col">
       <header className="bg-card/95 supports-[backdrop-filter]:bg-card/80 sticky top-0 z-40 border-b backdrop-blur">
         {/* Top row: brand, desktop nav, account/logout */}
-        <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
           <Link
             href="/admin/dashboard"
-            className="flex items-center gap-2.5 font-semibold tracking-tight"
+            className="flex shrink-0 items-center gap-2 font-semibold tracking-tight"
+            title="Mamta General Store — admin panel"
           >
-            <span className="bg-primary text-primary-foreground flex size-8 items-center justify-center rounded-lg">
+            <span className="bg-primary text-primary-foreground flex size-7 items-center justify-center rounded-lg">
               <Store aria-hidden="true" className="size-4" />
             </span>
-            <span className="leading-tight">
-              <span className="font-display block text-lg">Admin</span>
-              <span className="text-muted-foreground hidden text-[11px] font-normal tracking-normal sm:block">
-                Mamta General Store
-              </span>
-            </span>
+            <span className="font-display text-base">Admin</span>
           </Link>
 
           <AdminNav className="hidden md:flex" />
 
-          <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">
+          <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
             <DatabaseStatus host={dbHost ?? "not configured"} />
-            <span aria-hidden="true" className="bg-border mx-0.5 hidden h-5 w-px sm:block" />
             <Link
               href="/"
               target="_blank"
@@ -72,9 +67,6 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             >
               <ExternalLink aria-hidden="true" className="size-4" />
             </Link>
-            <span className="text-muted-foreground hidden text-sm whitespace-nowrap md:inline">
-              {session.name}
-            </span>
             <Link
               href="/admin/change-password"
               aria-label="Change password"
