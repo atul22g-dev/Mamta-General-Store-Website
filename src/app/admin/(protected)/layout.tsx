@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { KeyRound, LogOut, Store } from "lucide-react";
+import { ExternalLink, KeyRound, LogOut, Store } from "lucide-react";
 
 import { requireAdmin } from "@/lib/auth/session";
 import { logoutAction } from "@/app/admin/login/actions";
@@ -34,31 +34,39 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   // Only the session is awaited here — the DB health probe moved into the
   // DatabaseStatus component (lazy, client-side). Probing on every render
   // added a blocking Supabase round-trip to EVERY admin page's TTFB.
-  const session = await requireAdmin();
+  await requireAdmin();
   const dbHost = supabaseHost();
 
   return (
     <div className="bg-background flex min-h-svh flex-col">
       <header className="bg-card/95 supports-[backdrop-filter]:bg-card/80 sticky top-0 z-40 border-b backdrop-blur">
         {/* Top row: brand, desktop nav, account/logout */}
-        <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
           <Link
             href="/admin/dashboard"
-            className="flex items-center gap-2.5 font-semibold tracking-tight"
+            className="flex shrink-0 items-center gap-2 font-semibold tracking-tight"
+            title="Mamta General Store — admin panel"
           >
-            <span className="bg-primary text-primary-foreground flex size-8 items-center justify-center rounded-lg">
+            <span className="bg-primary text-primary-foreground flex size-7 items-center justify-center rounded-lg">
               <Store aria-hidden="true" className="size-4" />
             </span>
-            <span className="font-display text-lg">Admin</span>
+            <span className="font-display text-base">Admin</span>
           </Link>
 
           <AdminNav className="hidden md:flex" />
 
-          <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">
+          <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
             <DatabaseStatus host={dbHost ?? "not configured"} />
-            <span className="text-muted-foreground hidden text-sm whitespace-nowrap md:inline">
-              {session.name}
-            </span>
+            <Link
+              href="/"
+              target="_blank"
+              rel="noopener"
+              aria-label="Open the storefront in a new tab"
+              title="View the storefront"
+              className="text-muted-foreground hover:text-foreground hover:bg-accent inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg transition-colors md:min-h-9 md:min-w-9"
+            >
+              <ExternalLink aria-hidden="true" className="size-4" />
+            </Link>
             <Link
               href="/admin/change-password"
               aria-label="Change password"

@@ -49,6 +49,14 @@ export function CategoryManager({ categories }: { categories: AdminCategory[] })
     initialState,
   );
   const [editState, editAction, isEditing] = useActionState(updateCategoryAction, initialState);
+  const [toggleState, toggleAction, isToggling] = useActionState(
+    toggleCategoryActiveAction,
+    initialState,
+  );
+  const [deleteState, deleteAction, isDeleting] = useActionState(
+    deleteCategoryAction,
+    initialState,
+  );
   const [editingId, setEditingId] = React.useState<string | null>(null);
 
   return (
@@ -99,6 +107,18 @@ export function CategoryManager({ categories }: { categories: AdminCategory[] })
       </form>
 
       {/* List */}
+      {/* Row-action feedback (hide/show, delete) — shared line above the list
+          because these actions carry no per-row form state. */}
+      {(toggleState.error || deleteState.error) && (
+        <p className="text-destructive text-sm" role="alert">
+          {toggleState.error ?? deleteState.error}
+        </p>
+      )}
+      {(toggleState.success || deleteState.success) && (
+        <p className="mt-2 text-sm text-emerald-600" role="status">
+          {toggleState.success ?? deleteState.success}
+        </p>
+      )}
       <ul className="divide-y rounded-xl border">
         {categories.map((category) => (
           <li key={category.id} className="p-4">
@@ -170,20 +190,27 @@ export function CategoryManager({ categories }: { categories: AdminCategory[] })
                   </p>
                 </div>
                 <div className="flex shrink-0 gap-1.5">
-                  <form action={toggleCategoryActiveAction}>
+                  <form action={toggleAction}>
                     <input type="hidden" name="id" value={category.id} />
                     <input type="hidden" name="next" value={category.active ? "false" : "true"} />
                     <Button
                       type="submit"
                       variant="ghost"
                       size="sm"
+                      disabled={isToggling}
                       aria-label={
                         category.active
                           ? `Hide ${category.name} from the storefront`
                           : `Show ${category.name} on the storefront`
                       }
                     >
-                      {category.active ? <EyeOff /> : <Eye />}
+                      {isToggling ? (
+                        <Loader2 className="animate-spin" />
+                      ) : category.active ? (
+                        <EyeOff />
+                      ) : (
+                        <Eye />
+                      )}
                       {category.active ? "Hide" : "Show"}
                     </Button>
                   </form>
@@ -197,7 +224,7 @@ export function CategoryManager({ categories }: { categories: AdminCategory[] })
                     Edit
                   </Button>
                   <form
-                    action={deleteCategoryAction}
+                    action={deleteAction}
                     onSubmit={(event) => {
                       if (!window.confirm(`Delete category “${category.name}”?`)) {
                         event.preventDefault();
@@ -209,10 +236,11 @@ export function CategoryManager({ categories }: { categories: AdminCategory[] })
                       type="submit"
                       variant="ghost"
                       size="sm"
+                      disabled={isDeleting}
                       className="text-muted-foreground hover:text-destructive"
                       aria-label={`Delete ${category.name}`}
                     >
-                      <Trash2 />
+                      {isDeleting ? <Loader2 className="animate-spin" /> : <Trash2 />}
                       Delete
                     </Button>
                   </form>
