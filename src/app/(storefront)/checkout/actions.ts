@@ -4,6 +4,7 @@ import { after } from "next/server";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
+import { buildOrderNotification } from "@/lib/notifications/order-details";
 import { notifyOrderWebhook } from "@/lib/notifications/order-webhook";
 import { getSupabasePublicClient } from "@/lib/supabase/public";
 import { MAX_CART_QUANTITY } from "@/lib/constants";
@@ -129,19 +130,24 @@ export async function placeOrderAction(
     revalidatePath("/admin/products");
 
     // Fire-and-forget n8n notification: runs after the response is sent, so
-    // it never delays or fails the customer's checkout.
-    after(() =>
-      notifyOrderWebhook({
-        orderNumber,
-        customerName: customer.data.customerName,
-        mobile: customer.data.mobile,
-        addressLine: customer.data.addressLine,
-        city: customer.data.city,
-        state: customer.data.state,
-        pinCode: customer.data.pinCode,
-        items: cart,
-      }),
-    );
+    // it never delays or fails the customer's checkout. The cart (ids only)
+    // is enriched with full product details server-side — names, images,
+    // prices, totals — and posted as one payload.
+    after(async () => {
+      try {
+        const notification = await buildOrderNotification({
+          orderNumber,
+          customer: customer.data,
+          cart,
+        });
+        await notifyOrderWebhook(notification);
+      } catch (cause) {
+        console.error(
+          "[n8n] could not build the order notification:",
+          cause instanceof Error ? cause.message : cause,
+        );
+      }
+    });
 
     return { orderNumber };
   } catch (error) {

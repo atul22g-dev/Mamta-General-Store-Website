@@ -61,6 +61,41 @@ function postWithCa(
   });
 }
 
+export interface OrderItemNotification {
+  productId: string;
+  /** Display name from the catalog (n8n-friendly). */
+  productName: string;
+  productSlug: string | null;
+  /** Storefront URL path for the product page, when one exists. */
+  productUrl: string | null;
+  sku: string | null;
+  brand: string | null;
+  category: string | null;
+  quantity: number;
+  /** Chosen size label (e.g. "M", "Free Size"), when the product has sizes. */
+  size: string | null;
+  /** Chosen color name, when the product has colors. */
+  color: string | null;
+  /** Effective unit price in minor units (paise) — discount applied. */
+  unitPrice: number;
+  unitPriceFormatted: string;
+  lineTotal: number;
+  lineTotalFormatted: string;
+  /** All product image URLs, gallery order. First one is the cover. */
+  images: string[];
+}
+
+export interface OrderTotalsNotification {
+  itemCount: number;
+  currency: string;
+  subtotal: number;
+  subtotalFormatted: string;
+  discount: number;
+  discountFormatted: string;
+  total: number;
+  totalFormatted: string;
+}
+
 export interface OrderNotification {
   orderNumber: string;
   customerName: string;
@@ -69,12 +104,8 @@ export interface OrderNotification {
   city: string;
   state: string;
   pinCode: string;
-  items: Array<{
-    productId: string;
-    quantity: number;
-    sizeId: string | null;
-    colorId: string | null;
-  }>;
+  items: OrderItemNotification[];
+  totals: OrderTotalsNotification;
 }
 
 function siteOrigin(): string {
