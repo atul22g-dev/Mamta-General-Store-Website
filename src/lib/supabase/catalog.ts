@@ -167,10 +167,19 @@ function productsQuery() {
 }
 
 /** Active products flagged as featured (homepage "Featured Products"). */
+/**
+ * Active products flagged as featured (homepage "Featured Products").
+ * Products in inactive (admin-hidden) categories are excluded — hiding a
+ * category hides every product in it from the whole storefront.
+ */
 export async function getFeaturedProducts(limit = 4): Promise<Product[]> {
-  const { data, error } = await productsQuery()
-    .eq("active", true)
-    .eq("featured", true)
+  const visibleIds = await activeCategoryIds();
+  if (visibleIds !== null && visibleIds.length === 0) return [];
+
+  let builder = productsQuery().eq("active", true).eq("featured", true);
+  if (visibleIds !== null) builder = builder.in("categoryId", visibleIds);
+
+  const { data, error } = await builder
     .order("createdAt", { ascending: false })
     .limit(limit);
 
@@ -179,13 +188,23 @@ export async function getFeaturedProducts(limit = 4): Promise<Product[]> {
 }
 
 /**
- * Products flagged as New Arrivals (homepage section). Falls back to the
- * newest active products while no product is flagged, so the section never
- * renders empty for a stocked store.
+ * Products flagged as New Arrivals (homepage section; also feeds the hero's
+ * fallback image). Falls back to the newest active products while no product
+ * is flagged, so the section never renders empty for a stocked store. Both
+ * paths exclude products in inactive (admin-hidden) categories — hiding a
+ * category hides every product in it from the whole storefront.
  */
 export async function getNewArrivals(limit = 4): Promise<Product[]> {
-  const flagged = await productsQuery()
-    .eq("active", true)
+  const visibleIds = await activeCategoryIds();
+  if (visibleIds !== null && visibleIds.length === 0) return [];
+
+  const base = () => {
+    let builder = productsQuery().eq("active", true);
+    if (visibleIds !== null) builder = builder.in("categoryId", visibleIds);
+    return builder;
+  };
+
+  const flagged = await base()
     .eq("isNewArrival", true)
     .order("createdAt", { ascending: false })
     .limit(limit);
@@ -194,8 +213,7 @@ export async function getNewArrivals(limit = 4): Promise<Product[]> {
     return (flagged.data as ProductRow[]).map(mapProduct);
   }
 
-  const { data, error } = await productsQuery()
-    .eq("active", true)
+  const { data, error } = await base()
     .order("createdAt", { ascending: false })
     .limit(limit);
 

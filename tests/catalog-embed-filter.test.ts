@@ -3,6 +3,8 @@ import { describe, expect, it, vi } from "vitest";
 import {
   getCategories,
   getCategoriesWithCounts,
+  getFeaturedProducts,
+  getNewArrivals,
   getShopProducts,
 } from "@/lib/supabase/catalog";
 
@@ -29,13 +31,21 @@ const { fakeClient } = vi.hoisted(() => {
     { id: "retired", name: "Retired Collection", slug: "retired", active: false },
   ];
 
-  function productRow(id: string, categoryId: string, name: string, active = true): Row {
+  function productRow(
+    id: string,
+    categoryId: string,
+    name: string,
+    active = true,
+    flags: { featured?: boolean; isNewArrival?: boolean } = {},
+  ): Row {
     return {
       id,
       name,
       slug: id,
       price: 100_000,
       active,
+      featured: flags.featured ?? false,
+      isNewArrival: flags.isNewArrival ?? false,
       categoryId,
       categories: CATEGORIES.find((c) => c.id === categoryId) ?? null,
       product_images: [],
@@ -47,10 +57,15 @@ const { fakeClient } = vi.hoisted(() => {
 
   const PRODUCTS: Row[] = [
     productRow("plush-dog", "household", "Soft Plush Dog Stuffed Toy"),
-    productRow("plush-turtle", "household", "Soft Plush Turtle Stuffed Toy"),
+    productRow("plush-turtle", "household", "Soft Plush Turtle Stuffed Toy", true, {
+      featured: true,
+    }),
     productRow("suit-rosewood", "suit-material", "Rosewood Pink Embroidered Suit"),
     productRow("suit-wine", "suit-material", "Wine Maroon Embroidered Suit"),
-    productRow("retired-item", "retired", "Discontinued Collection Item"),
+    productRow("retired-item", "retired", "Discontinued Collection Item", true, {
+      featured: true,
+      isNewArrival: true,
+    }),
     productRow("draft-item", "household", "Inactive Draft", false),
   ];
 
@@ -185,5 +200,19 @@ describe("hidden (inactive) categories are invisible on the storefront", () => {
 
     expect(tiles.map((tile) => tile.slug)).toEqual(["household", "suit-material"]);
     expect(tiles.every((tile) => tile.productCount > 0)).toBe(true);
+  });
+
+  it("featured products from hidden categories never surface on the homepage", async () => {
+    const featured = await getFeaturedProducts();
+
+    // plush-turtle (HouseHold) is featured; retired-item is featured but its
+    // category is hidden.
+    expect(featured.map((p) => p.slug)).toEqual(["plush-turtle"]);
+  });
+
+  it("new arrivals from hidden categories never surface on the homepage", async () => {
+    const arrivals = await getNewArrivals();
+
+    expect(arrivals.some((p) => p.slug === "retired-item")).toBe(false);
   });
 });
